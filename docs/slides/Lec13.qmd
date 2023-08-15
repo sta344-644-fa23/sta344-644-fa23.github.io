@@ -1,0 +1,656 @@
+---
+title: "tidyverts & prophet"
+subtitle: "Lecture 13"
+author: "Dr. Colin Rundel"
+footer: "Sta 344 - Fall 2022"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+execute:
+  echo: true
+  warning: false
+  collapse: true
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(tsibble)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+options(width=50)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+
+source("util-crps.R")
+source("fix_pred_draws.R")
+
+set.seed(20221010)
+```
+
+
+# Tidy time series
+
+## `ts` objects
+
+In base R, time series are usually encoded using the `ts` S3 class,
+
+:::: {.columns}
+::: {.column width='50%' .small}
+```{r}
+co2
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+typeof(co2)
+class(co2)
+attributes(co2)
+```
+:::
+::::
+
+## tidyverts
+
+This is an effort headed by Rob Hyndman (of forecast fame) and others to provide a consistent tidy data based framework for working with time series data and models.
+
+Core packages:
+
+* `tsibble` - temporal data frames and related tools
+
+* `fable` - tidy forecasting (modelling)
+
+* `feasts` - feature extraction and statistics
+
+* `tsibbledata` - sample tsibble data sets
+
+## tsibble
+
+A tsibble is a tibble with additional infrastructure for encoding temporal data - specifcially a tsibble is a tidy data frame with an *index* and *key* where
+
+* the *index* is the variable that descibes the inherent ordering of the data (from past to present)
+
+* and the *key* is one or more variables that define the unit of observation over time
+
+* each observation should be uniquely identified by the *index* and *key*
+
+
+## `global_economy`
+
+```{r}
+tsibbledata::global_economy
+```
+
+
+## `vic_elec`
+
+```{r}
+tsibbledata::vic_elec
+```
+
+
+## `aus_retail`
+
+```{r}
+tsibbledata::aus_retail
+```
+
+
+## as_tsibble()
+
+Existing ts objects can be converted to a tsibble easily,
+
+```{r}
+tsibble::as_tsibble(co2)
+```
+
+## plotting tsibbles
+
+As the tsibble is basically just a tibble which is basically just a data frame both base and ggplot plotting methods will work.
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+tsibble::as_tsibble(co2) %>%
+  plot()
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+tsibble::as_tsibble(co2) %>%
+  ggplot(
+    aes(x=lubridate::as_date(index), y=value)
+  ) +
+    geom_point() +
+    geom_line()
+```
+:::
+::::
+
+
+## autoplot
+
+```{r}
+library(fabletools) # needed to support autoplot
+tsibble::as_tsibble(co2) %>%
+  autoplot(.vars = vars(value))
+```
+
+## Multiple variables
+
+::: {.small}
+```{r}
+tsibbledata::vic_elec %>%
+  tsibble::index_by(data = ~ lubridate::as_date(.)) %>%
+  summarize(
+    demand_avg = mean(Demand, na.rm=TRUE),
+    temp_avg = mean(Temperature, na.rm=TRUE)
+  ) %>%
+  autoplot(.vars = vars(temp_avg, demand_avg))
+```
+:::
+
+## `ggtsdisplay()` replacement
+
+The equivalent to the `ggtsdisplay()` plot is provided by `feasts` with `gg_tsdisplay()`,
+
+```{r}
+tsibble::as_tsibble(co2) %>%
+  feasts::gg_tsdisplay(y = value)
+```
+
+
+## `ggtsdisplay()` - pACF
+
+```{r}
+tsibble::as_tsibble(co2) %>%
+  feasts::gg_tsdisplay(y = value, plot_type = "partial")
+```
+
+# Modeling with fable
+
+## `elec_sales`
+
+```{r echo=FALSE}
+data(elecequip, package = "fpp")
+elec_sales = forecast::seasadj(stl(elecequip, s.window="periodic"))
+```
+
+:::: {.columns .small}
+::: {.column width='33%'}
+```{r}
+( elec_sales = as_tsibble(
+  elec_sales
+) )
+```
+:::
+
+::: {.column width='66%'}
+```{r}
+elec_sales %>%
+  autoplot(value)
+```
+:::
+::::
+
+::: {.aside}
+These data were also fit in Lecture 11
+:::
+
+## Differencing
+
+::: {.medium}
+```{r}
+elec_sales %>%
+  feasts::gg_tsdisplay(difference(value), plot_type="partial")
+```
+:::
+
+## Modeling
+
+::: {.medium}
+To fit a model with fable we use the `model()` function along with a specific function for the model we are trying to fit (`ARIMA()` here). 
+
+As with the rest of tidyverts - `fable` using a tidy approach for modeling which means that the model results are stored in a tibble (called a `mable`).
+
+```{r}
+library(fable)
+( m = elec_sales %>%
+    model(
+      ARIMA(value ~ pdq(3,1,0))
+    )
+)
+```
+:::
+
+## Model summary
+
+```{r}
+m %>% 
+  report()
+```
+
+## Model details (broom + yardstick)
+
+```{r echo=FALSE}
+options(width=100)
+```
+
+::: {.small}
+```{r}
+m %>% glance()
+```
+
+. . .
+
+::: {.small}
+```{r}
+m %>% accuracy()
+```
+:::
+
+. . .
+
+::: {.small}
+```{r}
+m %>% augment()
+```
+:::
+:::
+
+## Observed vs predicted
+
+::: {.small}
+```{r}
+m %>% 
+  augment() %>%
+  autoplot(vars(value, .fitted))
+```
+:::
+
+
+## Residuals
+
+::: {.small}
+```{r}
+m %>% 
+  augment() %>%
+  feasts::gg_tsdisplay(.resid, plot_type="partial")
+```
+:::
+
+
+## Forecasting
+
+```{r}
+m %>%
+  forecast()
+```
+
+## Forecasting - autoplot
+
+```{r}
+m %>%
+  forecast() %>%
+  autoplot(elec_sales)
+```
+
+
+## Comparing models
+
+The `fable` `model()` function also has the ability to fit multiple models at the same time which then makes comparison more straight forward.
+
+::: {.medium}
+```{r}
+( mm = elec_sales %>%
+    model(
+      arima310 = ARIMA(value ~ pdq(3,1,0)),
+      arima013 = ARIMA(value ~ pdq(0,1,3)),
+      autoarima = ARIMA(value),
+      autoarima_bf = ARIMA(value, stepwise = FALSE)
+    )
+)
+```
+:::
+
+## broom + multiple models
+
+::: {.medium}
+```{r}
+mm %>% glance() %>% arrange(AICc)
+```
+:::
+
+. . .
+
+::: {.medium}
+```{r}
+mm %>% accuracy() %>% arrange(RMSE)
+```
+:::
+
+## Forecasting - autoplot
+
+```{r}
+mm %>%
+  forecast() %>%
+  autoplot(elec_sales)
+```
+
+# Cross validation
+
+## Test train split
+
+::: {.small}
+The general approach is to keep the data ordered and split the first `prop`% into the training data and the remainder as testing data.
+
+![](imgs/Lec13/fpp3-cv1.png){fig-align="center" width="100%"}
+:::
+
+. . .
+
+::: {.small}
+```{r}
+elec_sales_split = rsample::initial_time_split(elec_sales, prop=0.9)
+```
+:::
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+rsample::training(elec_sales_split)
+```
+
+:::
+
+::: {.column width='50%'}
+```{r}
+rsample::testing(elec_sales_split)
+```
+:::
+::::
+
+## Model fit (training)
+
+::: {.medium}
+```{r}
+( mm = rsample::training(elec_sales_split) %>%
+    model(
+      arima310 = ARIMA(value ~ pdq(3,1,0)),
+      arima013 = ARIMA(value ~ pdq(0,1,3)),
+      autoarima = ARIMA(value),
+      autoarima_bf = ARIMA(value, stepwise = FALSE)
+    )
+)
+```
+:::
+
+## Forecasting
+
+```{r}
+mm %>%
+  forecast() %>%
+  autoplot(
+    elec_sales
+  )
+```
+
+## Accuracy
+
+**Out-of-sample:**
+
+::: {.small}
+```{r}
+mm %>%
+  forecast() %>%
+  accuracy(elec_sales)
+```
+:::
+
+. . .
+
+**Within-sample:**
+
+::: {.small}
+```{r}
+mm %>%
+  accuracy()
+```
+:::
+
+
+## Rolling forecasting origin
+
+One-step ahead predictive performance
+
+![](imgs/Lec13/fpp3-cv2.png){fig-align="center" width="100%"}
+
+::: {.aside}
+From Hyndman FPP3 - Chp 5.10
+:::
+
+##
+
+Four-step ahead predictive performance
+
+![](imgs/Lec13/fpp3-cv3.png){fig-align="center" width="100%"}
+
+::: {.aside}
+From Hyndman FPP3 - Chp 5.10
+:::
+
+# Prophet
+
+## Prophet model
+
+Prophet uses a modeling framework that looks a lot like traditional GAM approaches. Specifically the time series is modeled as
+
+$$ y(t) = g(t) + s(t) + h(t) + \epsilon_t $$
+
+where
+
+* $g(t)$ is a piecewise linear trend component
+
+* $s(t)$ is a seasonal component based on Fourier terms with specified period(s) and order
+
+* $h(t)$ are holiday effects (specific dummy coded variables for important dates / times)
+
+* $\epsilon_t$ white noise error
+
+
+## Implementation
+
+Prophet is implemented in its own R package and Python packages (`prophet`) which provide all of the basic functionality.
+
+The model fitting is done using a Bayesain approach with the specific implementation using Stan.
+
+Other frameworks like `fable` (or `modeltime`) provide higher level interfaces to this package.
+
+
+## `prodn` from `astsa`
+
+Monthly Federal Reserve Board Production Index (1948-1978)
+
+```{r}
+prodn = tsibble::as_tsibble(astsa::prodn)
+autoplot(prodn, value)
+```
+
+## Test train split
+
+```{r}
+prodn_split = rsample::initial_time_split(prodn, prop=0.90)
+```
+
+```{r echo=FALSE}
+bind_rows(
+  rsample::training(prodn_split) %>% mutate(split = "training"),
+  rsample::testing(prodn_split)  %>% mutate(split = "testing")
+) %>%
+  mutate(split = forcats::as_factor(split)) %>%
+  ggplot(aes(x = index, y=value, color = split)) +
+    geom_line() +
+    scale_color_manual(values=c("black", "darkcyan"))
+```
+
+## Models
+
+```{r}
+library(fable.prophet)
+
+( prodn_fit = rsample::training(prodn_split) %>%
+   model(
+     arima = ARIMA(value ~ pdq(1,1,0) + PDQ(0,1,3)),
+     autoarima = ARIMA(value),
+     prophet = prophet(value ~ season(period = 12, 
+                                      type = "multiplicative"))
+   )
+)
+```
+
+## Forecast
+
+```{r}
+prodn_fc = forecast(prodn_fit, h=38)
+prodn_fc %>% 
+  autoplot(prodn)
+```
+
+## Forecast - zoom
+
+```{r}
+prodn_fc = forecast(prodn_fit, h=38)
+prodn_fc %>% 
+  autoplot(
+    prodn %>% filter(index >= make_yearmonth(1970L, 1L))
+  )
+```
+
+## Accuracy
+
+**Out-of-sample:**
+
+::: {.small}
+```{r}
+prodn_fit %>%
+  forecast() %>%
+  accuracy(prodn)
+```
+:::
+
+. . .
+
+**Within-sample:**
+
+::: {.small}
+```{r}
+prodn_fit %>%
+  accuracy()
+```
+:::
+
+## Components
+
+::: {.small}
+```{r}
+prodn_fit %>%
+  select(prophet) %>%
+  components() %>%
+  autoplot()
+```
+:::
+
+# Complex seasonality
+
+## Half-hourly electricity demand - `vic_elec`
+
+```{r}
+tsibbledata::vic_elec
+```
+
+
+::: {.aside}
+For another treatment of these data with some additional feature engineering see FPP3 - Chp 12.1 & 12.2
+:::
+
+## Full data
+
+::: {.small}
+```{r}
+tsibbledata::vic_elec %>%
+  autoplot(vars(Demand, Temperature))
+```
+:::
+
+
+## Data - December 2014
+
+::: {.small}
+```{r}
+tsibbledata::vic_elec %>%
+  filter(Time >= lubridate::ymd("2014/12/01")) %>%
+  autoplot(vars(Demand, Temperature))
+```
+:::
+
+## Seasonality - Yearly
+
+```{r}
+tsibbledata::vic_elec %>%
+  feasts::gg_season(
+    y=Demand, period = "year", alpha=0.5
+  )
+```
+
+## Seasonality - Weekly
+
+```{r}
+tsibbledata::vic_elec %>%
+  feasts::gg_season(
+    y=Demand, period = "week"
+  )
+```
+
+
+## Seasonality - Daily
+
+```{r}
+tsibbledata::vic_elec %>%
+  feasts::gg_season(
+    y = Demand, period = "day"
+  )
+```
+
+## Model
+
+```{r}
+( vic_elec_fit = tsibbledata::vic_elec %>%
+    model(
+      p = prophet(Demand ~ Temperature  + Holiday +
+                  season(period = "day", order = 10) +
+                  season(period = "week", order = 5) +
+                  season(period = "year", order = 3))
+    )
+)
+```
+
+## Components
+
+```{r}
+vic_elec_fit %>%
+  components() %>%
+  autoplot()
+```
+
+## Residuals
+
+```{r}
+vic_elec_fit %>%
+  feasts::gg_tsresiduals()
+```

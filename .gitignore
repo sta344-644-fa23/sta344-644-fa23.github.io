@@ -1,0 +1,7 @@
+public/
+*.swp
+.Rproj.user
+.Rhistory
+static/slides/prev/*
+.hugo_build.lock
+*.Rdata

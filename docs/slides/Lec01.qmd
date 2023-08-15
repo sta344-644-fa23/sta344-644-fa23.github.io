@@ -1,0 +1,326 @@
+---
+title: "Introduction & Syllabus"
+subtitle: "Lecture 01"
+author: "Dr. Colin Rundel"
+footer: "Sta 344 - Fall 2022"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+    chalkboard: 
+      theme: whiteboard
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  fig.width=7,
+  fig.height=5,
+  out.width="\\textwidth",
+  fig.align="center",
+  echo=FALSE,
+  warning=FALSE,
+  cache=TRUE
+)
+
+library(tidyverse)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+```
+
+
+# Course Details
+
+## Course Team
+
+### Instrutor
+
+* Dr. Colin Rundel 
+    - [colin.rundel@duke.edu](mailto:colin.rundel@duke.edu) / [cr173@duke.edu](mailto:cr173@duke.edu) / [rundel@gmail.com ](mailto:rundel@gmail.com)
+
+
+### TA
+
+* Olivier	Binette
+
+
+## Course website(s)
+
+* GitHub pages - [sta344-fa22.github.io](https://sta344-fa22.github.io)
+  - HTML, PDF, and qmds of Slides
+  - Lecture screencasts (youtube)
+  - Suggested Readings
+
+* Sakai - [sakai.duke.edu](https://sakai.duke.edu/portal/site/ce7276bc-e677-46ce-a1e6-9c3f98d6d465)
+  - Links to GitHub page
+  - Announcements
+  - Gradebook
+
+
+
+## Course Timetable
+
+* Lectures (weekly) - Social Sciences 124
+  - Wednesdays, 12:00 - 1:15 pm - 
+  - Fridays, 12:00 - 1:15 pm - 
+  
+* Labs (weekly) - Perkins LINK 087 (Classroom 3)
+  - Lab 01 - Tuesdays, 5:15 to 6:30 pm
+
+## Labs
+
+- Attendance is expected
+
+- Opportunity to work on course assignments with TA support
+
+- Q&A + Worked examples
+
+- Labs will begin in Week 2 (September 6th) 
+
+
+## Announcements
+
+Will be posted on Sakai (Announcements tool)
+
+- Will also be sent via email
+
+- Recent announcements available on overview page
+
+- Check Sakai or email regularly
+
+
+## Grading
+
+We will be assessing you based on the following assignments,
+
+<br/>
+
+::: {.medium}
+|Assignment|Type      |Value  | n  |Assigned             |
+|:---------|:---------|:------|:--:|:--------------------|
+|Homeworks |Individual|40%    | ~7 | ~ Every other week  |
+|Midterms  |In class  |40%    | 2  | ~ Week 7 and 15     |
+|Project   |Team      |20%    | 1  | ~ Week 10           | 
+:::
+
+
+## Collaboration policy
+
+- Homeworks are to be completed individually but you are strongly encouraged to work together.
+
+- All solutions should be "in your own words" 
+
+- i.e. you should not directly share complete answers / code with others.
+
+
+## Sharing / reusing code or solutions policy
+
+- We are aware that a huge amount of code available on the web, and many tasks may have solutions posted.
+
+- Unless explicitly stated otherwise, this course's policy is that you may make use of any online resources (e.g. Google, StackOverflow, etc.) but you must explicitly cite where you obtained any code you directly use or use as inspiration in your solution(s). 
+
+- Any recycled code / solutions that are not explicitly cited will be treated as plagiarism, regardless of source.
+
+
+
+
+## Academic integrity
+
+<br/>
+
+::: {.medium}
+> To uphold the Duke Community Standard:
+>
+> - I will not lie, cheat, or steal in my academic endeavors;
+> - I will conduct myself honorably in all my endeavors; and
+> - I will act if the Standard is compromised.
+:::
+
+# Course Tools
+
+
+## RStudio 
+
+::: {.large .center}
+[rstudio.stat.duke.edu:8787](http://rstudio.stat.duke.edu:8787)
+:::
+
+- Browser based, departmental RStudio instance(s)
+
+- Requires Duke VPN or on campus connection to access
+
+- Provides consistency in hardware and software environments
+
+- Local R installations are fine but we will not guarantee support
+
+## Common issues:
+
+- If `This site can’t provide a secure connection` change `https` to `http` in the url.
+  
+- If `This site can’t be reached` make sure you are on a Duke network and are not use an alternative DNS service.
+
+- Anything more exotic please reach out for help.
+
+## Local R + RStudio
+
+If working locally you should make sure that your environment meets the following requirements:
+
+* latest R (4.2.1)
+
+* latest RStudio (2022.07.1+554)
+
+* working git installation
+
+* ability to create ssh keys (for GitHub authentication)
+
+* *All* R packages updated to their latest version from CRAN
+
+
+
+## GitHub
+
+- We will be using an organization specifically to this course [github.com/sta344-fa22](https://github.com/sta344-fa22)
+
+- All assignments will be distributed and collected via GitHub
+
+- All of your work and your membership (enrollment) in the organization is private
+
+- We will be distributing a survey this week to collection your account names 
+
+    - Before lab next week you will be invited to the course organization.
+
+
+## Before next Tuesday
+
+* Create a GitHub account if you don't have one
+
+* Complete the course survey (you will receive before next Monday)
+
+* make sure you can login in to the Department's RStudio server
+  - [rstudio.stat.duke.edu:8787](http://rstudio.stat.duke.edu:8787)
+  
+
+# Spatio-temporal data
+
+## Course content
+
+<br/><br/>
+
+:::: {.columns}
+
+::: {.column width='30%'}
+:::
+
+::: {.column width='40%'}
+\~ 1/3 theory
+
+\~ 1/3 application
+
+\~ 1/3 computation
+:::
+
+::::
+
+
+## Time Series Data - Discrete
+    
+```{r sandp, message=FALSE}
+x = quantmod::getSymbols("^GSPC", src = "yahoo", from = as.Date("2021-01-01"), auto.assign = FALSE)
+
+plot(x[,"GSPC.Open"], main='S&P 500 Open (^GSPC)', type='b', pch=16, col="black")
+```
+
+## Time Series Data - Continuous
+  
+```{r pm25}
+load("data/frn_example.Rdata")
+
+pm25 = pm25 |>
+  transmute(date = lubridate::mdy(Date), pm25 = PM25) |>
+  filter(lubridate::month(date) %in% 1:12)
+
+ggplot(pm25, aes(x=date, y=pm25)) +
+  geom_point() +
+  geom_line() +
+  labs(
+    title="FRN Measured PM25",
+    ylab="PM25 (ug/m^3)"
+  )
+```
+
+
+## Spatial Data - Areal
+    
+```{r nc_sids, out.width="80%"}
+nc = sf::st_read(system.file("shape/nc.shp", package="sf"), quiet = TRUE) |>
+  select(starts_with("SID")) |>
+  gather(var, value, -geometry)
+
+ggplot(nc, aes(fill=value)) +
+  geom_sf() +
+  coord_sf(datum = NA) +
+  facet_grid(var~.) +
+  scale_fill_viridis_c()
+```
+
+## Spatial Data - Point referenced
+    
+```{r meuse}
+data(meuse, package = "sp")
+m = sf::st_as_sf(meuse, coords=c("x","y")) |> 
+  select(2:4) |>
+  mutate_if(is.numeric, function(x) x / max(x)) |>
+  gather(metal, value, -geometry)
+
+data(meuse.riv, package = "sp")
+mr = sf::st_polygon(list(meuse.riv)) |> sf::st_sfc() |> sf::st_sf()
+
+ggplot(m, aes(color=value)) +
+  geom_sf(data=mr, color=NA, fill="lightblue", alpha=0.5) +
+  geom_sf() +
+  coord_sf(datum = NA) +
+  facet_wrap(~metal) + 
+  theme_bw() +
+  ylim(328000,334000) +
+  scale_colour_viridis_c() +
+  #scale_color_distiller(palette = "Spectral") +
+  labs(title="Meuse River", color="% of max")
+```
+## Spatial-temporal Data - Continuous (time)
+
+```{r epa_time, out.width="90%"}
+knitr::include_graphics("imgs/Lec01/epa/fig_joint_biv.png")
+```
+
+## Spatial-temporal Data - Continuous (space)
+
+```{r epa_space, out.width="90%"}
+knitr::include_graphics("imgs/Lec01/epa/fig_pred_joint.png")
+```
+
+## Point Pattern Data - Time
+   
+```{r oldfaithful}
+old_faithful = MASS::geyser |> 
+  mutate(time = cumsum(waiting)+cumsum(lag(duration,default=0))) |> 
+  select(time, duration) |> 
+  slice(1:25)
+
+plot(old_faithful, type='p', main="Old Faithful Eruption Duration", pch=16)
+```
+
+
+## Point Pattern Data - Space
+    
+```{r fires, out.width="80%"}
+knitr::include_graphics("imgs/Lec01/fires.png")
+```
+
+
+## Point Pattern Data - Space + Time
+        
+```{r earthquakes, out.width="80%"}
+knitr::include_graphics("imgs/Lec01/earthquakes.png")
+```
+
+

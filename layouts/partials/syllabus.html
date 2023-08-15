@@ -1,0 +1,113 @@
+<h2>Syllabus</h2>
+
+<h4>Instructors:</h4>
+
+{{ range .Params.contact }}
+<p>
+    {{ .name }} - <a href="{{ .email }}">{{ .email }}</a> 
+    {{ range .hours }}
+    <div style="padding-left: 1em">
+    Office hours:
+    <ul>
+      <li>
+        {{ .day }} {{ .time }} - {{ .loc }}
+      </li>
+    </ul>
+    </div>
+    {{ end }}
+</p>
+{{ end }}
+
+
+
+
+<h4>Classroom:</h4> 
+
+<p>Lecture</p> 
+<ul>
+  <li>
+    Reuben-Cooke Building 130 - Wednesdays & Fridays, 11:45 - 1:00 pm
+  </li>
+</ul>
+
+<p>Labs</p> 
+<ul>
+  <li> Section 01 - Physics 130 - Mondays, 11:45 to 1:00 pm </li>
+</ul>
+
+<h4>Lectures & Lab:</h4>
+
+<p>The goal of both the lectures and the labs is for them to be as interactive as possible. My role as instructor is to introduce you new tools and techniques, but it is up to you to take them and make use of them. Programming is a skill that is best learned by doing, so as much as possible you will be working on a variety of tasks and activities throughout each lecture / lab. Attendance will not be taken during class but you are expected to attend all lecture and lab sessions and meaningfully contribute to in-class exercises and homework assignments.
+</p>
+
+
+
+<h4>Homework and Exams:</h4>
+
+<p>You will be regularly given homework assignments, roughly one per week. These assignments will be composed of both theoretical / statistical questions as well as applied computational questions. These assignments are to be completed individually, but you are encouraged to work together to complete the assignments. Each assignment will be hosted in a private github repository within the class' organization. All work should be written up using Rmarkdown documents (templates will be provided) and turned in via this github repository. Grading will be based on completeness and correctness as well as overall effort.</p>
+
+<p>You are individually responsible for all work turned in, taking with and collaborating with another student is fine but you should never be directly sharing code or solutions. See the academic integrity section below if you have any questions about what constitutes cheating and or plagiarism. Any instances of directly copying another student's work will at the very least result in a 0 on the assignment for any involved students as well as any additional penalties deemed appropriate by the instructor.</p>
+
+
+<h4>Final Project:</h4>
+
+<p>You will form your own team of 2-5 students and will be responsible for the completion of an open ended final project for this course, the goal of which is to tackle an "interesting" problem using the tools and techniques covered in this class. Additional details on the project will be provided as the course progresses. You must complete a final project in order to pass this course.</p>
+
+<h4>Exams:</h4>
+
+<p>There will be up to two in class midterms that you will complete individually. Each exam will ask you to complete a small number of questions related to the material presented in the class. The exact structure and content of the exams will be discussed in more detail before they are assigned.</p>
+
+
+<h4>Course Announcements:</h4>
+
+<p> We will regularly send course announcements via email and Sakai, make sure to check one or the other of these regularly.</p>
+
+
+<h4>Academic integrity:</h4>
+
+<p>Duke University is a community dedicated to scholarship, leadership, and service and to the principles of honesty, fairness, respect, and accountability. Citizens of this community commit to reflect upon and uphold these principles in all academic and non-academic endeavors, and to protect and promote a culture of integrity. Cheating on exams or plagiarism on homework assignments, lying about an illness or absence and other forms of academic dishonesty are a breach of trust with classmates and faculty, violate the Duke Community Standard, and will not be tolerated. Such incidences will result in a 0 grade for all parties involved. Additionally, there may be penalties to your final class grade along with being reported to the Undergraduate Conduct Board.</p>
+
+<p>Please review the Academic Dishonesty policies here.</p>
+
+<p>A note on sharing / reusing code - I am well aware that a huge volume of code is available on the web to solve any number of problems. Unless I explicitly tell you not to use something the course's policy is that you may make use of any online resources (e.g. StackOverflow) but you must explicitly cite where you obtained any code you directly use (or use as inspiration). Any recycled code that is discovered and is not explicitly cited will be treated as plagiarism. The one exception to this rule is that you may not directly share code with another team in this class, you are welcome to discuss the problems together and ask for advice, but you may not send or make use of code from another team.</p>
+
+<h4>Excused Absences:</h4>
+<p>Students who miss a class due to a scheduled varsity trip, religious holiday or short-term illness should fill out an online NOVAP, RHoliday or short-term illness form respectively. Note that these excused absences do not excuse you from assigned homework, it is your responsibility to make alternative arrangements to turn in any assignments in a timely fashion.</p>
+
+<p>\Those with a personal emergency or bereavement should speak with your director of graduate studies or your academic dean.</p>
+
+
+
+<h4>Late work policy:</h4>
+
+<ul>
+<li>late, but same day: -10%</li>
+<li>late, next day: -20%</li>
+<li>2 days or later: no credit</li>
+</ul>
+
+<h4>Assessment:</h4>
+
+<p>Your final mark will be comprised of the following. </p>
+
+<p>
+<table style="width: 200px; margin-left: 1em">
+<thead>
+    <tr class="header">
+        <th>Assignment</th>
+        <th>Value</th>
+    </tr>
+</thead>
+<tbody>
+{{ range .Params.assignments }}
+    <tr>
+        <td>{{ .name }}</td>
+        <td>{{ .value }}</td>
+    </tr>
+{{ end }}
+</tbody>
+</table>
+</p>
+
+<p>The exact ranges for letter grades will be curved and cutoffs will be determined at the end of the semester. The more evidence there is that the class has mastered the material, the more generous the curve will be.</p>
+

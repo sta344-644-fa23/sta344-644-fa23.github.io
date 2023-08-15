@@ -1,0 +1,74 @@
+/*-- scss:defaults --*/
+
+// fonts
+@import 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible&display=swap';
+
+$font-family-sans-serif: "Atkinson Hyperlegible", sans-serif;
+$presentation-heading-color: #325b74; /* Pantone Midnight - Fall 2022 */
+$presentation-title-slide-text-align: "left";
+$link-color: #325b74;
+$code-block-font-size: 0.9em;
+
+
+
+/*-- scss:rules --*/
+
+:root {
+  --r-main-font-size: 32px;
+}
+
+details>summary {
+  font-size: 0.75em;
+}
+
+#title-slide .subtitle {
+  color: #325b74;
+  font-weight: bold
+}
+
+#title-slide .author {
+  text-align: right;
+}
+
+#title-slide .institute {
+  text-align: right;
+}
+
+.center {
+  text-align: center;
+}
+
+.padded-li li {
+  margin-top: 1.2em !important;
+}
+
+.large {
+  font-size: 1.4em;
+}
+
+.medium {
+  font-size: 0.9em;
+}
+
+.small {
+  font-size: 0.75em;
+}
+
+.reveal code {
+  font-size: 0.8em;
+}
+
+.reveal .cell {
+  margin-bottom: 15px;
+}
+
+.reveal table td {
+  border-bottom: 0;
+}
+
+.reveal div.sourceCode pre code {
+    min-height: 100%;
+}
+.reveal pre.sourceCode code {
+  max-height: 550px;
+}

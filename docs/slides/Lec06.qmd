@@ -1,0 +1,652 @@
+---
+title: "Logistic Regression (cont.)"
+subtitle: "Lecture 06"
+author: "Dr. Colin Rundel"
+footer: "Sta 344 - Fall 2022"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+execute:
+  echo: true
+  warning: false
+  collapse: true
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(patchwork)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+
+bin_width = 0.05
+
+source('fix_pred_draws.R')
+source('util-crps.R')
+```
+
+```{r data}
+#| include: false
+load("data/anguilla.Rdata")
+anguilla = as_tibble(anguilla)
+
+set.seed(20220908)
+part = rsample::initial_split(anguilla, prop = 3/4)
+
+anguilla_train = rsample::training(part)
+anguilla_test  = rsample::testing(part)
+
+g = glm(presence~SegSumT, family=binomial, data=anguilla_train)
+g_std =  broom::augment(g, type.predict = "response") |>
+  mutate(.resid = presence - .fitted)
+g_pear = broom::augment(g, type.predict="response", type.residuals="pearson")
+g_dev = broom::augment(g, type.predict="response", type.residuals="deviance")
+```
+
+# Full Model
+
+## Model
+
+::: {.small}
+
+```{r}
+f = glm(presence~., family=binomial, data=anguilla_train)
+summary(f)
+```
+
+:::
+
+## Separation
+
+```{r}
+#| echo: false
+f_std = broom::augment(f, type.predict = "response") |>
+  mutate(.resid = presence - .fitted)
+f_pear = broom::augment(f, type.predict = "response", type.residuals = "pearson")
+f_dev = broom::augment(f, type.predict = "response", type.residuals = "deviance")
+
+f_resid = bind_rows(
+  f_std  |> mutate(type = "standard"),
+  f_pear |> mutate(type = "pearson"),
+  f_dev  |> mutate(type = "deviance")
+) |>
+  mutate(type = as_factor(type))
+
+f_resid_bin = f_resid |>
+  group_by(type) |>
+  mutate(bin = .fitted - (.fitted %% bin_width) + bin_width/2) |>
+  group_by(type, bin) |>
+  summarize(.resid_bin = mean(.resid), .groups="drop")
+```
+
+```{r}
+#| echo: false
+( ggplot(g_std, aes(x=.fitted, y=presence, color=as.factor(presence))) +
+    geom_jitter(height=0.1, alpha=0.5) +
+    labs(color="presence", title="SegSumT Model")
++
+  ggplot(f_std, aes(x=.fitted, y=presence, color=as.factor(presence))) +
+    geom_jitter(height=0.1, alpha=0.5) +
+    labs(color="presence", title="Full Model")
++ plot_layout(ncol=1)
+)
+```
+
+## Residuals vs fitted
+
+::: {.small}
+```{r}
+f_resid |>
+  ggplot(aes(x=.fitted, y=.resid, color=type)) +
+  geom_jitter(height=0.2, alpha=0.2) +
+  facet_wrap(~type, ncol=3, scale="free_y") +
+  geom_smooth(se = FALSE, color="black")
+```
+:::
+
+## Residuals (binned) vs fitted
+
+::: {.small}
+```{r}
+f_resid_bin |>
+  mutate(type = as_factor(type)) |>
+  ggplot(aes(x=bin, y=.resid_bin, color=type)) +
+  geom_point() +
+  facet_wrap(~type, ncol=3)
+```
+:::
+
+# Model Performance
+
+## Confusion Matrix
+
+```{r}
+#| echo: false
+f_std |>
+  ggplot(aes(x=.fitted, y=presence, color=as.factor(presence))) +
+    geom_jitter(height=0.1, alpha=0.5) +
+    labs(color="presence", title="Full Model")
+```
+
+## Confusion Matrix - 50% threshold
+
+```{r}
+#| echo: false
+threshold = 0.5
+```
+
+:::: {.columns} 
+::: {.column width='80%'}
+```{r conf_plot}
+#| echo: false
+conf = f_std |>
+  mutate(
+    result = case_when(
+      .fitted > threshold & presence == 1 ~ "TP",
+      .fitted > threshold & presence == 0 ~ "FP",
+      .fitted < threshold & presence == 1 ~ "FN",
+      .fitted < threshold & presence == 0 ~ "TN"
+    )
+  )
+
+conf |>
+  ggplot(aes(x=.fitted, y=presence, color=as.factor(result))) +
+    geom_jitter(height=0.1, alpha=0.75) +
+    geom_vline(xintercept = threshold, color="darkgrey", size=1.25, alpha=0.75) +
+    labs(color="presence", title="Full Model")
+```
+:::
+::: {.column width='20%' .small}
+```{r conf_table}
+#| echo: false
+conf |> count(result)
+```
+:::
+::::
+
+## Confusion Matrix - 25% threshold
+
+```{r}
+#| echo: false
+threshold = 0.25
+```
+
+:::: {.columns} 
+::: {.column width='80%'}
+```{r ref.label="conf_plot"}
+#| echo: false
+```
+:::
+::: {.column width='20%' .small}
+```{r ref.label="conf_table"}
+#| echo: false
+```
+:::
+::::
+
+## Confusion Matrix - 75% threshold
+
+```{r}
+#| echo: false
+threshold = 0.75
+```
+
+:::: {.columns}
+::: {.column width='80%'}
+
+```{r ref.label="conf_plot"}
+#| echo: false
+```
+:::
+::: {.column width='20%' .small}
+```{r ref.label="conf_table"}
+#| echo: false
+```
+:::
+::::
+
+## Confusion Matrix statistics
+
+$$
+\begin{aligned}
+\text{Sensitivity} = \text{Recall} &= TPR = \frac{TP}{TP+FN} = 1 - FNR\\\\
+\text{Specificity} &= TNR = \frac{TN}{TN+FP} = 1 - FPR \\\\
+\text{Precision} &= PPV = \frac{TP}{TP+FP} \\\\
+F_1 &= \frac{2TP}{2TP + FP + FN} \\\\
+\text{Accuracy} &= \frac{TP+TN}{TP+TN+FP+FN}
+\end{aligned}
+$$
+
+## Combining model predictions
+
+::: {.small}
+```{r}
+( model_comb  = bind_rows(
+    g_std |> mutate(model = "SegSumT"),
+    f_std |> mutate(model = "Full")
+  ) |>
+    group_by(model)
+)
+```
+:::
+
+## Receiver operating characteristic (ROC)
+
+$$
+\begin{aligned}
+\text{Sensitivity} = \frac{TP}{TP+FN}
+\qquad\qquad
+\text{Specificity} = \frac{TN}{TN+FP}
+\end{aligned}
+$$
+
+::: {.small}
+```{r}
+( model_roc = model_comb |>
+    yardstick::roc_curve(factor(presence, levels = c(1,0)), .fitted)
+)
+```
+
+:::
+
+## ROC Curve
+
+```{r}
+model_roc |>
+  autoplot()
+```
+
+## AUC (area under the curve)
+
+```{r}
+model_comb |>
+  yardstick::roc_auc(factor(presence, levels = c(1,0)), .fitted)
+```
+
+. . .
+
+<br/>
+
+A model that randomly assigns classes to the data is expected to achieve an AUC of 0.5 (dotted line on the previous plot) while a perfect model would achieve an AUC of 1.
+
+
+## Precision / Recall
+
+$$
+\begin{aligned}
+\text{Precision} = \frac{TP}{TP+FP}
+\qquad\qquad
+\text{Recall} = \frac{TP}{TP+FN}
+\end{aligned}
+$$
+
+::: {.small}
+```{r}
+( model_pr = model_comb |>
+    yardstick::pr_curve(factor(presence, levels = c(1,0)), .fitted)
+)
+```
+:::
+
+## Precision Recall curve
+
+```{r}
+model_pr |> 
+  autoplot()
+```
+
+## Precision Recall auc
+
+```{r}
+model_comb |>
+  yardstick::pr_auc(factor(presence, levels = c(1,0)), .fitted)
+```
+
+. . .
+
+<br/>
+
+A model that randomly assigns classes to the data is expected to achieve an PR-AUC of # successes / n while a perfect model would achieve an AUC of 1 (a point at a coordinate of (1,1)).
+
+
+
+# What about the test data?
+
+## Combining predicitons
+
+::: {.small}
+
+```{r}
+(model_comb = bind_rows(
+    broom::augment(g, newdata=anguilla_train,   type.predict="response") |> 
+      mutate(model = "SegSumT (train)"),
+    broom::augment(g, newdata=anguilla_test,    type.predict="response") |> 
+      mutate(model = "SegSumT (test)"),
+    broom::augment(f, newdata=anguilla_train,   type.predict="response") |> 
+      mutate(model = "Full (train)"),
+    broom::augment(f, newdata=anguilla_test,    type.predict="response") |> 
+      mutate(model = "Full (test)"),
+  ) |>
+    group_by(model)
+)
+```
+
+:::
+
+## Separation
+
+::: {.small}
+```{r}
+model_comb |>
+  ggplot(aes(x=.fitted, y=presence, color=as.factor(presence))) +
+    geom_jitter(height=0.1, alpha=0.5) +
+    facet_wrap(~model, ncol=2) +
+    guides(color="none")
+```
+:::
+
+## ROC
+
+::: {.small}
+```{r}
+model_comb |>
+  yardstick::roc_curve(factor(presence, levels = c(1,0)), .fitted) |>
+  autoplot()
+```
+:::
+
+## AUC
+
+```{r}
+model_comb |>
+  yardstick::roc_auc(factor(presence, levels = c(1,0)), .fitted)
+```
+
+## Precision / Recall
+
+::: {.small}
+```{r}
+model_comb |>
+  yardstick::pr_curve(factor(presence, levels = c(1,0)), .fitted) |>
+  autoplot()
+```
+:::
+
+## PR-AUC
+
+```{r}
+model_comb |>
+  yardstick::pr_auc(factor(presence, levels = c(1,0)), .fitted)
+```
+
+# Aside: Species Distribution Modeling
+
+## Model Choice
+
+We have been fitting a model that looks like the following,
+
+$$
+  \begin{aligned}
+y_i &\sim \text{Bern}(p_i) \\\\
+\text{logit}(p_i) &= \boldsymbol{X}_{i\cdot} \boldsymbol{\beta} 
+\end{aligned}
+$$
+
+<br/>
+
+Interpretation of $y_i$ and $p_i$?
+
+## Absence of evidence ...
+
+If we observe a species at a particular location what does that tell us?
+
+. . .
+
+<br/>
+
+If we *don't* observe a species at a particular location what does that tell us?
+
+. . .
+
+![](https://imgs.xkcd.com/comics/heatmap.png){fig-align="center" width="40%"}
+
+## Revised Model
+
+If we allow for crypsis, then
+
+$$
+\begin{aligned}
+y_i &\sim \text{Bern}(q_i \, z_i) \\
+z_i &\sim \text{Bern}(p_i)
+\end{aligned}
+$$
+$$
+\begin{aligned}
+\text{logit}(q_i) &= \boldsymbol{X^\star}_{i\cdot} \boldsymbol{\gamma} \\
+\text{logit}(p_i) &= \boldsymbol{X}_{i\cdot} \boldsymbol{\beta}
+\end{aligned}
+$$
+
+. . .
+
+<br/>
+
+How should we interpret the parameters / variables: $y_i$, $z_i$, $p_i$, and $q_i$?
+
+
+# Bayesian Model
+
+## brms + logistic regression
+
+```{r}
+#| include: false
+( b = brms::brm(
+    presence~SegSumT+Method, family="bernoulli", 
+    data=anguilla_train
+) )
+```
+
+::: {.small}
+```{r}
+#| eval: false
+( b = brms::brm(
+    presence~SegSumT+Method, family="bernoulli", 
+    data=anguilla_train
+) )
+```
+
+```{r}
+#| echo: false
+b
+```
+:::
+
+## Diagnostics
+
+```{r}
+plot(b, N=6)
+```
+
+
+## PP checks
+
+```{r}
+brms::pp_check(b, ndraws=100)
+```
+
+## PP check - bars
+
+```{r}
+brms::pp_check(b, type="bars", ndraws=1000)
+```
+
+
+## Gathering parameters
+
+```{r}
+( b_param = b |>
+    tidybayes::gather_draws( `b_.*`, regex = TRUE)
+)
+```
+
+## Caterpillar plot
+
+::: {.small}
+```{r}
+b_param |>
+  ggplot(aes(x=.value, y=as_factor(.variable), color=as.factor(.chain))) +
+    tidybayes::stat_pointinterval(position = "dodge") +
+    guides(color="none")
+```
+:::
+
+## Posterior predictive
+
+```{r}
+( b_pred = b |>
+    predicted_draws_fix(newdata = anguilla_train) |>
+    select(presence, .row:.prediction) |>
+    mutate( # Fix for yardstick
+      presence = factor(presence, levels=c(1,0)),
+      .prediction = factor(.prediction, levels=c(1,0))
+    )
+)
+```
+
+## Posterior Accuracy
+
+::: {.small}
+```{r}
+b_pred  |>
+  group_by(.chain, .iteration) |>
+  summarize(
+    accuracy = yardstick::accuracy_vec(presence, .prediction)
+  ) |>
+  ggplot(aes(x = accuracy, fill = as.factor(.chain))) +
+    geom_density(alpha=0.33) +
+    guides(fill = "none")
+```
+:::
+
+## Posterior Sensitivity
+
+::: {.small}
+```{r}
+b_pred  |>
+  group_by(.chain, .iteration) |>
+  summarize(
+    sensitivity = yardstick::sensitivity_vec(presence, .prediction)
+  ) |>
+  ggplot(aes(x = sensitivity, fill = as.factor(.chain))) +
+    geom_density(alpha=0.33) +
+    guides(fill = "none")
+```
+:::
+
+## Posterior Specificity
+
+::: {.small}
+```{r}
+b_pred  |>
+  group_by(.chain, .iteration) |>
+  summarize(
+    specificity = yardstick::specificity_vec(presence, .prediction)
+  ) |>
+  ggplot(aes(x = specificity, fill = as.factor(.chain))) +
+    geom_density(alpha=0.33) +
+    guides(fill = "none")
+```
+:::
+
+## Expected posterior predictive
+
+```{r}
+( b_epred = b |>
+    epred_draws_fix(newdata = anguilla_train) |>
+    select(presence, .row:.epred) |>
+    mutate( # Fix for yardstick
+      presence = factor(presence, levels=c(1,0))
+    )
+)
+```
+
+## Posterior AUC
+
+::: {.small}
+```{r}
+b_epred  |>
+  group_by(.chain, .iteration) |>
+  summarize(
+    auc = yardstick::roc_auc_vec(presence, .epred)
+  ) |>
+  ggplot(aes(x = auc, fill = as.factor(.chain))) +
+    geom_density(alpha=0.33) +
+    guides(fill = "none")
+```
+:::
+
+## Posterior PR-AUC
+
+::: {.small}
+```{r}
+b_epred  |>
+  group_by(.chain, .iteration) |>
+  summarize(
+    pr_auc = yardstick::pr_auc_vec(presence, .epred)
+  ) |>
+  ggplot(aes(x = pr_auc, fill = as.factor(.chain))) +
+    geom_density(alpha=0.33) +
+    guides(fill = "none")
+```
+:::
+
+## Expected posterior predictive - test
+
+```{r}
+#| code-line-numbers: |2 
+b_epred_test = b |>
+  epred_draws_fix(newdata = anguilla_test) |>
+  select(presence, .row:.epred) |>
+  mutate( # Fix for yardstick
+    presence = factor(presence, levels=c(1,0))
+  )
+```
+
+. . .
+
+```{r}
+b_comb = bind_rows(
+  b_epred |> mutate(data = "train"),
+  b_epred_test |> mutate(data = "test")
+)
+```
+
+## Comparing AUC / PR-AUC
+
+::: {.small}
+```{r auc_compare}
+#| eval: false
+b_comb  |>
+  group_by(.chain, .iteration, data) |>
+  summarize(
+    auc = yardstick::roc_auc_vec(presence, .epred),
+    pr_auc = yardstick::pr_auc_vec(presence, .epred)
+  ) |>
+  pivot_longer(cols = auc:pr_auc, names_to = "stat", values_to = "value") |>
+  ggplot(aes(x = value, y=data)) +
+    tidybayes::stat_halfeye() +
+    facet_wrap(~stat, ncol=1, scales = "free_x")
+```
+:::
+
+
+##
+
+```{r ref.label="auc_compare"}
+#| echo: false
+```

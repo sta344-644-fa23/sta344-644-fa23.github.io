@@ -1,0 +1,255 @@
+startdate: "2023-08-28"
+dateFormat: 'Mon, Jan 2'
+schedule:
+
+- week: 1
+  day: 0
+  lecture: <i>No lab</i>
+  lab: true
+
+- week: 1
+  day: 2
+  lecture: Introduction & Syllabus
+  slides: 
+  screencast: 
+
+- week: 1
+  day: 4
+  lecture: Linear Models
+  slides: 
+  readings:
+  - text: Matrix Cookbook
+    link: https://www.math.uwaterloo.ca/~hwolkowi/matrixcookbook.pdf
+  notes: 
+  
+- week: 2
+  day: 2
+  lecture: Diagnostics and Model Evaluation
+  slides: 
+  screencast: 
+  readings:
+  - text: Gelman, et. al - R^2 for Bayesian regression models
+    link: http://www.stat.columbia.edu/~gelman/research/unpublished/bayes_R2.pdf
+  notes: 
+  
+- week: 2
+  day: 4
+  lecture: Generalized Linear Models (pt. 1)
+  slides: 
+  screencast: 
+  readings:
+  - text: "Gelman & Hill 6"
+  notes: 
+
+- week: 3
+  day: 2
+  lecture: Generalized Linear Models (pt. 2)
+  slides: 
+  screencast: 
+  readings:
+  - text: "Gelman & Hill 5.6-5.8"
+  notes: 
+  
+  
+- week: 3
+  day: 4
+  lecture: Generalized Linear Models (pt. 3)
+  slides: 
+  screencast: 
+  readings:
+  notes: 
+
+- week: 4
+  day: 2
+  lecture: Discrete Time Series
+  slides: 
+  screencast: 
+  readings:
+  - text: "Shumway 1.2-1.6, 2, 3.1-3.4"
+  notes: 
+
+- week: 4
+  day: 4
+  lecture: CCF, Differencing, & AR(1) models
+  slides: 
+  screencast: 
+  readings:
+  - text: "Shumway 3.2, 3.4"
+  notes: 
+
+- week: 5
+  day: 2
+  lecture: AR, MA, and ARMA models
+  slides: 
+  screencast: 
+  readings:
+  - text: "Shumway 3.7, 3.8"
+  notes:   
+
+- week: 5
+  day: 4
+  lecture: TBD
+
+- week: 6
+  day: 2
+  lecture: ARIMA models
+  slides: 
+  screencast: 
+  notes: 
+  readings:
+  - text: "Shumway 3.7, 3.8"
+  notes: 
+
+- week: 6
+  day: 4
+  lecture: Seasonal ARIMA
+  slides: 
+  screencast: 
+  readings:
+  - text: "Shumway 3.5, 3.6, 3.9"
+  - text: "Congdon 5.1, 5.2"
+  - text: "Hyndman 8.6, 8.8, 8.9"
+    link: https://www.otexts.org/fpp/8
+
+- week: 7
+  day: 2
+  lecture: Fitting ARIMA Models
+  slides: 
+  screencast: 
+  readings:
+
+- week: 7
+  day: 4
+  lecture: tidyverts + Prophet
+  slides: 
+  screencast: 
+  readings:
+  - text: "Hyndman (fpp3)  5"
+    link: https://otexts.com/fpp3/toolbox.html
+  - text: "Hyndman (fpp3) 12.2"
+    link: https://otexts.com/fpp3/prophet.html
+  - text: "Forecasting at scale"
+    link: https://peerj.com/preprints/3190/
+
+- week: 8
+  day: 0
+  lecture: "<i>No lab - Fall break</i>"
+  lab: true
+
+- week: 8
+  day: 2
+  lecture: Gaussian Process models
+  slides: 
+  screencast: 
+  readings:
+  - text: "Rasmussen & Williams 2, 4"
+    link: http://www.gaussianprocess.org/gpml/chapters/RW.pdf
+  notes: 
+  
+- week: 8
+  day: 4
+  lecture: Gaussian Process models (pt. 2)
+  slides: 
+  screencast: 
+  notes: 
+  
+
+
+- week: 9
+  day: 2
+  lecture: Covariance Functions
+  slides: 
+  screencast: 
+  readings:
+  - text: "Rasmussen & Williams 4, 5"
+    link: http://www.gaussianprocess.org/gpml/chapters/RW.pdf
+  - text: "Kernel Cookbook"
+    link: http://www.cs.toronto.edu/~duvenaud/cookbook/index.html
+  notes: 
+
+- week: 9
+  day: 4
+  lecture: GPs & GLMs + Spatial Data (pt. 1)
+  slides: 
+  screencast: 
+  readings:
+  - text: "sf Vignettes"
+    link: https://cran.r-project.org/web/packages/sf/vignettes/
+  notes: 
+
+- week: 10
+  day: 2
+  lecture: TBD
+
+- week: 10
+  day: 4
+  lecture: Spatial Data and Cartography (pt. 2)
+  slides: 
+  screencast: 
+  readings:
+  - text: "Spatial Data Science"
+    link: "https://r-spatial.org/book/"
+  - text: "Geocomputation with R"
+    link: "https://geocompr.robinlovelace.net/"
+  
+- week: 11
+  day: 2
+  lecture: Models for areal data
+  slides: 
+  screencast: 
+  readings:
+  - text: Banerjee, Carlin, Gelfand Ch. 4
+  notes: 
+
+- week: 11
+  day: 4
+  lecture: Fitting CAR and SAR models
+  slides: 
+  screencast: 
+  readings:
+  - text: On the relationship between CAR and SAR models
+    link: https://mhooten.github.io/publications/VerHoef_etal_SpatStat_2018.pdf
+  notes: 
+  
+- week: 12
+  day: 2
+  lecture: GLMs for areal data + Point referenced data (pt. 1)
+  slides: 
+  screencast: 
+  
+- week: 12
+  day: 4
+  lecture: Point referenced data (pt. 2)
+  slides: 
+  screencast:
+  readings:
+  - text: Diggle (2007)
+    link: https://www.researchgate.net/profile/Valerie-Obsomer/publication/6124441_Spatial_modelling_and_the_prediction_of_Loa_loa_risk_Decision_making_under_uncertainty/links/0fcfd5081417290b82000000/Spatial-modelling-and-the-prediction-of-Loa-loa-risk-Decision-making-under-uncertainty.pdf
+
+- week: 13
+  day: 0
+  lecture: "<i>No lab</i>"
+  lab: true
+
+- week: 13
+  day: 2
+  lecture: <i>No class - Thanksgiving </i>
+
+- week: 13
+  day: 4
+  lecture: <i>No class - Thanksgiving </i>
+
+
+- week: 14
+  day: 2
+  lecture: Computation and GP Models
+  slides: 
+  notes: 
+  screencast: 
+
+- week: 14
+  day: 4
+  lecture: Spatio-temporal models
+  slides: 
+
+

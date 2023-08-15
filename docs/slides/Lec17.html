@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="Lec17_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Lec17_files/libs/quarto-html/tabby.min.js"></script>
+<script src="Lec17_files/libs/quarto-html/popper.min.js"></script>
+<script src="Lec17_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="Lec17_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Lec17_files/libs/quarto-html/quarto-html.min.css" rel="stylesheet" data-mode="light">
+<link href="Lec17_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.2.247">
+
+  <meta name="author" content="Dr.&nbsp;Colin Rundel">
+  <title>GPs for GLMs + Spatial Data</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="Lec17_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="Lec17_files/libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="Lec17_files/libs/revealjs/dist/theme/quarto.css" id="theme">
+  <link href="Lec17_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="Lec17_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="Lec17_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="Lec17_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+
+  .callout {
+    margin-top: 1em;
+    margin-bottom: 1em;  
+    border-radius: .25rem;
+  }
+
+  .callout.callout-style-simple { 
+    padding: 0em 0.5em;
+    border-left: solid #acacac .3rem;
+    border-right: solid 1px silver;
+    border-top: solid 1px silver;
+    border-bottom: solid 1px silver;
+    display: flex;
+  }
+
+  .callout.callout-style-default {
+    border-left: solid #acacac .3rem;
+    border-right: solid 1px silver;
+    border-top: solid 1px silver;
+    border-bottom: solid 1px silver;
+  }
+
+  .callout .callout-body-container {
+    flex-grow: 1;
+  }
+
+  .callout.callout-style-simple .callout-body {
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  .callout.callout-style-default .callout-body {
+    font-size: 0.9rem;
+    font-weight: 400;
+  }
+
+  .callout.callout-captioned.callout-style-simple .callout-body {
+    margin-top: 0.2em;
+  }
+
+  .callout:not(.callout-captioned) .callout-body {
+      display: flex;
+  }
+
+  .callout:not(.no-icon).callout-captioned.callout-style-simple .callout-content {
+    padding-left: 1.6em;
+  }
+
+  .callout.callout-captioned .callout-header {
+    padding-top: 0.2em;
+    margin-bottom: -0.2em;
+  }
+
+  .callout.callout-captioned .callout-caption  p {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+    
+  .callout.callout-captioned.callout-style-simple .callout-content  p {
+    margin-top: 0;
+  }
+
+  .callout.callout-captioned.callout-style-default .callout-content  p {
+    margin-top: 0.7em;
+  }
+
+  .callout.callout-style-simple div.callout-caption {
+    border-bottom: none;
+    font-size: .9rem;
+    font-weight: 600;
+    opacity: 75%;
+  }
+
+  .callout.callout-style-default  div.callout-caption {
+    border-bottom: none;
+    font-weight: 600;
+    opacity: 85%;
+    font-size: 0.9rem;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  .callout.callout-style-default div.callout-content {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  .callout.callout-style-simple .callout-icon::before {
+    height: 1rem;
+    width: 1rem;
+    display: inline-block;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 1rem 1rem;
+  }
+
+  .callout.callout-style-default .callout-icon::before {
+    height: 0.9rem;
+    width: 0.9rem;
+    display: inline-block;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 0.9rem 0.9rem;
+  }
+
+  .callout-caption {
+    display: flex
+  }
+    
+  .callout-icon::before {
+    margin-top: 1rem;
+    padding-right: .5rem;
+  }
+
+  .callout.no-icon::before {
+    display: none !important;
+  }
+
+  .callout.callout-captioned .callout-body > .callout-content > :last-child {
+    margin-bottom: 0.5rem;
+  }
+
+  .callout.callout-captioned .callout-icon::before {
+    margin-top: .5rem;
+    padding-right: .5rem;
+  }
+
+  .callout:not(.callout-captioned) .callout-icon::before {
+    margin-top: 1rem;
+    padding-right: .5rem;
+  }
+
+  /* Callout Types */
+
+  div.callout-note {
+    border-left-color: #4582ec !important;
+  }
+
+  div.callout-note .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAEU0lEQVRYCcVXTWhcVRQ+586kSUMMxkyaElstCto2SIhitS5Ek8xUKV2poatCcVHtUlFQk8mbaaziwpWgglJwVaquitBOfhQXFlqlzSJpFSpIYyXNjBNiTCck7x2/8/LeNDOZxDuEkgOXe++553zfefee+/OYLOXFk3+1LLrRdiO81yNqZ6K9cG0P3MeFaMIQjXssE8Z1JzLO9ls20MBZX7oG8w9GxB0goaPrW5aNMp1yOZIa7Wv6o2ykpLtmAPs/vrG14Z+6d4jpbSKuhdcSyq9wGMPXjonwmESXrriLzFGOdDBLB8Y6MNYBu0dRokSygMA/mrun8MGFN3behm6VVAwg4WR3i6FvYK1T7MHo9BK7ydH+1uurECoouk5MPRyVSBrBHMYwVobG2aOXM07sWrn5qgB60rc6mcwIDJtQrnrEr44kmy+UO9r0u9O5/YbkS9juQckLed3DyW2XV/qWBBB3ptvI8EUY3I9p/67OW+g967TNr3Sotn3IuVlfMLVnsBwH4fsnebJvyGm5GeIUA3jljERmrv49SizPYuq+z7c2H/jlGC+Ghhupn/hcapqmcudB9jwJ/3jvnvu6vu5lVzF1fXyZuZZ7U8nRmVzytvT+H3kilYvH09mLWrQdwFSsFEsxFVs5fK7A0g8gMZjbif4ACpKbjv7gNGaD8bUrlk8x+KRflttr22JEMRUbTUwwDQScyzPgedQHZT0xnx7ujw2jfVfExwYHwOsDTjLdJ2ebmeQIlJ7neo41s/DrsL3kl+W2lWvAga0tR3zueGr6GL78M3ifH0rGXrBC2aAR8uYcIA5gwV8zIE8onoh8u0Fca/ciF7j1uOzEnqcIm59sEXoGc0+z6+H45V1CvAvHcD7THztu669cnp+L0okAeIc6zjbM/24LgGM1gZk7jnRu1aQWoU9sfUOuhrmtaPIO3YY1KLLWZaEO5TKUbMY5zx8W9UJ6elpLwKXbsaZ4EFl7B4bMtDv0iRipKoDQT2sNQI9b1utXFdYisi+wzZ/ri/1m7QfDgEuvgUUEIJPq3DhX/5DWNqIXDOweC2wvIR90Oq3lDpdMIgD2r0dXvGdsEW5H6x6HLRJYU7C69VefO1x8Gde1ZFSJLfWS1jbCnhtOPxmpfv2LXOA2Xk2tvnwKKPFuZ/oRmwBwqRQDcKNeVQkYcOjtWVBuM/JuYw5b6isojIkYxyYAFn5K7ZBF10fea52y8QltAg6jnMqNHFBmGkQ1j+U43HMi2xMar1Nv0zGsf1s8nUsmUtPOOrbFIR8bHFDMB5zL13Gmr/kGlCkUzedTzzmzsaJXhYawnA3UmARpiYj5ooJZiUoxFRtK3X6pgNPv+IZVPcnwbOl6f+aBaO1CNvPW9n9LmCp01nuSaTRF2YxHqZ8DYQT6WsXT+RD6eUztwYLZ8rM+rcPxamv1VQzFUkzFXvkiVrySGQgJNvXHJAxiU3/NwiC03rSf05VBaPtu/Z7/B8Yn/w7eguloAAAAAElFTkSuQmCC');
+  }
+
+  div.callout-note.callout-style-default .callout-caption {
+    background-color: #dae6fb
+  }
+
+  div.callout-important {
+    border-left-color: #d9534f !important;
+  }
+
+  div.callout-important .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAEKklEQVRYCcVXTWhcVRS+575MJym48A+hSRFr00ySRQhURRfd2HYjk2SSTokuBCkU2o0LoSKKraKIBTcuFCoidGFD08nkBzdREbpQ1EDNIv8qSGMFUboImMSZd4/f9zJv8ibJMC8xJQfO3HPPPef7zrvvvnvviIkpC9nsw0UttFunbUhpFzFtarSd6WJkStVMw5xyVqYTvkwfzuf/5FgtkVoB0729j1rjXwThS7Vio+Mo6DNnvLfahoZ+i/o32lULuJ3NNiz7q6+pyAUkJaFF6JwaM2lUJlV0MlnQn5aTRbEu0SEqHUa0A4AdiGuB1kFXRfVyg5d87+Dg4DL6m2TLAub60ilj7A1Ec4odSAc8X95sHh7+ZRPCFo6Fnp7HfU/fBng/hi10CjCnWnJjsxvDNxWw0NfV6Rv5GgP3I3jGWXumdTD/3cbEOP2ZbOZp69yniG3FQ9z1jD7bnBu9Fc2tKGC2q+uAJOQHBDRiZX1x36o7fWBs7J9ownbtO+n0/qWkvW7UPIfc37WgT6ZGR++EOJyeQDSb9UB+DZ1G6DdLDzyS+b/kBCYGsYgJbSQHuThGKRcw5xdeQf8YdNHsc6ePXrlSYMBuSIAFTGAtQo+VuALo4BX83N190NWZWbynBjhOHsmNfFWLeL6v+ynsA58zDvvAC8j5PkbOcXCMg2PZFk3q8MjI7WAG/Dp9AwP7jdGBOOQkAvlFUB+irtm16I1Zw9YBcpGTGXYmk3kQIC/Cds55l+iMI3jqhjAuaoe+am2Jw5GT3Nbz3CkE12NavmzN5+erJW7046n/CH1RO/RVa8lBLozXk9uqykkGAyRXLWlLv5jyp4RFsG5vGVzpDLnIjTWgnRy2Rr+tDKvRc7Y8AyZq10jj8DqXdnIRNtFZb+t/ZRtXcDiVnzpqx8mPcDWxgARUqx0W1QB9MeUZiNrV4qP+Ehc+BpNgATsTX8ozYKL2NtFYAHc84fG7ndxUPr+AR/iQSns7uSUufAymwDOb2+NjK27lEFocm/EE2WpyIy/Hi66MWuMKJn8RvxIcj87IM5Vh9663ziW36kR0HNenXuxmfaD8JC7tfKbrhFr7LiZCrMjrzTeGx+PmkosrkNzW94ObzwocJ7A1HokLolY+AvkTiD/q1H0cN48c5EL8Crkttsa/AXQVDmutfyku0E7jShx49XqV3MFK8IryDhYVbj7Sj2P2eBxwcXoe8T8idsKKPRcnZw1b+slFTubwUwhktrfnAt7J++jwQtLZcm3sr9LQrjRzz6cfMv9aLvgmnAGvpoaGLxM4mAEaLV7iAzQ3oU0IvD5x9ix3yF2RAAuYAOO2f7PEFWCXZ4C9Pb2UsgDeVnFSpbFK7/IWu7TPTvBqzbGdCHOJQSxiEjt6IyZmxQyEJHv6xyQsYk//moVFsN2zP6fRImjfq7/n/wFDguUQFNEwugAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-important.callout-style-default .callout-caption {
+    background-color: #f7dddc
+  }
+
+  div.callout-warning {
+    border-left-color: #f0ad4e !important;
+  }
+
+  div.callout-warning .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAETklEQVRYCeVWW2gcVRg+58yaTUnizqbipZeX4uWhBEniBaoUX1Ioze52t7sRq6APio9V9MEaoWlVsFasRq0gltaAPuxms8lu0gcviE/FFOstVbSIxgcv6SU7EZqmdc7v9+9mJtNks51NTUH84ed889/PP+cmxP+d5FIbMJmNbpREu4WUkiTtCicKny0l1pIKmBzovF2S+hIJHX8iEu3hZJ5lNZGqyRrGSIQpq15AzF28jgpeY6yk6GVdrfFqdrD6Iw+QlB8g0YS2g7dyQmXM/IDhBhT0UCiRf59lfqmmDvzRt6kByV/m4JjtzuaujMUM2c5Z2d6JdKrRb3K2q6mA+oYVz8JnDdKPmmNthzkAk/lN63sYPgevrguc72aZX/L9C6x09GYyxBgCX4NlvyGUHOKELlm5rXeR1kchuChJt4SSwyddZRXgvwMGvYo4QSlk3/zkHD8UHxwVJA6zjZZqP8v8kK8OWLnIZtLyCAJagYC4rTGW/9Pqj92N/c+LUaAj27movwbi19tk/whRCIE7Q9vyI6yvRpftAKVTdUjOW40X3h5OXsKCdmFcx0xlLJoSuQngnrJe7Kcjm4OMq9FlC7CMmScQANuNvjfP3PjGXDBaUQmbp296S5L4DrpbrHN1T87ZVEZVCzg1FF0Ft+dKrlLukI+/c9ENo+TvlTDbYFvuKPtQ9+l052rXrgKoWkDAFnvh0wTOmYn8R5f4k/jN/fZiCM1tQx9jQQ4ANhqG4hiL0qIFTGViG9DKB7GYzgubnpofgYRwO+DFjh0Zin2m4b/97EDkXkc+f6xYAPX0KK2I/7fUQuwzuwo/L3AkcjugPNixC8cHf0FyPjWlItmLxWw4Ou9YsQCr5fijMGoD/zpdRy95HRysyXA74MWOnscpO4j2y3HAVisw85hX5+AFBRSHt4ShfLFkIMXTqyKFc46xdzQM6XbAi702a7sy04J0+feReMFKp5q9esYLCqAZYw/k14E/xcLLsFElaornTuJB0svMuJINy8xkIYuL+xPAlWRceH6+HX7THJ0djLUom46zREu7tTkxwmf/FdOZ/sh6Q8qvEAiHpm4PJ4a/doJe0gH1t+aHRgCzOvBvJedEK5OFE5jpm4AGP2a8Dxe3gGJ/pAutug9Gp6he92CsSsWBaEcxGx0FHytmIpuqGkOpldqNYQK8cSoXvd+xLxXADw0kf6UkJNFtdo5MOgaLjiQOQHcn+A6h5NuL2s0qsC2LOM75PcF3yr5STuBSAcGG+meA14K/CI21HcS4LBT6tv0QAh8Dr5l93AhZzG5ZJ4VxAqdZUEl9z7WJ4aN+svMvwHHL21UKTd1mqvChH7/Za5xzXBBKrUcB0TQ+Ulgkfbi/H/YT5EptrGzsEK7tR1B7ln9BBwckYfMiuSqklSznIuoIIOM42MQO+QnduCoFCI0bpkzjCjddHPN/F+2Yu+sd9bKNpVwHhbS3LluK/0zgfwD0xYI5dXuzlQAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-warning.callout-style-default .callout-caption {
+    background-color: #fcefdc
+  }
+
+  div.callout-tip {
+    border-left-color: #02b875 !important;
+  }
+
+  div.callout-tip .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAADr0lEQVRYCe1XTWgTQRj9ZjZV8a9SPIkKgj8I1bMHsUWrqYLVg4Ue6v9BwZOxSYsIerFao7UiUryIqJcqgtpimhbBXoSCVxUFe9CTiogUrUp2Pt+3aUI2u5vdNh4dmMzOzHvvezuz8xNFM0mjnbXaNu1MvFWRXkXEyE6aYOYJpdW4IXuA4r0fo8qqSMDBU0v1HJUgVieAXxzCsdE/YJTdFcVIZQNMyhruOMJKXYFoLfIfIvVIMWdsrd+Rpd86ZmyzzjJmLStqRn0v8lzkb4rVIXvnpScOJuAn2ACC65FkPzEdEy4TPWRLJ2h7z4cArXzzaOdKlbOvKKX25Wl00jSnrwVxAg3o4dRxhO13RBSdNvH0xSARv3adTXbBdTf64IWO2vH0LT+cv4GR1DJt+DUItaQogeBX/chhbTBxEiZ6gftlDNXTrvT7co4ub5A6gp9HIcHvzTa46OS5fBeP87Qm0fQkr4FsYgVQ7Qg+ZayaDg9jhg1GkWj8RG6lkeSacrrHgDaxdoBiZPg+NXV/KifMuB6//JmYH4CntVEHy/keA6x4h4CU5oFy8GzrBS18cLJMXcljAKB6INjWsRcuZBWVaS3GDrqB7rdapVIeA+isQ57Eev9eCqzqOa81CY05VLd6SamW2wA2H3SiTbnbSxmzfp7WtKZkqy4mdyAlGx7ennghYf8voqp9cLSgKdqNfa6RdRsAAkPwRuJZNbpByn+RrJi1RXTwdi8RQF6ymDwGMAtZ6TVE+4uoKh+MYkcLsT0Hk8eAienbiGdjJHZTpmNjlbFJNKDVAp2fJlYju6IreQxQ08UJDNYdoLSl6AadO+fFuCQqVMB1NJwPm69T04Wv5WhfcWyfXQB+wXRs1pt+nCknRa0LVzSA/2B+a9+zQJadb7IyyV24YAxKp2Jqs3emZTuNnKxsah+uabKbMk7CbTgJx/zIgQYErIeTKRQ9yD9wxVof5YolPHqaWo7TD6tJlh7jQnK5z2n3+fGdggIOx2kaa2YI9QWarc5Ce1ipNWMKeSG4DysFF52KBmTNMmn5HqCFkwy34rDg05gDwgH3bBi+sgFhN/e8QvRn8kbamCOhgrZ9GJhFDgfcMHzFb6BAtjKpFhzTjwv1KCVuxHvCbsSiEz4CANnj84cwHdFXAbAOJ4LTSAawGWFn5tDhLMYz6nWeU2wJfIhmIJBefcd/A5FWQWGgrWzyORZ3Q6HuV+Jf0Bj+BTX69fm1zWgK7By1YTXchFDORywnfQ7GpzOo6S+qECrsx2ifVQAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-tip.callout-style-default .callout-caption {
+    background-color: #ccf1e3
+  }
+
+  div.callout-caution {
+    border-left-color: #fd7e14 !important;
+  }
+
+  div.callout-caution .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAACV0lEQVRYCdVWzWoUQRCuqp2ICBLJXgITZL1EfQDBW/bkzUMUD7klD+ATSHBEfAIfQO+iXsWDxJsHL96EHAwhgzlkg8nBg25XWb0zIb0zs9muYYWkoKeru+vn664fBqElyZNuyh167NXJ8Ut8McjbmEraKHkd7uAnAFku+VWdb3reSmRV8PKSLfZ0Gjn3a6Xlcq9YGb6tADjn+lUfTXtVmaZ1KwBIvFI11rRXlWlatwIAAv2asaa9mlB9wwygiDX26qaw1yYPzFXg2N1GgG0FMF8Oj+VIx7E/03lHx8UhvYyNZLN7BwSPgekXXLribw7w5/c8EF+DBK5idvDVYtEEwMeYefjjLAdEyQ3M9nfOkgnPTEkYU+sxMq0BxNR6jExrAI31H1rzvLEfRIdgcv1XEdj6QTQAS2wtstEALLG1yEZ3QhH6oDX7ExBSFEkFINXH98NTrme5IOaaA7kIfiu2L8A3qhH9zRbukdCqdsA98TdElyeMe5BI8Rs2xHRIsoTSSVFfCFCWGPn9XHb4cdobRIWABNf0add9jakDjQJpJ1bTXOJXnnRXHRf+dNL1ZV1MBRCXhMbaHqGI1JkKIL7+i8uffuP6wVQAzO7+qVEbF6NbS0LJureYcWXUUhH66nLR5rYmva+2tjRFtojkM2aD76HEGAD3tPtKM309FJg5j/K682ywcWJ3PASCcycH/22u+Bh7Aa0ehM2Fu4z0SAE81HF9RkB21c5bEn4Dzw+/qNOyXr3DCTQDMBOdhi4nAgiFDGCinIa2owCEChUwD8qzd03PG+qdW/4fDzjUMcE1ZpIAAAAASUVORK5CYII=');
+  }
+
+  div.callout-caution.callout-style-default .callout-caption {
+    background-color: #ffe5d0
+  }
+
+  </style>
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">GPs for GLMs<br>+ Spatial Data</h1>
+  <p class="subtitle">Lecture 17</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Dr.&nbsp;Colin Rundel 
+</div>
+</div>
+</div>
+
+</section>
+<section>
+<section id="gps-and-glms" class="title-slide slide level1 center">
+<h1>GPs and GLMs</h1>
+
+</section>
+<section id="logistic-regression" class="slide level2">
+<h2>Logistic Regression</h2>
+<p>A typical logistic regression problem uses the following model,</p>
+<p><span class="math display">\[
+\begin{aligned}
+y_i &amp;\sim \text{Bern}(p_i)\\
+\text{logit}(p_i)
+  &amp;= \boldsymbol{X}\,\boldsymbol{\beta} \\
+  &amp;= \beta_0 + \beta_1 \, x_{i1} + \cdots + \beta_k \, x_{ik}
+\end{aligned}
+\]</span></p>
+<div class="fragment">
+<p>there is no reason that the linear equation above can’t contain thing like random effects or GPs</p>
+<p><span class="math display">\[
+\begin{aligned}
+y_i &amp;\sim \text{Bern}(p_i) \\
+\text{logit}(p_i)
+  &amp;= \eta_i = \boldsymbol{X}\,\boldsymbol{\beta} + w(\boldsymbol{x}) \\
+w(\boldsymbol{x}) &amp;\sim N(0,\Sigma)
+\end{aligned}
+\]</span></p>
+</div>
+</section>
+<section id="a-toy-example" class="slide level2">
+<h2>A toy example</h2>
+
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-1-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="model-fitting" class="slide level2">
+<h2>Model fitting</h2>
+<div class="medium">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>m <span class="ot">=</span> <span class="fu">gpglm</span>(</span>
+<span id="cb1-2"><a href="#cb1-2"></a>  y<span class="sc">~</span><span class="dv">1</span>, <span class="at">family=</span><span class="st">"binomial"</span>,</span>
+<span id="cb1-3"><a href="#cb1-3"></a>  <span class="at">data =</span> d, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"x"</span>),</span>
+<span id="cb1-4"><a href="#cb1-4"></a>  <span class="at">cov_model =</span> <span class="st">"exponential"</span>,</span>
+<span id="cb1-5"><a href="#cb1-5"></a>  <span class="at">starting=</span><span class="fu">list</span>(</span>
+<span id="cb1-6"><a href="#cb1-6"></a>    <span class="st">"beta"</span><span class="ot">=</span><span class="dv">0</span>, <span class="st">"phi"</span><span class="ot">=</span><span class="dv">3</span><span class="sc">/</span><span class="fl">0.1</span>, <span class="st">"sigma.sq"</span><span class="ot">=</span><span class="dv">1</span>, <span class="st">"w"</span><span class="ot">=</span><span class="dv">0</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a>  ),</span>
+<span id="cb1-8"><a href="#cb1-8"></a>  <span class="at">tuning=</span><span class="fu">list</span>(</span>
+<span id="cb1-9"><a href="#cb1-9"></a>    <span class="st">"beta"</span><span class="ot">=</span><span class="fl">0.5</span>, <span class="st">"phi"</span><span class="ot">=</span><span class="fl">0.5</span>, <span class="st">"sigma.sq"</span><span class="ot">=</span><span class="fl">0.5</span>, <span class="st">"w"</span><span class="ot">=</span><span class="fl">0.5</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a>  ),</span>
+<span id="cb1-11"><a href="#cb1-11"></a>  <span class="at">priors=</span><span class="fu">list</span>(</span>
+<span id="cb1-12"><a href="#cb1-12"></a>    <span class="st">"beta.Normal"</span><span class="ot">=</span><span class="fu">list</span>(<span class="dv">0</span>,<span class="dv">1</span>),</span>
+<span id="cb1-13"><a href="#cb1-13"></a>    <span class="st">"phi.unif"</span><span class="ot">=</span><span class="fu">c</span>(<span class="dv">3</span><span class="sc">/</span><span class="fl">0.5</span>, <span class="dv">3</span><span class="sc">/</span><span class="fl">0.01</span>),</span>
+<span id="cb1-14"><a href="#cb1-14"></a>    <span class="st">"sigma.sq.ig"</span><span class="ot">=</span><span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>)</span>
+<span id="cb1-15"><a href="#cb1-15"></a>  ),</span>
+<span id="cb1-16"><a href="#cb1-16"></a>  <span class="at">n_batch =</span> <span class="dv">100</span>,</span>
+<span id="cb1-17"><a href="#cb1-17"></a>  <span class="at">batch_len =</span> <span class="dv">100</span>,</span>
+<span id="cb1-18"><a href="#cb1-18"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb1-19"><a href="#cb1-19"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+
+</div>
+</section>
+<section id="model-diagnostics" class="slide level2">
+<h2>Model diagnostics</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="fu">plot</span>(m)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-4-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="model-predictions" class="slide level2">
+<h2>Model predictions</h2>
+<div class="medium">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>newdata <span class="ot">=</span> <span class="fu">data.frame</span>(</span>
+<span id="cb3-2"><a href="#cb3-2"></a>  <span class="at">x=</span><span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="at">length.out=</span><span class="dv">101</span>)</span>
+<span id="cb3-3"><a href="#cb3-3"></a>)</span>
+<span id="cb3-4"><a href="#cb3-4"></a></span>
+<span id="cb3-5"><a href="#cb3-5"></a>(<span class="at">p =</span> <span class="fu">predict</span>(m, <span class="at">newdata=</span>newdata, <span class="at">coords=</span><span class="st">"x"</span>, <span class="at">thin=</span><span class="dv">50</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="cell-output cell-output-stdout">
+<pre><code># A draws_matrix: 200 iterations, 4 chains, and 202 variables
+    variable
+draw  w[1]     w[2]   w[3]   w[4]   w[5]   w[6]  w[7]
+  1  -1.18 -0.22201 -0.354  0.072  0.380 -0.226 -0.45
+  2  -0.22 -0.00092 -0.167 -0.079  0.170  0.149 -0.29
+  3  -0.64  0.09967 -0.345  0.357 -0.801 -0.339 -0.44
+  4  -0.82  1.25431 -0.542 -1.391 -0.637 -0.033 -0.30
+  5   0.19 -0.90628 -0.969 -0.561 -0.188 -1.444 -0.94
+  6  -0.58 -1.01544  0.036 -0.611 -1.297 -1.107 -0.77
+  7  -1.74  0.64735  0.036 -0.357 -1.268 -0.870 -0.70
+  8  -0.25 -0.01433 -0.460  0.312 -0.046 -0.902 -1.68
+  9  -0.83 -2.72657 -2.128 -1.316 -1.648 -2.682 -2.54
+  10 -0.51 -1.15691 -1.570 -0.998 -1.074 -1.079 -1.63
+    variable
+draw   w[8]
+  1  -0.042
+  2  -0.671
+  3  -0.440
+  4  -0.368
+  5  -0.346
+  6  -0.706
+  7   0.220
+  8  -0.666
+  9  -1.486
+  10 -1.311
+# ... with 790 more draws, and 194 more variables</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="predicted-y" class="slide level2">
+<h2>Predicted y</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>p <span class="sc">|&gt;</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a>  tidybayes<span class="sc">::</span><span class="fu">gather_draws</span>(y[i]) <span class="sc">|&gt;</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a>  ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x=</span>i<span class="sc">/</span><span class="fu">max</span>(i),<span class="at">y=</span>.value)) <span class="sc">+</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a>    tidybayes<span class="sc">::</span><span class="fu">stat_lineribbon</span>(<span class="at">alpha=</span><span class="fl">0.25</span>) <span class="sc">+</span></span>
+<span id="cb5-5"><a href="#cb5-5"></a>    <span class="fu">geom_line</span>(<span class="at">data=</span>d <span class="sc">|&gt;</span> <span class="fu">arrange</span>(x), <span class="fu">aes</span>(<span class="at">x=</span>x, <span class="at">y=</span>p), <span class="at">color=</span><span class="st">'red'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec17_files/figure-revealjs/unnamed-chunk-7-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="predicted-w" class="slide level2">
+<h2>Predicted w</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>p <span class="sc">|&gt;</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a>  tidybayes<span class="sc">::</span><span class="fu">gather_draws</span>(w[i]) <span class="sc">|&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a>  ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x=</span>i<span class="sc">/</span><span class="fu">max</span>(i),<span class="at">y=</span>.value)) <span class="sc">+</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a>    tidybayes<span class="sc">::</span><span class="fu">stat_lineribbon</span>(<span class="at">alpha=</span><span class="fl">0.25</span>) <span class="sc">+</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a>    <span class="fu">geom_line</span>(<span class="at">data=</span>d <span class="sc">|&gt;</span> <span class="fu">arrange</span>(x), <span class="fu">aes</span>(<span class="at">x=</span>x, <span class="at">y=</span>eta), <span class="at">color=</span><span class="st">'red'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec17_files/figure-revealjs/unnamed-chunk-8-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="glm" class="slide level2">
+<h2>glm</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>g <span class="ot">=</span> <span class="fu">glm</span>(y<span class="sc">~</span><span class="fu">poly</span>(x,<span class="dv">2</span>), <span class="at">data=</span>d, <span class="at">family=</span><span class="st">"binomial"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-10-1.png" width="960" class="r-stretch quarto-figure-center"></section></section>
+<section>
+<section id="count-data" class="title-slide slide level1 center">
+<h1>Count data</h1>
+
+</section>
+<section id="polio-cases" class="slide level2">
+<h2>Polio cases</h2>
+<p><code>Polio</code> from the <code>glarma</code> package.</p>
+<blockquote>
+<p>This data set gives the monthly number of cases of poliomyelitis in the U.S. for the years 1970–1983 as reported by the Center for Disease Control.</p>
+</blockquote>
+
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-11-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="polio-model" class="slide level2">
+<h2>Polio Model</h2>
+<p><em>Model</em>: <span class="math display">\[
+\begin{aligned}
+y_i &amp;\sim \text{Pois}(\lambda_i) \\
+\text{log}(\lambda_i)
+  &amp;= \beta_0 + w(\boldsymbol{t}) \\
+\\
+w(\boldsymbol{t}) &amp;\sim N(0,\Sigma) \\
+\{\boldsymbol{\Sigma}\}_{ij} &amp;= \sigma^2 \exp(-| l \, d_{ij}|)
+\end{aligned}
+\]</span> . . .</p>
+<p><em>Priors</em>:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\beta_0 &amp;\sim N(0,1) \\
+\phi &amp;\sim \text{Unif}\left(\frac{3}{6}, \frac{3}{1/12}\right)\\
+\sigma^2 &amp;\sim \text{Inv-Gamma}(2,1)
+\end{aligned}
+\]</span></p>
+</section>
+<section id="model-fitting-1" class="slide level2">
+<h2>Model fitting</h2>
+<div class="medium">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>m <span class="ot">=</span> <span class="fu">gpglm</span>(</span>
+<span id="cb8-2"><a href="#cb8-2"></a>  cases<span class="sc">~</span><span class="dv">1</span>, <span class="at">family=</span><span class="st">"poisson"</span>,</span>
+<span id="cb8-3"><a href="#cb8-3"></a>  <span class="at">data =</span> polio, <span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"year"</span>),</span>
+<span id="cb8-4"><a href="#cb8-4"></a>  <span class="at">cov_model =</span> <span class="st">"exponential"</span>,</span>
+<span id="cb8-5"><a href="#cb8-5"></a>  <span class="at">starting=</span><span class="fu">list</span>(</span>
+<span id="cb8-6"><a href="#cb8-6"></a>    <span class="st">"beta"</span><span class="ot">=</span><span class="dv">0</span>, <span class="st">"phi"</span><span class="ot">=</span><span class="dv">3</span><span class="sc">/</span><span class="dv">2</span>, <span class="st">"sigma.sq"</span><span class="ot">=</span><span class="dv">1</span>, <span class="st">"w"</span><span class="ot">=</span><span class="dv">0</span></span>
+<span id="cb8-7"><a href="#cb8-7"></a>  ),</span>
+<span id="cb8-8"><a href="#cb8-8"></a>  <span class="at">tuning=</span><span class="fu">list</span>(</span>
+<span id="cb8-9"><a href="#cb8-9"></a>    <span class="st">"beta"</span><span class="ot">=</span><span class="fl">0.5</span>, <span class="st">"phi"</span><span class="ot">=</span><span class="fl">0.5</span>, <span class="st">"sigma.sq"</span><span class="ot">=</span><span class="fl">0.5</span>, <span class="st">"w"</span><span class="ot">=</span><span class="fl">0.5</span></span>
+<span id="cb8-10"><a href="#cb8-10"></a>  ),</span>
+<span id="cb8-11"><a href="#cb8-11"></a>  <span class="at">priors=</span><span class="fu">list</span>(</span>
+<span id="cb8-12"><a href="#cb8-12"></a>    <span class="st">"beta.Normal"</span><span class="ot">=</span><span class="fu">list</span>(<span class="dv">0</span>,<span class="dv">1</span>),</span>
+<span id="cb8-13"><a href="#cb8-13"></a>    <span class="st">"phi.unif"</span><span class="ot">=</span><span class="fu">c</span>(<span class="dv">3</span><span class="sc">/</span><span class="dv">6</span>, <span class="dv">3</span><span class="sc">/</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">12</span>)),</span>
+<span id="cb8-14"><a href="#cb8-14"></a>    <span class="st">"sigma.sq.ig"</span><span class="ot">=</span><span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>)</span>
+<span id="cb8-15"><a href="#cb8-15"></a>  ),</span>
+<span id="cb8-16"><a href="#cb8-16"></a>  <span class="at">n_batch =</span> <span class="dv">100</span>,</span>
+<span id="cb8-17"><a href="#cb8-17"></a>  <span class="at">batch_len =</span> <span class="dv">100</span>,</span>
+<span id="cb8-18"><a href="#cb8-18"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb8-19"><a href="#cb8-19"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+
+</div>
+</section>
+<section id="model-diagnostics-1" class="slide level2">
+<h2>Model diagnostics</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="fu">plot</span>(m)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-14-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="model-fit" class="slide level2">
+<h2>Model fit</h2>
+<div class="medium">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>newdata <span class="ot">=</span> <span class="fu">data.frame</span>(</span>
+<span id="cb10-2"><a href="#cb10-2"></a>  <span class="at">year =</span> <span class="fu">seq</span>(<span class="dv">1970</span>, <span class="dv">1984</span>, <span class="at">by=</span><span class="fl">0.1</span>) <span class="sc">|&gt;</span> <span class="fu">jitter</span>()</span>
+<span id="cb10-3"><a href="#cb10-3"></a>)</span>
+<span id="cb10-4"><a href="#cb10-4"></a></span>
+<span id="cb10-5"><a href="#cb10-5"></a>(<span class="at">p =</span> <span class="fu">predict</span>(m, <span class="at">newdata=</span>newdata, <span class="at">coords=</span><span class="st">"year"</span>, <span class="at">thin=</span><span class="dv">50</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="cell-output cell-output-stdout">
+<pre><code># A draws_matrix: 200 iterations, 4 chains, and 282 variables
+    variable
+draw   w[1]   w[2]    w[3]    w[4]  w[5] w[6]    w[7]  w[8]
+  1  -0.498  0.065  0.3183  0.2519 -0.52 0.32 -0.0085 -0.22
+  2   0.190 -0.115 -0.0028  0.0917  1.12 1.62  1.0786  1.34
+  3  -1.322 -0.651 -0.5380 -0.4450  0.94 1.80  1.5415  1.80
+  4   0.112  0.075  0.3479  0.6895  1.05 1.68  1.6113  0.79
+  5  -0.043 -0.088 -0.2408 -0.2396  2.15 1.79 -0.0989  1.04
+  6  -0.528 -0.995 -0.9240 -0.0067  1.50 2.00  0.9907  1.63
+  7  -1.779 -0.426 -1.2744  0.9432  0.51 0.90  1.2267  0.04
+  8  -0.594 -0.119 -0.9112 -0.0822  1.69 1.28  0.2578  0.88
+  9   0.259  0.157  0.3803  0.4777  0.30 1.23  0.3618  0.35
+  10 -1.880 -1.996 -0.5955 -0.5550  1.45 1.43  0.6164  0.61
+# ... with 790 more draws, and 274 more variables</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="predicted-y-1" class="slide level2">
+<h2>Predicted y</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>p <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2"></a>  tidybayes<span class="sc">::</span><span class="fu">gather_draws</span>(y[i]) <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3"></a>  ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x=</span>i<span class="sc">/</span><span class="fu">max</span>(i),<span class="at">y=</span>.value)) <span class="sc">+</span></span>
+<span id="cb12-4"><a href="#cb12-4"></a>    tidybayes<span class="sc">::</span><span class="fu">stat_lineribbon</span>(<span class="at">alpha=</span><span class="fl">0.25</span>) <span class="sc">+</span></span>
+<span id="cb12-5"><a href="#cb12-5"></a>    <span class="fu">geom_line</span>(<span class="at">data=</span>polio, <span class="fu">aes</span>(<span class="at">x=</span>(year<span class="sc">-</span><span class="fu">min</span>(year))<span class="sc">/</span>(<span class="fu">max</span>(year)<span class="sc">-</span><span class="fu">min</span>(year)), <span class="at">y=</span>cases), <span class="at">color=</span><span class="st">'red'</span>, <span class="at">alpha=</span><span class="fl">0.5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec17_files/figure-revealjs/unnamed-chunk-17-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="predicted-w-1" class="slide level2">
+<h2>Predicted w</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a>p <span class="sc">|&gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2"></a>  tidybayes<span class="sc">::</span><span class="fu">gather_draws</span>(w[i]) <span class="sc">|&gt;</span></span>
+<span id="cb13-3"><a href="#cb13-3"></a>  ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x=</span>i<span class="sc">/</span><span class="fu">max</span>(i),<span class="at">y=</span>.value)) <span class="sc">+</span></span>
+<span id="cb13-4"><a href="#cb13-4"></a>    tidybayes<span class="sc">::</span><span class="fu">stat_lineribbon</span>(<span class="at">alpha=</span><span class="fl">0.25</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec17_files/figure-revealjs/unnamed-chunk-18-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="spatial-data-in-r" class="title-slide slide level1 center">
+<h1>Spatial data in R</h1>
+
+</section>
+<section id="packages-for-geospatial-data-in-r" class="slide level2">
+<h2>Packages for geospatial data in R</h2>
+<div class="medium">
+<p>R has a rich package ecosystem for read/writing, manipulating, and analyzing geospatial data.</p>
+<p>Some core packages:</p>
+<ul>
+<li><p><code>sp</code> - core classes for handling spatial data, additional utility functions - <strong>Deprecated</strong></p></li>
+<li><p><code>rgdal</code> - R interface to <code>gdal</code> (Geospatial Data Abstraction Library) for reading and writing spatial data - <strong>Deprecated</strong></p></li>
+<li><p><code>rgeos</code> - R interface to <code>geos</code> (Geometry Engine Open Source) library for querying and manipulating spatial data. Reading and writing WKT. - <strong>Deprecated</strong></p></li>
+<li><p><code>sf</code> - Combines the functionality of <code>sp</code>, <code>rgdal</code>, and <code>rgeos</code> into a single package based on tidy simple features.</p></li>
+<li><p><code>raster</code> - classes and tools for handling spatial raster data.</p></li>
+<li><p><code>stars</code> - Reading, manipulating, writing and plotting spatiotemporal arrays (rasters)</p></li>
+</ul>
+<p>See more - <a href="http://cran.r-project.org/web/views/Spatial.html">Spatial task view</a></p>
+</div>
+</section>
+<section id="installing-sf" class="slide level2">
+<h2>Installing <code>sf</code></h2>
+<p>This is the hardest part of using the <code>sf</code> package, difficulty comes from is dependence on several external libraries (<code>geos</code>, <code>gdal</code>, and <code>proj</code>).</p>
+<ul>
+<li><p><em>Windows</em> - installing from source works when Rtools is installed (system requirements are downloaded from rwinlib)</p></li>
+<li><p><em>MacOS</em> - install dependencies via homebrew: <code>gdal2</code>, <code>geos</code>, <code>proj</code>.</p></li>
+<li><p><em>Linux</em> - Install development packages for GDAL (&gt;= 2.0.0), GEOS (&gt;= 3.3.0) and Proj.4 (&gt;= 4.8.0) from your package manager of choice.</p></li>
+</ul>
+<p>More specific details are included in the <a href="https://github.com/r-spatial/sf">README on github</a>.</p>
+</section>
+<section id="simple-features" class="slide level2">
+<h2>Simple Features</h2>
+
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-19-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="reading-writing-and-converting" class="slide level2">
+<h2>Reading, writing, and converting</h2>
+<ul>
+<li><code>sf</code>
+<ul>
+<li><code>st_read()</code> / <code>st_write()</code> - Shapefile, GeoJSON, KML, …</li>
+<li><code>read_sf()</code> / <code>write_sf()</code> - Same, supports tibbles …</li>
+<li><code>st_as_sfc()</code> / <code>st_as_wkt()</code> - sf &lt;-&gt; WKT</li>
+<li><code>st_as_sfc()</code> / <code>st_as_binary()</code> - sf &lt;-&gt; WKB</li>
+<li><code>st_as_sfc()</code> / <code>as(x, "Spatial")</code> - sf &lt;-&gt; sp</li>
+</ul></li>
+</ul>
+
+<aside><div>
+<p>See <a href="https://cran.r-project.org/web/packages/sf/vignettes/sf2.html">sf vignette #2 - Reading, Writing and Converting Simple Features</a>.</p>
+</div></aside></section></section>
+<section>
+<section id="geospatial-data-in-the-real-world" class="title-slide slide level1 center">
+<h1>Geospatial data in<br>the real world</h1>
+
+</section>
+<section id="projections" class="slide level2">
+<h2>Projections</h2>
+
+<img data-src="Lec17_files/figure-revealjs/projs-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="distance-on-a-sphere" class="slide level2">
+<h2>Distance on a Sphere</h2>
+
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-20-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="dateline" class="slide level2">
+<h2>Dateline</h2>
+<p>How long is the flight between the Western most and the Eastern most points in the US?</p>
+<div class="fragment">
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec17_files/figure-revealjs/unnamed-chunk-21-1.png" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="section" class="slide level2">
+<h2></h2>
+
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-22-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="section-1" class="slide level2">
+<h2></h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>path <span class="ot">=</span> geosphere<span class="sc">::</span><span class="fu">gcIntermediate</span>(</span>
+<span id="cb14-2"><a href="#cb14-2"></a>  <span class="fu">c</span>(<span class="fl">179.776</span>, <span class="fl">51.952</span>), <span class="fu">c</span>(<span class="sc">-</span><span class="fl">179.146</span>, <span class="fl">51.273</span>), </span>
+<span id="cb14-3"><a href="#cb14-3"></a>  <span class="at">n=</span><span class="dv">50</span>, <span class="at">addStartEnd=</span><span class="cn">TRUE</span></span>
+<span id="cb14-4"><a href="#cb14-4"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-24-1.png" width="768" class="r-stretch quarto-figure-center"></section></section>
+<section>
+<section id="using-sf" class="title-slide slide level1 center">
+<h1>Using <code>sf</code></h1>
+
+</section>
+<section id="example-data" class="slide level2">
+<h2>Example data</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>nc  <span class="ot">=</span> <span class="fu">read_sf</span>(<span class="st">"data/gis/nc_counties/"</span>, <span class="at">quiet=</span><span class="cn">TRUE</span>)</span>
+<span id="cb15-2"><a href="#cb15-2"></a>air <span class="ot">=</span> <span class="fu">read_sf</span>(<span class="st">"data/gis/airports/"</span>, <span class="at">quiet=</span><span class="cn">TRUE</span>)</span>
+<span id="cb15-3"><a href="#cb15-3"></a>hwy <span class="ot">=</span> <span class="fu">read_sf</span>(<span class="st">"data/gis/us_interstates/"</span>, <span class="at">quiet=</span><span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a>nc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simple feature collection with 100 features and 8 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: -84.32186 ymin: 33.84175 xmax: -75.46003 ymax: 36.58815
+Geodetic CRS:  NAD83
+# A tibble: 100 × 9
+     AREA PERIM…¹ COUNT…² STATE COUNTY FIPS  STATE…³ SQUAR…⁴
+    &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;     &lt;dbl&gt;
+ 1 0.112     1.61    1994 NC    Ashe … 37009 37         429.
+ 2 0.0616    1.35    1996 NC    Alleg… 37005 37         236.
+ 3 0.140     1.77    1998 NC    Surry… 37171 37         539.
+ 4 0.0891    1.43    1999 NC    Gates… 37073 37         342.
+ 5 0.0687    4.43    2000 NC    Curri… 37053 37         264.
+ 6 0.119     1.40    2001 NC    Stoke… 37169 37         456.
+ 7 0.0626    2.11    2002 NC    Camde… 37029 37         241.
+ 8 0.115     1.46    2003 NC    Warre… 37185 37         444.
+ 9 0.143     2.40    2004 NC    North… 37131 37         551.
+10 0.0925    1.81    2005 NC    Hertf… 37091 37         356.
+# … with 90 more rows, 1 more variable:
+#   geometry &lt;MULTIPOLYGON [°]&gt;, and abbreviated variable
+#   names ¹​PERIMETER, ²​COUNTYP010, ³​STATE_FIPS, ⁴​SQUARE_MIL</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="section-2" class="slide level2">
+<h2></h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a>air</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simple feature collection with 940 features and 16 fields
+Geometry type: POINT
+Dimension:     XY
+Bounding box:  xmin: -176.646 ymin: 17.70156 xmax: -64.80172 ymax: 71.28545
+Geodetic CRS:  NAD83
+# A tibble: 940 × 17
+   AIRPRTX…¹ FEATURE ICAO  IATA  AIRPT…² CITY  STATE STATE…³
+       &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;   &lt;chr&gt; &lt;chr&gt; &lt;chr&gt;  
+ 1         0 AIRPORT KGON  GON   GROTON… GROT… CT    09     
+ 2         3 AIRPORT K6S5  6S5   RAVALL… HAMI… MT    30     
+ 3         4 AIRPORT KMHV  MHV   MOJAVE… MOJA… CA    06     
+ 4         6 AIRPORT KSEE  SEE   GILLES… SAN … CA    06     
+ 5         7 AIRPORT KFPR  FPR   ST LUC… FORT… FL    12     
+ 6         8 AIRPORT KRYY  RYY   COBB C… ATLA… GA    13     
+ 7        10 AIRPORT KMKL  MKL   MC KEL… JACK… TN    47     
+ 8        11 AIRPORT KCCR  CCR   BUCHAN… CONC… CA    06     
+ 9        13 AIRPORT KJYO  JYO   LEESBU… LEES… VA    51     
+10        15 AIRPORT KCAD  CAD   WEXFOR… CADI… MI    26     
+# … with 930 more rows, 9 more variables: COUNTY &lt;chr&gt;,
+#   FIPS &lt;chr&gt;, TOT_ENP &lt;dbl&gt;, LATITUDE &lt;dbl&gt;,
+#   LONGITUDE &lt;dbl&gt;, ELEV &lt;dbl&gt;, ACT_DATE &lt;chr&gt;,
+#   CNTL_TWR &lt;chr&gt;, geometry &lt;POINT [°]&gt;, and abbreviated
+#   variable names ¹​AIRPRTX010, ²​AIRPT_NAME, ³​STATE_FIPS</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="section-3" class="slide level2">
+<h2></h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a>hwy</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simple feature collection with 233 features and 3 fields
+Geometry type: MULTILINESTRING
+Dimension:     XY
+Bounding box:  xmin: -7472582 ymin: 2911107 xmax: 2443707 ymax: 8208428
+Projected CRS: NAD83 / UTM zone 15N
+# A tibble: 233 × 4
+   ROUTE_NUM DIST_MILES DIST_KM                     geometry
+   &lt;chr&gt;          &lt;dbl&gt;   &lt;dbl&gt;        &lt;MULTILINESTRING [m]&gt;
+ 1 I10          2449.   3941.   ((-1881200 4072307, -187992…
+ 2 I105           20.8    33.4  ((-1910156 5339585, -191013…
+ 3 I110           41.4    66.6  ((1054139 3388879, 1054287 …
+ 4 I115            1.58    2.55 ((-1013796 5284243, -101313…
+ 5 I12            85.3   137.   ((680741.7 3366581, 682709.…
+ 6 I124            1.73    2.79 ((1201467 3906285, 1201643 …
+ 7 I126            3.56    5.72 ((1601502 3829718, 1602136 …
+ 8 I129            3.1     4.99 ((217446 4705389, 217835.1 …
+ 9 I135           96.3   155.   ((96922.97 4313125, 96561.8…
+10 I15          1436.   2311    ((-882875.7 5602902, -88299…
+# … with 223 more rows</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="sf-structure" class="slide level2">
+<h2><code>sf</code> structure</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a><span class="fu">str</span>(nc)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>sf [100 × 9] (S3: sf/tbl_df/tbl/data.frame)
+ $ AREA      : num [1:100] 0.1118 0.0616 0.1402 0.0891 0.0687 ...
+ $ PERIMETER : num [1:100] 1.61 1.35 1.77 1.43 4.43 ...
+ $ COUNTYP010: num [1:100] 1994 1996 1998 1999 2000 ...
+ $ STATE     : chr [1:100] "NC" "NC" "NC" "NC" ...
+ $ COUNTY    : chr [1:100] "Ashe County" "Alleghany County" "Surry County" "Gates County" ...
+ $ FIPS      : chr [1:100] "37009" "37005" "37171" "37073" ...
+ $ STATE_FIPS: chr [1:100] "37" "37" "37" "37" ...
+ $ SQUARE_MIL: num [1:100] 429 236 539 342 264 ...
+ $ geometry  :sfc_MULTIPOLYGON of length 100; first list element: List of 1
+  ..$ :List of 1
+  .. ..$ : num [1:1030, 1:2] -81.7 -81.7 -81.7 -81.6 -81.6 ...
+  ..- attr(*, "class")= chr [1:3] "XY" "MULTIPOLYGON" "sfg"
+ - attr(*, "sf_column")= chr "geometry"
+ - attr(*, "agr")= Factor w/ 3 levels "constant","aggregate",..: NA NA NA NA NA NA NA NA
+  ..- attr(*, "names")= chr [1:8] "AREA" "PERIMETER" "COUNTYP010" "STATE" ...</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="sf-classes" class="slide level2">
+<h2><code>sf</code> classes</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a><span class="fu">class</span>(nc)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "sf"         "tbl_df"     "tbl"        "data.frame"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a><span class="fu">class</span>(nc<span class="sc">$</span>geometry)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "sfc_MULTIPOLYGON" "sfc"             </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a><span class="fu">class</span>(nc<span class="sc">$</span>geometry[[<span class="dv">1</span>]])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "XY"           "MULTIPOLYGON" "sfg"         </code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="projections-1" class="slide level2">
+<h2>Projections</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a><span class="fu">st_crs</span>(nc)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Coordinate Reference System:
+  User input: NAD83 
+  wkt:
+GEOGCRS["NAD83",
+    DATUM["North American Datum 1983",
+        ELLIPSOID["GRS 1980",6378137,298.257222101,
+            LENGTHUNIT["metre",1]]],
+    PRIMEM["Greenwich",0,
+        ANGLEUNIT["degree",0.0174532925199433]],
+    CS[ellipsoidal,2],
+        AXIS["latitude",north,
+            ORDER[1],
+            ANGLEUNIT["degree",0.0174532925199433]],
+        AXIS["longitude",east,
+            ORDER[2],
+            ANGLEUNIT["degree",0.0174532925199433]],
+    ID["EPSG",4269]]</code></pre>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>EPSG? See <a href="https://en.wikipedia.org/wiki/EPSG_Geodetic_Parameter_Dataset">here</a></p>
+</div></aside></section>
+<section id="section-4" class="slide level2">
+<h2></h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a><span class="fu">st_crs</span>(hwy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Coordinate Reference System:
+  User input: NAD83 / UTM zone 15N 
+  wkt:
+PROJCRS["NAD83 / UTM zone 15N",
+    BASEGEOGCRS["NAD83",
+        DATUM["North American Datum 1983",
+            ELLIPSOID["GRS 1980",6378137,298.257222101,
+                LENGTHUNIT["metre",1]]],
+        PRIMEM["Greenwich",0,
+            ANGLEUNIT["degree",0.0174532925199433]],
+        ID["EPSG",4269]],
+    CONVERSION["UTM zone 15N",
+        METHOD["Transverse Mercator",
+            ID["EPSG",9807]],
+        PARAMETER["Latitude of natural origin",0,
+            ANGLEUNIT["Degree",0.0174532925199433],
+            ID["EPSG",8801]],
+        PARAMETER["Longitude of natural origin",-93,
+            ANGLEUNIT["Degree",0.0174532925199433],
+            ID["EPSG",8802]],
+        PARAMETER["Scale factor at natural origin",0.9996,
+            SCALEUNIT["unity",1],
+            ID["EPSG",8805]],
+        PARAMETER["False easting",500000,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8806]],
+        PARAMETER["False northing",0,
+            LENGTHUNIT["metre",1],
+            ID["EPSG",8807]]],
+    CS[Cartesian,2],
+        AXIS["(E)",east,
+            ORDER[1],
+            LENGTHUNIT["metre",1]],
+        AXIS["(N)",north,
+            ORDER[2],
+            LENGTHUNIT["metre",1]],
+    ID["EPSG",26915]]</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="utm-zones" class="slide level2">
+<h2>UTM Zones</h2>
+
+<img data-src="imgs/UTM_Zones.png" style="width:100.0%" class="r-stretch quarto-figure-center"></section>
+<section id="latlong" class="slide level2">
+<h2>Lat/Long</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1"></a>nc_ll <span class="ot">=</span> nc</span>
+<span id="cb34-2"><a href="#cb34-2"></a>air_ll <span class="ot">=</span> air</span>
+<span id="cb34-3"><a href="#cb34-3"></a>hwy_ll <span class="ot">=</span> <span class="fu">st_transform</span>(hwy, <span class="fu">st_crs</span>(nc))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-34-1.png" width="768" class="r-stretch quarto-figure-center"></section>
+<section id="utm" class="slide level2">
+<h2>UTM</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1"></a>nc_utm <span class="ot">=</span> <span class="fu">st_transform</span>(nc, <span class="fu">st_crs</span>(hwy))</span>
+<span id="cb35-2"><a href="#cb35-2"></a>air_utm <span class="ot">=</span> <span class="fu">st_transform</span>(air, <span class="fu">st_crs</span>(hwy))</span>
+<span id="cb35-3"><a href="#cb35-3"></a>hwy_utm <span class="ot">=</span> hwy</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-36-1.png" width="768" class="r-stretch quarto-figure-center"></section>
+<section id="comparison" class="slide level2">
+<h2>Comparison</h2>
+
+<img data-src="Lec17_files/figure-revealjs/unnamed-chunk-37-1.png" style="width:75.0%" class="r-stretch quarto-figure-center"><div class="footer footer-default">
+<p>Sta 344 - Fall 2022</p>
+</div>
+</section></section>
+    </div>
+  </div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="Lec17_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="Lec17_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="Lec17_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="Lec17_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="Lec17_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="Lec17_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="Lec17_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="Lec17_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="Lec17_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="Lec17_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'smaller': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    
+    <script>
+      // htmlwidgets need to know to resize themselves when slides are shown/hidden.
+      // Fire the "slideenter" event (handled by htmlwidgets.js) when the current
+      // slide changes (different for each slide format).
+      (function () {
+        // dispatch for htmlwidgets
+        function fireSlideEnter() {
+          const event = window.document.createEvent("Event");
+          event.initEvent("slideenter", true, true);
+          window.document.dispatchEvent(event);
+        }
+
+        function fireSlideChanged(previousSlide, currentSlide) {
+          fireSlideEnter();
+
+          // dispatch for shiny
+          if (window.jQuery) {
+            if (previousSlide) {
+              window.jQuery(previousSlide).trigger("hidden");
+            }
+            if (currentSlide) {
+              window.jQuery(currentSlide).trigger("shown");
+            }
+          }
+        }
+
+        // hookup for slidy
+        if (window.w3c_slidy) {
+          window.w3c_slidy.add_observer(function (slide_num) {
+            // slide_num starts at position 1
+            fireSlideChanged(null, w3c_slidy.slides[slide_num - 1]);
+          });
+        }
+
+      })();
+    </script>
+
+    <script id="quarto-html-after-body" type="application/javascript">
+    window.document.addEventListener("DOMContentLoaded", function (event) {
+      const toggleBodyColorMode = (bsSheetEl) => {
+        const mode = bsSheetEl.getAttribute("data-mode");
+        const bodyEl = window.document.querySelector("body");
+        if (mode === "dark") {
+          bodyEl.classList.add("quarto-dark");
+          bodyEl.classList.remove("quarto-light");
+        } else {
+          bodyEl.classList.add("quarto-light");
+          bodyEl.classList.remove("quarto-dark");
+        }
+      }
+      const toggleBodyColorPrimary = () => {
+        const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+        if (bsSheetEl) {
+          toggleBodyColorMode(bsSheetEl);
+        }
+      }
+      toggleBodyColorPrimary();  
+      const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+      tabsets.forEach(function(tabset) {
+        const tabby = new Tabby('#' + tabset.id);
+      });
+      const clipboard = new window.ClipboardJS('.code-copy-button', {
+        target: function(trigger) {
+          return trigger.previousElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        // button target
+        const button = e.trigger;
+        // don't keep focus
+        button.blur();
+        // flash "checked"
+        button.classList.add('code-copy-button-checked');
+        var currentTitle = button.getAttribute("title");
+        button.setAttribute("title", "Copied!");
+        let tooltip;
+        if (window.bootstrap) {
+          button.setAttribute("data-bs-toggle", "tooltip");
+          button.setAttribute("data-bs-placement", "left");
+          button.setAttribute("data-bs-title", "Copied!");
+          tooltip = new bootstrap.Tooltip(button, 
+            { trigger: "manual", 
+              customClass: "code-copy-button-tooltip",
+              offset: [0, -8]});
+          tooltip.show();    
+        }
+        setTimeout(function() {
+          if (tooltip) {
+            tooltip.hide();
+            button.removeAttribute("data-bs-title");
+            button.removeAttribute("data-bs-toggle");
+            button.removeAttribute("data-bs-placement");
+          }
+          button.setAttribute("title", currentTitle);
+          button.classList.remove('code-copy-button-checked');
+        }, 1000);
+        // clear code selection
+        e.clearSelection();
+      });
+      function tippyHover(el, contentFn) {
+        const config = {
+          allowHTML: true,
+          content: contentFn,
+          maxWidth: 500,
+          delay: 100,
+          arrow: false,
+          appendTo: function(el) {
+              return el.closest('section.slide') || el.parentElement;
+          },
+          interactive: true,
+          interactiveBorder: 10,
+          theme: 'quarto-reveal',
+          placement: 'bottom-start'
+        };
+          config['offset'] = [0,0];
+          config['maxWidth'] = 700;
+        window.tippy(el, config); 
+      }
+      const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+      for (var i=0; i<noterefs.length; i++) {
+        const ref = noterefs[i];
+        tippyHover(ref, function() {
+          // use id or data attribute instead here
+          let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+          try { href = new URL(href).hash; } catch {}
+          const id = href.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          return note.innerHTML;
+        });
+      }
+      const findCites = (el) => {
+        const parentEl = el.parentElement;
+        if (parentEl) {
+          const cites = parentEl.dataset.cites;
+          if (cites) {
+            return {
+              el,
+              cites: cites.split(' ')
+            };
+          } else {
+            return findCites(el.parentElement)
+          }
+        } else {
+          return undefined;
+        }
+      };
+      var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+      for (var i=0; i<bibliorefs.length; i++) {
+        const ref = bibliorefs[i];
+        const citeInfo = findCites(ref);
+        if (citeInfo) {
+          tippyHover(citeInfo.el, function() {
+            var popup = window.document.createElement('div');
+            citeInfo.cites.forEach(function(cite) {
+              var citeDiv = window.document.createElement('div');
+              citeDiv.classList.add('hanging-indent');
+              citeDiv.classList.add('csl-entry');
+              var biblioDiv = window.document.getElementById('ref-' + cite);
+              if (biblioDiv) {
+                citeDiv.innerHTML = biblioDiv.innerHTML;
+              }
+              popup.appendChild(citeDiv);
+            });
+            return popup.innerHTML;
+          });
+        }
+      }
+    });
+    </script>
+    
+
+</body></html>

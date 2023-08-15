@@ -1,0 +1,19 @@
+<div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
+  
+  <div>
+      <span id="class">
+        {{ .Site.Params.course | safeHTML }} <br/>
+        <span id="semester">{{ .Site.Params.subtitle | safeHTML }}</span>
+      </span>
+      &nbsp;
+      {{ .Site.Title | safeHTML }}
+  </div>
+
+  <ul class="pure-menu-list">
+    {{ range .Site.Menus.main }}
+      <li class="pure-menu-item">
+        <a class="pure-menu-link" {{ printf "href=%q" .URL | safeHTMLAttr }}>{{ .Pre }} {{ .Name }}</a>
+      </li>
+    {{end}}
+  </ul>
+</div>

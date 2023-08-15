@@ -1,0 +1,10 @@
+prev_323/*
+prev_uoe/*
+.Rhistory
+*_cache/
+*.sqlite
+*.icloud
+test/
+wip/
+*.rds
+*.Rdata

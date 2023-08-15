@@ -1,0 +1,108 @@
+<h2>Schedule</h2>
+
+<div class="schedule-tbl">
+  <table>
+    <colgroup>
+      <col style="width:auto">
+      <col style="width:auto">
+      <col style="width:auto">
+      <col style="width:auto">
+      <col style="width:40%">
+      <col style="width:60%">
+      <col style="width:2.5%">
+    </colgroup> 
+    <thead>
+      <tr>
+        <th>Week</th>
+        <th>Date</th>
+        <th></th>
+        <th>Lecture</th>
+        <th>Readings</th>
+        <th>Notes</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ $schedule := .Data.schedule }}
+
+      {{ $prev := newScratch }}
+      {{ $prev.Set "week" -1 }}
+      {{ range $schedule.schedule }}
+        {{ $start := (time $schedule.startdate) }}
+        {{ $days := (add (mul (sub (int .week) 1) 7) (int .day)) }}
+        {{ $date := $start.AddDate 0 0 (int $days)}}
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            {{ if (ne .week ($prev.Get "week")) }}
+              {{ .week }}
+            {{ end }}
+            {{ $prev.Set "week" .week }}
+          </td>
+          <td class="schedule-date"> {{ dateFormat $schedule.dateFormat $date }}</td>
+          <td class="schedule-slides">
+            
+            {{ if (not .lab)}}
+              {{ $slides_html := print "slides/" .slides ".html" }}
+              {{ $slides_qmd  := print "slides/" .slides ".qmd" }}
+              {{ $slides_pdf  := print "slides/" .slides ".pdf" }}
+              
+              {{ if (fileExists (print "static/" $slides_html)) }}
+                <a href="{{ $slides_html }}"><i class="far fa-file fa-fw active"></i></a>
+              {{ else if (.ext_html) }}
+                <a href="{{ .ext_html | safeHTMLAttr }}"><i class="far fa-file fa-fw active"></i></a>
+              {{ else }}
+                <i class="far fa-file fa-fw inactive"></i>
+              {{ end }}
+
+              {{ if (fileExists (print "static/" $slides_pdf)) }}
+                <a href="{{ $slides_pdf }}"><i class="far fa-file-pdf fa-fw active"></i></a>
+              {{ else if (.ext_pdf) }}
+                <a href="{{ .ext_pdf | safeHTMLAttr }}"><i class="far fa-file-pdf fa-fw active"></i></a>
+              {{ else }}
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              {{ end }}
+
+              {{ if (fileExists (print "static/" $slides_qmd)) }}
+                <a href="{{ $slides_qmd }}"><i class="far fa-file-code fa-fw active"></i></a>
+              {{ else }}
+                <i class="far fa-file-code fa-fw inactive"></i>
+              {{ end }}
+  
+              {{ if .screencast }}
+                <a href="{{ .screencast | safeHTMLAttr }}"><i class="fab fa-youtube fa-fw youtube"></i></a>
+              {{ else }}
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              {{ end }}
+            {{ end }}
+
+          </td>
+          <td class="schedule-title">{{ .lecture | safeHTML }} </td>
+          <td class="schedule-readings">
+            {{ with .readings }}
+              {{ if gt (len .) 0 }}
+                <ul>
+                {{ range . }}
+                  <li> 
+                    {{ if .link }}
+                      <a href="{{ .link | safeHTMLAttr}}">{{ .text }}</a> 
+                    {{ else }}
+                      {{ .text }}
+                    {{ end }}
+                  </li>
+                {{ end }}
+                </ul>
+              {{ end }}
+            {{ end }}
+          </td>
+          <td class="schedule-notes">
+            {{ if .notes }}
+              {{ .notes | safeHTML }}
+            {{ end }}
+          </td>
+          <td> </td>
+        </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</div>

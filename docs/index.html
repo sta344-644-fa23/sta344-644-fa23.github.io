@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta name="generator" content="Hugo 0.117.0">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Introduction to Spatio-Temporal Models - Sta 344 / 644</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w" crossorigin="anonymous">
+  
+  <script src="https://kit.fontawesome.com/28f9263ed7.js" crossorigin="anonymous"></script>
+
+  <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="css/menu.css">
+  <link rel="stylesheet" href="css/blackburn.css">
+  <link rel="stylesheet" href="css/schedule.css">
+</head>
+
+
+<body>
+<div id="layout">
+
+  <div class="home-menu pure-menu pure-menu-horizontal pure-menu-fixed">
+  
+  <div>
+      <span id="class">
+        Sta 344 / 644 <br/>
+        <span id="semester">(Fall 2023)</span>
+      </span>
+      &nbsp;
+      Introduction to Spatio-Temporal Models
+  </div>
+
+  <ul class="pure-menu-list">
+    
+      <li class="pure-menu-item">
+        <a class="pure-menu-link" href="#syllabus"><i class='fa fa-file-text-o fa-fw'></i> Syllabus</a>
+      </li>
+    
+      <li class="pure-menu-item">
+        <a class="pure-menu-link" href="https://canvas.duke.edu/courses/7711"><i class="fas fa-chalkboard-teacher"></i> Canvas</a>
+      </li>
+    
+      <li class="pure-menu-item">
+        <a class="pure-menu-link" href="https://github.com/sta344-644-fa23"><i class='fa fa-github fa-fw'></i> Github</a>
+      </li>
+    
+      <li class="pure-menu-item">
+        <a class="pure-menu-link" href="https://rstudio.stat.duke.edu"><i class='fab fa-r-project fa-fw'></i> RStudio</a>
+      </li>
+    
+  </ul>
+</div>
+
+
+  <div id="main">
+    
+    <div class="content" id="content">
+      <div class="wrapper">
+          
+        
+          <section class="schedule", id="schedule">
+          <h2>Schedule</h2>
+
+<div class="schedule-tbl">
+  <table>
+    <colgroup>
+      <col style="width:auto">
+      <col style="width:auto">
+      <col style="width:auto">
+      <col style="width:auto">
+      <col style="width:40%">
+      <col style="width:60%">
+      <col style="width:2.5%">
+    </colgroup> 
+    <thead>
+      <tr>
+        <th>Week</th>
+        <th>Date</th>
+        <th></th>
+        <th>Lecture</th>
+        <th>Readings</th>
+        <th>Notes</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      
+
+      
+      
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              1
+            
+            
+          </td>
+          <td class="schedule-date"> Mon, Aug 28</td>
+          <td class="schedule-slides">
+            
+            
+
+          </td>
+          <td class="schedule-title"><i>No lab</i> </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Aug 30</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Introduction & Syllabus </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Sep 1</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Linear Models </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      <a href="https://www.math.uwaterloo.ca/~hwolkowi/matrixcookbook.pdf">Matrix Cookbook</a> 
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              2
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Sep 6</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Diagnostics and Model Evaluation </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      <a href="http://www.stat.columbia.edu/~gelman/research/unpublished/bayes_R2.pdf">Gelman, et. al - R^2 for Bayesian regression models</a> 
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Sep 8</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Generalized Linear Models (pt. 1) </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      Gelman &amp; Hill 6
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              3
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Sep 13</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Generalized Linear Models (pt. 2) </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      Gelman &amp; Hill 5.6-5.8
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Sep 15</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Generalized Linear Models (pt. 3) </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              4
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Sep 20</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Discrete Time Series </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      Shumway 1.2-1.6, 2, 3.1-3.4
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Sep 22</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">CCF, Differencing, & AR(1) models </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      Shumway 3.2, 3.4
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              5
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Sep 27</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">AR, MA, and ARMA models </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      Shumway 3.7, 3.8
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Sep 29</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">TBD </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              6
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Oct 4</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">ARIMA models </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      Shumway 3.7, 3.8
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Oct 6</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Seasonal ARIMA </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      Shumway 3.5, 3.6, 3.9
+                    
+                  </li>
+                
+                  <li> 
+                    
+                      Congdon 5.1, 5.2
+                    
+                  </li>
+                
+                  <li> 
+                    
+                      <a href="https://www.otexts.org/fpp/8">Hyndman 8.6, 8.8, 8.9</a> 
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              7
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Oct 11</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Fitting ARIMA Models </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Oct 13</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">tidyverts + Prophet </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      <a href="https://otexts.com/fpp3/toolbox.html">Hyndman (fpp3)  5</a> 
+                    
+                  </li>
+                
+                  <li> 
+                    
+                      <a href="https://otexts.com/fpp3/prophet.html">Hyndman (fpp3) 12.2</a> 
+                    
+                  </li>
+                
+                  <li> 
+                    
+                      <a href="https://peerj.com/preprints/3190/">Forecasting at scale</a> 
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              8
+            
+            
+          </td>
+          <td class="schedule-date"> Mon, Oct 16</td>
+          <td class="schedule-slides">
+            
+            
+
+          </td>
+          <td class="schedule-title"><i>No lab - Fall break</i> </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Oct 18</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Gaussian Process models </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      <a href="http://www.gaussianprocess.org/gpml/chapters/RW.pdf">Rasmussen &amp; Williams 2, 4</a> 
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Oct 20</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Gaussian Process models (pt. 2) </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              9
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Oct 25</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Covariance Functions </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      <a href="http://www.gaussianprocess.org/gpml/chapters/RW.pdf">Rasmussen &amp; Williams 4, 5</a> 
+                    
+                  </li>
+                
+                  <li> 
+                    
+                      <a href="http://www.cs.toronto.edu/~duvenaud/cookbook/index.html">Kernel Cookbook</a> 
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Oct 27</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">GPs & GLMs + Spatial Data (pt. 1) </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      <a href="https://cran.r-project.org/web/packages/sf/vignettes/">sf Vignettes</a> 
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              10
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Nov 1</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">TBD </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Nov 3</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Spatial Data and Cartography (pt. 2) </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      <a href="https://r-spatial.org/book/">Spatial Data Science</a> 
+                    
+                  </li>
+                
+                  <li> 
+                    
+                      <a href="https://geocompr.robinlovelace.net/">Geocomputation with R</a> 
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              11
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Nov 8</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Models for areal data </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      Banerjee, Carlin, Gelfand Ch. 4
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Nov 10</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Fitting CAR and SAR models </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      <a href="https://mhooten.github.io/publications/VerHoef_etal_SpatStat_2018.pdf">On the relationship between CAR and SAR models</a> 
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              12
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Nov 15</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">GLMs for areal data + Point referenced data (pt. 1) </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Nov 17</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Point referenced data (pt. 2) </td>
+          <td class="schedule-readings">
+            
+              
+                <ul>
+                
+                  <li> 
+                    
+                      <a href="https://www.researchgate.net/profile/Valerie-Obsomer/publication/6124441_Spatial_modelling_and_the_prediction_of_Loa_loa_risk_Decision_making_under_uncertainty/links/0fcfd5081417290b82000000/Spatial-modelling-and-the-prediction-of-Loa-loa-risk-Decision-making-under-uncertainty.pdf">Diggle (2007)</a> 
+                    
+                  </li>
+                
+                </ul>
+              
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              13
+            
+            
+          </td>
+          <td class="schedule-date"> Mon, Nov 20</td>
+          <td class="schedule-slides">
+            
+            
+
+          </td>
+          <td class="schedule-title"><i>No lab</i> </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Nov 22</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title"><i>No class - Thanksgiving </i> </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Nov 24</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title"><i>No class - Thanksgiving </i> </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+              14
+            
+            
+          </td>
+          <td class="schedule-date"> Wed, Nov 29</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Computation and GP Models </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+        
+        
+        
+
+        <tr class="schedule-other">
+          <td class="schedule-week"> 
+            
+            
+          </td>
+          <td class="schedule-date"> Fri, Dec 1</td>
+          <td class="schedule-slides">
+            
+            
+              
+              
+              
+              
+              
+                <i class="far fa-file fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-pdf fa-fw inactive"></i>
+              
+
+              
+                <i class="far fa-file-code fa-fw inactive"></i>
+              
+  
+              
+                <i class="fab fa-youtube fa-fw inactive"></i>
+              
+            
+
+          </td>
+          <td class="schedule-title">Spatio-temporal models </td>
+          <td class="schedule-readings">
+            
+          </td>
+          <td class="schedule-notes">
+            
+          </td>
+          <td> </td>
+        </tr>
+      
+    </tbody>
+  </table>
+</div>
+
+          </section>
+        
+          <section class="syllabus", id="syllabus">
+          <h2>Syllabus</h2>
+
+<h4>Instructors:</h4>
+
+
+<p>
+    Dr. Colin Rundel - <a href="colin.rundel@duke.edu">colin.rundel@duke.edu</a> 
+    
+    <div style="padding-left: 1em">
+    Office hours:
+    <ul>
+      <li>
+        TBD TBD - 204 Old Chemistry / Zoom
+      </li>
+    </ul>
+    </div>
+    
+</p>
+
+<p>
+     - <a href=""></a> 
+    
+    <div style="padding-left: 1em">
+    Office hours:
+    <ul>
+      <li>
+        TBD TBD - TBD
+      </li>
+    </ul>
+    </div>
+    
+</p>
+
+
+
+
+
+<h4>Classroom:</h4> 
+
+<p>Lecture</p> 
+<ul>
+  <li>
+Social Sciences 124 - Wednesdays & Fridays, 12:00 - 1:15 pm
+  </li>
+</ul>
+
+<p>Labs</p> 
+<ul>
+  <li> Section 01 - Perkins LINK 087 (Classroom 3) - Tuesdays, 5:15 to 6:30 pm </li>
+</ul>
+
+<h4>Lectures & Lab:</h4>
+
+<p>The goal of both the lectures and the labs is for them to be as interactive as possible. My role as instructor is to introduce you new tools and techniques, but it is up to you to take them and make use of them. Programming is a skill that is best learned by doing, so as much as possible you will be working on a variety of tasks and activities throughout each lecture / lab. Attendance will not be taken during class but you are expected to attend all lecture and lab sessions and meaningfully contribute to in-class exercises and homework assignments.
+</p>
+
+
+
+<h4>Homework and Exams:</h4>
+
+<p>You will be regularly given homework assignments, roughly one per week. These assignments will be composed of both theoretical / statistical questions as well as applied computational questions. These assignments are to be completed individually, but you are encouraged to work together to complete the assignments. Each assignment will be hosted in a private github repository within the class' organization. All work should be written up using Rmarkdown documents (templates will be provided) and turned in via this github repository. Grading will be based on completeness and correctness as well as overall effort.</p>
+
+<p>You are individually responsible for all work turned in, taking with and collaborating with another student is fine but you should never be directly sharing code or solutions. See the academic integrity section below if you have any questions about what constitutes cheating and or plagiarism. Any instances of directly copying another student's work will at the very least result in a 0 on the assignment for any involved students as well as any additional penalties deemed appropriate by the instructor.</p>
+
+
+<h4>Final Project:</h4>
+
+<p>You will form your own team of 2-4 students and will be responsible for the completion of an open ended final project for this course, the goal of which is to tackle an "interesting" problem using the tools and techniques covered in this class. Additional details on the project will be provided as the course progresses. You must complete a final project in order to pass this course.</p>
+
+<h4>Exams:</h4>
+
+<p>There will be up to two in class midterms that you will complete individually. Each exam will ask you to complete a small number of questions related to the material presented in the class. The exact structure and content of the exams will be discussed in more detail before they are assigned.</p>
+
+
+<h4>Course Announcements:</h4>
+
+<p> We will regularly send course announcements via email and Sakai, make sure to check one or the other of these regularly.</p>
+
+
+<h4>Academic integrity:</h4>
+
+<p>Duke University is a community dedicated to scholarship, leadership, and service and to the principles of honesty, fairness, respect, and accountability. Citizens of this community commit to reflect upon and uphold these principles in all academic and non-academic endeavors, and to protect and promote a culture of integrity. Cheating on exams or plagiarism on homework assignments, lying about an illness or absence and other forms of academic dishonesty are a breach of trust with classmates and faculty, violate the Duke Community Standard, and will not be tolerated. Such incidences will result in a 0 grade for all parties involved. Additionally, there may be penalties to your final class grade along with being reported to the Undergraduate Conduct Board.</p>
+
+<p>Please review the Academic Dishonesty policies here.</p>
+
+<p>A note on sharing / reusing code - I am well aware that a huge volume of code is available on the web to solve any number of problems. Unless I explicitly tell you not to use something the course's policy is that you may make use of any online resources (e.g. StackOverflow) but you must explicitly cite where you obtained any code you directly use (or use as inspiration). Any recycled code that is discovered and is not explicitly cited will be treated as plagiarism. The one exception to this rule is that you may not directly share code with another team in this class, you are welcome to discuss the problems together and ask for advice, but you may not send or make use of code from another team.</p>
+
+<h4>Excused Absences:</h4>
+<p>Students who miss a class due to a scheduled varsity trip, religious holiday or short-term illness should fill out an online NOVAP, RHoliday or short-term illness form respectively. Note that these excused absences do not excuse you from assigned homework, it is your responsibility to make alternative arrangements to turn in any assignments in a timely fashion.</p>
+
+<p>\Those with a personal emergency or bereavement should speak with your director of graduate studies or your academic dean.</p>
+
+
+
+<h4>Late work policy:</h4>
+
+<ul>
+<li>late, but same day: -10%</li>
+<li>late, next day: -20%</li>
+<li>2 days or later: no credit</li>
+</ul>
+
+<h4>Assessment:</h4>
+
+<p>Your final mark will be comprised of the following. </p>
+
+<p>
+<table style="width: 200px; margin-left: 1em">
+<thead>
+    <tr class="header">
+        <th>Assignment</th>
+        <th>Value</th>
+    </tr>
+</thead>
+<tbody>
+
+    <tr>
+        <td>Homework</td>
+        <td>50%</td>
+    </tr>
+
+    <tr>
+        <td>Midterms</td>
+        <td>40%</td>
+    </tr>
+
+    <tr>
+        <td>Project</td>
+        <td>10%</td>
+    </tr>
+
+</tbody>
+</table>
+</p>
+
+<p>The exact ranges for letter grades will be curved and cutoffs will be determined at the end of the semester. The more evidence there is that the class has mastered the material, the more generous the curve will be.</p>
+
+
+          </section>
+        
+          <section class="textbooks", id="textbooks">
+          <h2>Textbooks</h2>
+
+<p>There are no required textbooks for this course, the following textbooks are recommended for supplementary and reference purposes.</p>
+
+<ul>
+  <li>
+    Hierarchical Modeling and Analysis for Spatial Data - Banerjee, Carlin, Gelfand <br/>
+    CRC Press, 2nd edition, 2014 (ISBN: 978-1439819173)
+  </li>
+  <li>
+    <a href="http://www.stat.pitt.edu/stoffer/tsa4/tsa4.pdf">Time Series Analysis and Its Applications</a> - Shumway & Stoffer <br/>
+    Springer, 4th edition, 2016 (ISBN: 978-3319524511)
+  </li>
+  <li>
+    Data Analysis Using Regression and Multilevel/Hierarchical Models - Gelman & Hill <br/>
+    Cambridge University Press, 1st edition, 2003 (ISBN: 978-0521686891)
+  </li>
+  <li>
+     Regression and Other Stories - Gelman & Hill <br/>
+     Gelman, Hill, Vehtari, 1st edition, 2020 (ISBN: ISBN-13
+978-1107676510)
+  </li>
+  <li>
+    Applied Bayesian Modelling - Congdon <br/>
+    Wiley, 2003 (ISBN: 978-0471486954)
+  </li>
+  <li>
+    <a href='https://otexts.org/fpp3/'>Forecasting: Principles and Practice</a> - Hyndman & Athanasopoulos <br/>
+    OTexts, 3rd edition, 2021 (ISBN: 978-0987507136)
+  </li>
+</ul>
+          </section>
+        
+          <section class="about", id="about">
+          <h2>About this website</h2>
+
+<p>This site is built with <a href="https://gohugo.io/">Hugo</a>.
+
+The theme is based on <a href="https://github.com/yoshiharuyamashita/blackburn" target="_blank">Blackburn</a>
+and <a href="https://github.com/jweslley/hugo-conference/">Hugo Conference</a>.</p>
+
+          </section>
+        
+    
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="text-align: center">
+  <small>
+    &copy; 2023. All rights reserved.
+  </small>
+</div>
+
+<br/>
+
+</body>
+</html>

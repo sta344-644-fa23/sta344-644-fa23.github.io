@@ -1,0 +1,517 @@
+---
+title: "CCFs, Differencing, & AR(1) models" 
+subtitle: "Lecture 08"
+author: "Dr. Colin Rundel"
+footer: "Sta 344 - Fall 2022"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+execute:
+  echo: true
+  warning: false
+  collapse: true
+---
+  
+```{r setup, include=FALSE}
+library(tidyverse)
+library(patchwork)
+library(forecast)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+```
+
+# Lagged Predictors and CCFs
+
+## Southern Oscillation Index & Recruitment
+
+The Southern Oscillation Index (SOI) is an indicator of the development and intensity of El Niño (negative SOI) or La Niña (positive SOI) events in the Pacific Ocean. These data also included the estimate of "recruitment", which indicate fish population sizes in the southern hemisphere.
+
+```{r echo=FALSE}
+library(astsa)
+
+fish = data_frame(
+  date = time(astsa::soi) %>% as.numeric(),
+  soi = astsa::soi %>% as.numeric(),
+  recruitment = astsa::rec %>% as.numeric()
+)
+fish
+```
+
+## Time series
+
+```{r echo=FALSE}
+fish %>%
+  tidyr::pivot_longer(-date, names_to = "variable", values_to = "value") %>%
+  ggplot(aes(x=date, y=value)) +
+    geom_line() +
+    facet_wrap(~variable, nrow=2, scale="free_y") +
+    ylab("")
+```
+
+## Relationship?
+
+```{r echo=FALSE, message=FALSE}
+fish %>%
+  ggplot(aes(x=soi, y=recruitment)) +
+  geom_point() + 
+  geom_smooth(color="blue", alpha=0.75, se=FALSE, method="lm") +
+  geom_smooth(color="red", alpha=0.75, se=FALSE)
+```
+
+## `soi` - ACF & PACF
+
+```{r}
+forecast::ggtsdisplay(fish$soi, lag.max = 36)
+```
+
+## `recruitment` - ACF & PACF
+
+```{r}
+forecast::ggtsdisplay(fish$recruitment, lag.max = 36)
+```
+
+
+
+
+## Cross correlation function
+
+```{r}
+forecast::ggCcf(fish$soi, fish$recruitment)
+```
+
+## Cross correlation function - Scatter plots
+
+```{r echo=FALSE, warning=FALSE, fig.align="center"}
+fish_lags = fish %>%
+  mutate(
+    "lag 0" = lag(soi,0),
+    "lag 1" = lag(soi,1),
+    "lag 2" = lag(soi,2),
+    "lag 3" = lag(soi,3),
+    "lag 4" = lag(soi,4),
+    "lag 5" = lag(soi,5),
+    "lag 6" = lag(soi,6),
+    "lag 7" = lag(soi,7),
+    "lag 8" = lag(soi,8),
+    "lag 9" = lag(soi,9),
+    "lag 10" = lag(soi,10),
+    "lag 11" = lag(soi,11)
+  ) 
+
+corrs = fish_lags %>%
+  select(-soi, -date) %>%
+  tidyr::gather(lag, soi, -recruitment) %>%
+  group_by(lag) %>%
+  summarize(corr = cor(soi, recruitment, use="complete.obs"))
+
+fish_lags %>%
+  select(-soi, -date) %>%
+  tidyr::gather(lag, soi, -recruitment) %>%
+  ggplot(aes(x=soi, y=recruitment)) +
+    geom_point(alpha=0.3) +
+    facet_wrap(~forcats::as_factor(lag)) +
+    #geom_line(stat="smooth", method="loess", color='red',  size=1.2, alpha=0.75) +
+    geom_line(stat="smooth", method="lm", color="blue", size=1.2, alpha=0.75) +
+    geom_text(data=corrs, aes(x=-0.75, y=5, label=round(corr,2)), size=3)
+```
+
+. . .
+
+The CCF gave us negative lags, why are we not considering them here?
+
+
+## Model
+
+::: {.small}
+```{r}
+model1 = lm(recruitment~lag(soi,6), data=fish)
+model2 = lm(recruitment~lag(soi,6)+lag(soi,7), data=fish)
+model3 = lm(recruitment~lag(soi,5)+lag(soi,6)+lag(soi,7)+lag(soi,8), data=fish)
+```
+:::
+
+. . .
+
+::: {.small}
+```{r}
+summary(model3)
+```
+:::
+
+## Prediction
+
+```{r echo=FALSE}
+bind_rows(
+  broom::augment(model1,newdata=fish) %>% mutate(model = "Model 1 - soi lag 6"),
+  broom::augment(model2,newdata=fish) %>% mutate(model = "Model 2 - soi lags 6,7"),
+  broom::augment(model3,newdata=fish) %>% mutate(model = "Model 3 - soi lags 5,6,7,8")
+) %>%
+  group_by(model) %>%
+  mutate(
+    model = paste0(
+      model, " (RMSE: ",
+      yardstick::rmse_vec(recruitment, .fitted) %>% round(2),
+      ")"
+    )
+  ) %>%
+  ggplot(aes(x=date,y=recruitment)) +
+    geom_line() +
+    geom_line(aes(y=.fitted), col="red") +
+    facet_wrap(~model,nrow=3)
+```
+
+
+
+
+## Residual ACF - Model 3
+
+```{r echo=FALSE}
+broom::augment(model3, newdata=fish) %>%
+  pull(.resid) %>%
+  forecast::ggtsdisplay()
+```
+
+## Autoregessive model 4
+
+::: {.small}
+```{r}
+model4 = lm(
+  recruitment~lag(recruitment,1) + lag(recruitment,2) + 
+              lag(soi,5)+lag(soi,6)+lag(soi,7)+lag(soi,8), 
+  data=fish
+)
+summary(model4)
+```
+:::
+
+## Autoregessive model 5
+
+::: {.small}
+```{r}
+model5 = lm(
+  recruitment~lag(recruitment,1) + lag(recruitment,2) + 
+              lag(soi,5) + lag(soi,6),
+  data=fish
+)
+summary(model5)
+```
+:::
+
+## Prediction
+
+```{r echo=FALSE, warning=FALSE, fig.align="center"}
+bind_rows(
+  broom::augment(model3, newdata=fish) %>% mutate(model = "Model 3"),
+  broom::augment(model4, newdata=fish) %>% mutate(model = "Model 4"),
+  broom::augment(model5, newdata=fish) %>% mutate(model = "Model 5")
+) %>%
+  group_by(model) %>%
+  mutate(
+    model = paste0(
+      model, " (RMSE: ",
+      yardstick::rmse_vec(recruitment, .fitted) %>% round(2),
+      ")"
+    )
+  ) %>%
+  ggplot(aes(x=date,y=recruitment)) +
+    geom_line() +
+    geom_line(aes(y=.fitted), col="red") +
+    facet_wrap(~model,nrow=3)
+```
+
+## Residual ACF - Model 5
+
+```{r}
+broom::augment(model5, newdata=fish) %>%
+  pull(.resid) %>%
+  forecast::ggtsdisplay()
+```
+
+# Non-stationarity
+
+## Non-stationary models
+
+> All happy families are alike; each unhappy family is unhappy in its own way. 
+> 
+> - Tolstoy, Anna Karenina
+
+This applies to time series models as well, just replace happy family with stationary model.
+
+. . .
+
+A simple example of a non-stationary time series is a trend stationary model 
+
+$$ y_t = \mu(t) + w_t $$
+
+where $\mu(t)$ denotes a time dependent trend and $w_t$ is a white noise (stationary) process. 
+
+
+## Linear trend model
+
+Lets imagine a simple model where $y_t = \delta + \beta t + x_t$ where $\delta$ and $\beta$ are constants and $x_t$ is a stationary process.
+
+```{r echo=FALSE}
+delta = 1
+beta = 0.1
+lt = data_frame(
+  t = 1:100,
+  w = rnorm(100)
+) %>%
+  mutate(y = delta + beta * t + w)
+
+ggplot(lt, aes(x=t,y=y)) + 
+  geom_point() +
+  geom_line() + 
+  labs(title="Linear trend")
+```
+
+
+
+## Differencing
+
+An simple approach to remove trend is to difference your response variable, specifically examine $d_t = y_t - y_{t-1}$ instead of $y_t$.
+
+
+## Detrending vs Differencing
+
+```{r echo=FALSE}
+( lm(y~t,data=lt) %>%
+    broom::augment(newdata=lt) %>%
+    ggplot(aes(x=t,y=.resid)) + 
+      geom_point() +
+      geom_line() + 
+      labs(title="Detrended")
+) / (
+  data_frame(t=1:99, y_diff=diff(lt$y)) %>%
+    ggplot(aes(x=t, y=y_diff)) +
+      geom_point() +
+      geom_line() + 
+      labs(title="Differenced")
+)
+```
+
+## Quadratic trend model
+
+Lets imagine another simple model where $y_t = \delta + \beta t + \gamma t^2 + x_t$ where $\delta$, $\beta$, and $\gamma$ are constants and $x_t$ is a stationary process.
+
+```{r echo=FALSE}
+delta = -1
+phi = -0.10
+gamma = 0.0012
+qt = data_frame(
+  t = 1:100,
+  w = rnorm(100)
+) %>%
+  mutate(y = ((t-50)/20)^2 + w)
+
+ggplot(qt, aes(x=t,y=y)) + 
+  geom_point() +
+  geom_line() + 
+  labs(title="Quadratic trend")
+```
+
+## Detrending
+
+```{r echo=FALSE}
+(
+  lm(y~t, data=qt) %>%
+    broom::augment(newdata=qt) %>%
+    ggplot(aes(x=t,y=.resid)) + 
+      geom_point() +
+      geom_line() + 
+      labs(title="Detrended - Linear")
+) / (
+  lm(y~t+I(t^2), data=qt) %>%
+    broom::augment(newdata=qt) %>%
+    ggplot(aes(x=t, y=.resid)) + 
+      geom_point() +
+      geom_line() + 
+      labs(title="Detrended - Quadratic")
+)
+```
+
+## 2nd order differencing {.t}
+
+Let $d_t = y_t - y_{t-1}$ be a first order difference then $d_t - d_{t-1}$ is a 2nd order difference.
+
+
+
+## Differencing
+
+```{r echo=FALSE}
+(
+  data_frame(t=1:99, y_diff=diff(qt$y)) %>%
+    ggplot(aes(x=t, y=y_diff)) +
+      geom_point() +
+      geom_line() + 
+      labs(title="1st Difference")
+) / (
+  data_frame(t=1:98, y_diff=diff(qt$y, differences=2)) %>%
+    ggplot(aes(x=t, y=y_diff)) +
+      geom_point() +
+      geom_line() + 
+      labs(title="2nd Difference")
+)
+```
+
+## Differencing - ACF
+
+```{r echo=FALSE, fig.align="center"}
+with(qt,
+  gridExtra::grid.arrange(
+    forecast::ggAcf(y),
+    forecast::ggPacf(y),
+    forecast::ggAcf(diff(y)),
+    forecast::ggPacf(diff(y)),
+    forecast::ggAcf(diff(y, differences = 2)),
+    forecast::ggPacf(diff(y, differences = 2))
+  )
+)
+```
+
+# AR Models
+
+## AR(1)
+
+Last time we mentioned a random walk with trend process where $y_t = \delta + y_{t-1} + w_t$. 
+
+The AR(1) process is a generalization of this where we include a coefficient in front of the $y_{t-1}$ term. 
+
+$$AR(1): \quad y_t = \delta + \phi \, y_{t-1} + w_t $$
+$$ w_t \sim N(0, \sigma^2_w) $$
+
+## AR(1) - Positive $\phi$
+
+```{r echo=FALSE, fig.height=5}
+delta = 0.1
+phi1 = 0.9
+phi2 = 1.01
+
+ar1 = data_frame(
+  t = 1:500,
+  y1 = 0,
+  y2 = 0,
+  y3 = 0
+)
+
+for(t in 2:nrow(ar1))
+{
+  ar1$y1[t] = delta + phi1 * ar1$y1[t-1] + rnorm(1)
+  ar1$y2[t] = delta + ar1$y2[t-1] + rnorm(1)
+  ar1$y3[t] = delta + phi2 * ar1$y3[t-1] + rnorm(1)
+}
+
+ar1 %>%
+  rename(
+    "AR(1) w/ phi = 0.9" = y1,
+    "AR(1) w/ phi = 1" = y2,
+    "AR(1) w/ phi = 1.01" = y3
+  ) %>%
+  tidyr::gather(model, y, -t) %>%
+  ggplot(aes(x=t,y=y)) +
+    geom_line() +
+    facet_grid(model~., scale="free_y") 
+```
+
+## AR(1) - Negative $\phi$ 
+
+```{r echo=FALSE, fig.height=5}
+delta = 0.1
+phi1 = 0.9
+phi2 = 1.05
+
+ar1 = data_frame(
+  t = 1:200,
+  y1 = 0,
+  y2 = 0,
+  y3 = 0
+)
+
+for(t in 2:nrow(ar1))
+{
+  ar1$y1[t] = delta - phi1 * ar1$y1[t-1] + rnorm(1)
+  ar1$y2[t] = delta - ar1$y2[t-1] + rnorm(1)
+  ar1$y3[t] = delta - phi2 * ar1$y3[t-1] + rnorm(1)
+}
+
+ar1 %>%
+  rename(
+    "AR(1) w/ phi = -0.9"  = y1,
+    "AR(1) w/ phi = -1"    = y2,
+    "AR(1) w/ phi = -1.01" = y3
+  ) %>%
+  tidyr::gather(model, y, -t) %>%
+  ggplot(aes(x=t,y=y)) +
+    geom_line() +
+    facet_grid(forcats::as_factor(model)~., scale="free_y") 
+```
+
+## Stationarity of $AR(1)$ processes
+
+Lets rewrite the AR(1) without any autoregressive terms
+
+
+## Stationarity of $AR(1)$ processes
+
+Under what conditions will an AR(1) process be stationary?
+
+
+
+## Properties of a stationary $AR(1)$ process
+
+
+
+## Identifying AR(1) Processes
+
+```{r echo=FALSE}
+sims = data_frame(
+  t = 1:100,
+  "phi=-0.9" = arima.sim(n = 100, list(ar = -0.9)) %>% as.numeric,
+  "phi=-0.5" = arima.sim(n = 100, list(ar = -0.5)) %>% as.numeric, 
+  "phi= 0.5" = arima.sim(n = 100, list(ar =  0.5)) %>% as.numeric, 
+  "phi= 0.9" = arima.sim(n = 100, list(ar =  0.9)) %>% as.numeric
+)
+
+sims %>%
+  tidyr::gather(model, vals, -t) %>%
+  ggplot(aes(x=t, y=vals)) +
+    geom_line() +
+    facet_wrap(~model)
+```
+
+## Identifying AR(1) Processes - ACFs
+
+```{r echo=FALSE, fig.height=5}
+with(
+  sims,
+  gridExtra::grid.arrange(
+    forecast::ggAcf(`phi= 0.5`),
+    forecast::ggAcf(`phi= 0.9`),
+    forecast::ggAcf(`phi=-0.5`), 
+    forecast::ggAcf(`phi=-0.9`)
+  )
+)
+```
+
+## Identifying AR(1) Processes - PACFs
+
+```{r echo=FALSE, fig.height=5}
+with(
+  sims,
+  gridExtra::grid.arrange(
+    forecast::ggPacf(`phi= 0.5`),
+    forecast::ggPacf(`phi= 0.9`),
+    forecast::ggPacf(`phi=-0.5`), 
+    forecast::ggPacf(`phi=-0.9`)
+  )
+)
+```
+
+
+

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{{ partial "head.html" . }}
+
+<body>
+<div id="layout">
+
+  {{ partial "menu.html" . }}
+
+  <div id="main">
+    
+    <div class="content" id="content">
+      <div class="wrapper">
+          
+        {{ range $section := .Site.Params.sections }}
+          <section class="{{ $section }}", id="{{ $section }}">
+          {{ partial $section $.Site }}
+          </section>
+        {{ end }}
+    
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="text-align: center">
+  <small>
+    {{ .Site.Copyright | safeHTML }}
+  </small>
+</div>
+
+<br/>
+
+</body>
+</html>

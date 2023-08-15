@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="Lec13_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Lec13_files/libs/quarto-html/tabby.min.js"></script>
+<script src="Lec13_files/libs/quarto-html/popper.min.js"></script>
+<script src="Lec13_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="Lec13_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Lec13_files/libs/quarto-html/quarto-html.min.css" rel="stylesheet" data-mode="light">
+<link href="Lec13_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.2.219">
+
+  <meta name="author" content="Dr.&nbsp;Colin Rundel">
+  <title>tidyverts &amp; prophet</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="Lec13_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="Lec13_files/libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="Lec13_files/libs/revealjs/dist/theme/quarto.css" id="theme">
+  <link href="Lec13_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="Lec13_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="Lec13_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="Lec13_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+
+  .callout {
+    margin-top: 1em;
+    margin-bottom: 1em;  
+    border-radius: .25rem;
+  }
+
+  .callout.callout-style-simple { 
+    padding: 0em 0.5em;
+    border-left: solid #acacac .3rem;
+    border-right: solid 1px silver;
+    border-top: solid 1px silver;
+    border-bottom: solid 1px silver;
+    display: flex;
+  }
+
+  .callout.callout-style-default {
+    border-left: solid #acacac .3rem;
+    border-right: solid 1px silver;
+    border-top: solid 1px silver;
+    border-bottom: solid 1px silver;
+  }
+
+  .callout .callout-body-container {
+    flex-grow: 1;
+  }
+
+  .callout.callout-style-simple .callout-body {
+    font-size: 1rem;
+    font-weight: 400;
+  }
+
+  .callout.callout-style-default .callout-body {
+    font-size: 0.9rem;
+    font-weight: 400;
+  }
+
+  .callout.callout-captioned.callout-style-simple .callout-body {
+    margin-top: 0.2em;
+  }
+
+  .callout:not(.callout-captioned) .callout-body {
+      display: flex;
+  }
+
+  .callout:not(.no-icon).callout-captioned.callout-style-simple .callout-content {
+    padding-left: 1.6em;
+  }
+
+  .callout.callout-captioned .callout-header {
+    padding-top: 0.2em;
+    margin-bottom: -0.2em;
+  }
+
+  .callout.callout-captioned .callout-caption  p {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+    
+  .callout.callout-captioned.callout-style-simple .callout-content  p {
+    margin-top: 0;
+  }
+
+  .callout.callout-captioned.callout-style-default .callout-content  p {
+    margin-top: 0.7em;
+  }
+
+  .callout.callout-style-simple div.callout-caption {
+    border-bottom: none;
+    font-size: .9rem;
+    font-weight: 600;
+    opacity: 75%;
+  }
+
+  .callout.callout-style-default  div.callout-caption {
+    border-bottom: none;
+    font-weight: 600;
+    opacity: 85%;
+    font-size: 0.9rem;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  .callout.callout-style-default div.callout-content {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+  }
+
+  .callout.callout-style-simple .callout-icon::before {
+    height: 1rem;
+    width: 1rem;
+    display: inline-block;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 1rem 1rem;
+  }
+
+  .callout.callout-style-default .callout-icon::before {
+    height: 0.9rem;
+    width: 0.9rem;
+    display: inline-block;
+    content: "";
+    background-repeat: no-repeat;
+    background-size: 0.9rem 0.9rem;
+  }
+
+  .callout-caption {
+    display: flex
+  }
+    
+  .callout-icon::before {
+    margin-top: 1rem;
+    padding-right: .5rem;
+  }
+
+  .callout.no-icon::before {
+    display: none !important;
+  }
+
+  .callout.callout-captioned .callout-body > .callout-content > :last-child {
+    margin-bottom: 0.5rem;
+  }
+
+  .callout.callout-captioned .callout-icon::before {
+    margin-top: .5rem;
+    padding-right: .5rem;
+  }
+
+  .callout:not(.callout-captioned) .callout-icon::before {
+    margin-top: 1rem;
+    padding-right: .5rem;
+  }
+
+  /* Callout Types */
+
+  div.callout-note {
+    border-left-color: #4582ec !important;
+  }
+
+  div.callout-note .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAEU0lEQVRYCcVXTWhcVRQ+586kSUMMxkyaElstCto2SIhitS5Ek8xUKV2poatCcVHtUlFQk8mbaaziwpWgglJwVaquitBOfhQXFlqlzSJpFSpIYyXNjBNiTCck7x2/8/LeNDOZxDuEkgOXe++553zfefee+/OYLOXFk3+1LLrRdiO81yNqZ6K9cG0P3MeFaMIQjXssE8Z1JzLO9ls20MBZX7oG8w9GxB0goaPrW5aNMp1yOZIa7Wv6o2ykpLtmAPs/vrG14Z+6d4jpbSKuhdcSyq9wGMPXjonwmESXrriLzFGOdDBLB8Y6MNYBu0dRokSygMA/mrun8MGFN3behm6VVAwg4WR3i6FvYK1T7MHo9BK7ydH+1uurECoouk5MPRyVSBrBHMYwVobG2aOXM07sWrn5qgB60rc6mcwIDJtQrnrEr44kmy+UO9r0u9O5/YbkS9juQckLed3DyW2XV/qWBBB3ptvI8EUY3I9p/67OW+g967TNr3Sotn3IuVlfMLVnsBwH4fsnebJvyGm5GeIUA3jljERmrv49SizPYuq+z7c2H/jlGC+Ghhupn/hcapqmcudB9jwJ/3jvnvu6vu5lVzF1fXyZuZZ7U8nRmVzytvT+H3kilYvH09mLWrQdwFSsFEsxFVs5fK7A0g8gMZjbif4ACpKbjv7gNGaD8bUrlk8x+KRflttr22JEMRUbTUwwDQScyzPgedQHZT0xnx7ujw2jfVfExwYHwOsDTjLdJ2ebmeQIlJ7neo41s/DrsL3kl+W2lWvAga0tR3zueGr6GL78M3ifH0rGXrBC2aAR8uYcIA5gwV8zIE8onoh8u0Fca/ciF7j1uOzEnqcIm59sEXoGc0+z6+H45V1CvAvHcD7THztu669cnp+L0okAeIc6zjbM/24LgGM1gZk7jnRu1aQWoU9sfUOuhrmtaPIO3YY1KLLWZaEO5TKUbMY5zx8W9UJ6elpLwKXbsaZ4EFl7B4bMtDv0iRipKoDQT2sNQI9b1utXFdYisi+wzZ/ri/1m7QfDgEuvgUUEIJPq3DhX/5DWNqIXDOweC2wvIR90Oq3lDpdMIgD2r0dXvGdsEW5H6x6HLRJYU7C69VefO1x8Gde1ZFSJLfWS1jbCnhtOPxmpfv2LXOA2Xk2tvnwKKPFuZ/oRmwBwqRQDcKNeVQkYcOjtWVBuM/JuYw5b6isojIkYxyYAFn5K7ZBF10fea52y8QltAg6jnMqNHFBmGkQ1j+U43HMi2xMar1Nv0zGsf1s8nUsmUtPOOrbFIR8bHFDMB5zL13Gmr/kGlCkUzedTzzmzsaJXhYawnA3UmARpiYj5ooJZiUoxFRtK3X6pgNPv+IZVPcnwbOl6f+aBaO1CNvPW9n9LmCp01nuSaTRF2YxHqZ8DYQT6WsXT+RD6eUztwYLZ8rM+rcPxamv1VQzFUkzFXvkiVrySGQgJNvXHJAxiU3/NwiC03rSf05VBaPtu/Z7/B8Yn/w7eguloAAAAAElFTkSuQmCC');
+  }
+
+  div.callout-note.callout-style-default .callout-caption {
+    background-color: #dae6fb
+  }
+
+  div.callout-important {
+    border-left-color: #d9534f !important;
+  }
+
+  div.callout-important .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAEKklEQVRYCcVXTWhcVRS+575MJym48A+hSRFr00ySRQhURRfd2HYjk2SSTokuBCkU2o0LoSKKraKIBTcuFCoidGFD08nkBzdREbpQ1EDNIv8qSGMFUboImMSZd4/f9zJv8ibJMC8xJQfO3HPPPef7zrvvvnvviIkpC9nsw0UttFunbUhpFzFtarSd6WJkStVMw5xyVqYTvkwfzuf/5FgtkVoB0729j1rjXwThS7Vio+Mo6DNnvLfahoZ+i/o32lULuJ3NNiz7q6+pyAUkJaFF6JwaM2lUJlV0MlnQn5aTRbEu0SEqHUa0A4AdiGuB1kFXRfVyg5d87+Dg4DL6m2TLAub60ilj7A1Ec4odSAc8X95sHh7+ZRPCFo6Fnp7HfU/fBng/hi10CjCnWnJjsxvDNxWw0NfV6Rv5GgP3I3jGWXumdTD/3cbEOP2ZbOZp69yniG3FQ9z1jD7bnBu9Fc2tKGC2q+uAJOQHBDRiZX1x36o7fWBs7J9ownbtO+n0/qWkvW7UPIfc37WgT6ZGR++EOJyeQDSb9UB+DZ1G6DdLDzyS+b/kBCYGsYgJbSQHuThGKRcw5xdeQf8YdNHsc6ePXrlSYMBuSIAFTGAtQo+VuALo4BX83N190NWZWbynBjhOHsmNfFWLeL6v+ynsA58zDvvAC8j5PkbOcXCMg2PZFk3q8MjI7WAG/Dp9AwP7jdGBOOQkAvlFUB+irtm16I1Zw9YBcpGTGXYmk3kQIC/Cds55l+iMI3jqhjAuaoe+am2Jw5GT3Nbz3CkE12NavmzN5+erJW7046n/CH1RO/RVa8lBLozXk9uqykkGAyRXLWlLv5jyp4RFsG5vGVzpDLnIjTWgnRy2Rr+tDKvRc7Y8AyZq10jj8DqXdnIRNtFZb+t/ZRtXcDiVnzpqx8mPcDWxgARUqx0W1QB9MeUZiNrV4qP+Ehc+BpNgATsTX8ozYKL2NtFYAHc84fG7ndxUPr+AR/iQSns7uSUufAymwDOb2+NjK27lEFocm/EE2WpyIy/Hi66MWuMKJn8RvxIcj87IM5Vh9663ziW36kR0HNenXuxmfaD8JC7tfKbrhFr7LiZCrMjrzTeGx+PmkosrkNzW94ObzwocJ7A1HokLolY+AvkTiD/q1H0cN48c5EL8Crkttsa/AXQVDmutfyku0E7jShx49XqV3MFK8IryDhYVbj7Sj2P2eBxwcXoe8T8idsKKPRcnZw1b+slFTubwUwhktrfnAt7J++jwQtLZcm3sr9LQrjRzz6cfMv9aLvgmnAGvpoaGLxM4mAEaLV7iAzQ3oU0IvD5x9ix3yF2RAAuYAOO2f7PEFWCXZ4C9Pb2UsgDeVnFSpbFK7/IWu7TPTvBqzbGdCHOJQSxiEjt6IyZmxQyEJHv6xyQsYk//moVFsN2zP6fRImjfq7/n/wFDguUQFNEwugAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-important.callout-style-default .callout-caption {
+    background-color: #f7dddc
+  }
+
+  div.callout-warning {
+    border-left-color: #f0ad4e !important;
+  }
+
+  div.callout-warning .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAAETklEQVRYCeVWW2gcVRg+58yaTUnizqbipZeX4uWhBEniBaoUX1Ioze52t7sRq6APio9V9MEaoWlVsFasRq0gltaAPuxms8lu0gcviE/FFOstVbSIxgcv6SU7EZqmdc7v9+9mJtNks51NTUH84ed889/PP+cmxP+d5FIbMJmNbpREu4WUkiTtCicKny0l1pIKmBzovF2S+hIJHX8iEu3hZJ5lNZGqyRrGSIQpq15AzF28jgpeY6yk6GVdrfFqdrD6Iw+QlB8g0YS2g7dyQmXM/IDhBhT0UCiRf59lfqmmDvzRt6kByV/m4JjtzuaujMUM2c5Z2d6JdKrRb3K2q6mA+oYVz8JnDdKPmmNthzkAk/lN63sYPgevrguc72aZX/L9C6x09GYyxBgCX4NlvyGUHOKELlm5rXeR1kchuChJt4SSwyddZRXgvwMGvYo4QSlk3/zkHD8UHxwVJA6zjZZqP8v8kK8OWLnIZtLyCAJagYC4rTGW/9Pqj92N/c+LUaAj27movwbi19tk/whRCIE7Q9vyI6yvRpftAKVTdUjOW40X3h5OXsKCdmFcx0xlLJoSuQngnrJe7Kcjm4OMq9FlC7CMmScQANuNvjfP3PjGXDBaUQmbp296S5L4DrpbrHN1T87ZVEZVCzg1FF0Ft+dKrlLukI+/c9ENo+TvlTDbYFvuKPtQ9+l052rXrgKoWkDAFnvh0wTOmYn8R5f4k/jN/fZiCM1tQx9jQQ4ANhqG4hiL0qIFTGViG9DKB7GYzgubnpofgYRwO+DFjh0Zin2m4b/97EDkXkc+f6xYAPX0KK2I/7fUQuwzuwo/L3AkcjugPNixC8cHf0FyPjWlItmLxWw4Ou9YsQCr5fijMGoD/zpdRy95HRysyXA74MWOnscpO4j2y3HAVisw85hX5+AFBRSHt4ShfLFkIMXTqyKFc46xdzQM6XbAi702a7sy04J0+feReMFKp5q9esYLCqAZYw/k14E/xcLLsFElaornTuJB0svMuJINy8xkIYuL+xPAlWRceH6+HX7THJ0djLUom46zREu7tTkxwmf/FdOZ/sh6Q8qvEAiHpm4PJ4a/doJe0gH1t+aHRgCzOvBvJedEK5OFE5jpm4AGP2a8Dxe3gGJ/pAutug9Gp6he92CsSsWBaEcxGx0FHytmIpuqGkOpldqNYQK8cSoXvd+xLxXADw0kf6UkJNFtdo5MOgaLjiQOQHcn+A6h5NuL2s0qsC2LOM75PcF3yr5STuBSAcGG+meA14K/CI21HcS4LBT6tv0QAh8Dr5l93AhZzG5ZJ4VxAqdZUEl9z7WJ4aN+svMvwHHL21UKTd1mqvChH7/Za5xzXBBKrUcB0TQ+Ulgkfbi/H/YT5EptrGzsEK7tR1B7ln9BBwckYfMiuSqklSznIuoIIOM42MQO+QnduCoFCI0bpkzjCjddHPN/F+2Yu+sd9bKNpVwHhbS3LluK/0zgfwD0xYI5dXuzlQAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-warning.callout-style-default .callout-caption {
+    background-color: #fcefdc
+  }
+
+  div.callout-tip {
+    border-left-color: #02b875 !important;
+  }
+
+  div.callout-tip .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAADr0lEQVRYCe1XTWgTQRj9ZjZV8a9SPIkKgj8I1bMHsUWrqYLVg4Ue6v9BwZOxSYsIerFao7UiUryIqJcqgtpimhbBXoSCVxUFe9CTiogUrUp2Pt+3aUI2u5vdNh4dmMzOzHvvezuz8xNFM0mjnbXaNu1MvFWRXkXEyE6aYOYJpdW4IXuA4r0fo8qqSMDBU0v1HJUgVieAXxzCsdE/YJTdFcVIZQNMyhruOMJKXYFoLfIfIvVIMWdsrd+Rpd86ZmyzzjJmLStqRn0v8lzkb4rVIXvnpScOJuAn2ACC65FkPzEdEy4TPWRLJ2h7z4cArXzzaOdKlbOvKKX25Wl00jSnrwVxAg3o4dRxhO13RBSdNvH0xSARv3adTXbBdTf64IWO2vH0LT+cv4GR1DJt+DUItaQogeBX/chhbTBxEiZ6gftlDNXTrvT7co4ub5A6gp9HIcHvzTa46OS5fBeP87Qm0fQkr4FsYgVQ7Qg+ZayaDg9jhg1GkWj8RG6lkeSacrrHgDaxdoBiZPg+NXV/KifMuB6//JmYH4CntVEHy/keA6x4h4CU5oFy8GzrBS18cLJMXcljAKB6INjWsRcuZBWVaS3GDrqB7rdapVIeA+isQ57Eev9eCqzqOa81CY05VLd6SamW2wA2H3SiTbnbSxmzfp7WtKZkqy4mdyAlGx7ennghYf8voqp9cLSgKdqNfa6RdRsAAkPwRuJZNbpByn+RrJi1RXTwdi8RQF6ymDwGMAtZ6TVE+4uoKh+MYkcLsT0Hk8eAienbiGdjJHZTpmNjlbFJNKDVAp2fJlYju6IreQxQ08UJDNYdoLSl6AadO+fFuCQqVMB1NJwPm69T04Wv5WhfcWyfXQB+wXRs1pt+nCknRa0LVzSA/2B+a9+zQJadb7IyyV24YAxKp2Jqs3emZTuNnKxsah+uabKbMk7CbTgJx/zIgQYErIeTKRQ9yD9wxVof5YolPHqaWo7TD6tJlh7jQnK5z2n3+fGdggIOx2kaa2YI9QWarc5Ce1ipNWMKeSG4DysFF52KBmTNMmn5HqCFkwy34rDg05gDwgH3bBi+sgFhN/e8QvRn8kbamCOhgrZ9GJhFDgfcMHzFb6BAtjKpFhzTjwv1KCVuxHvCbsSiEz4CANnj84cwHdFXAbAOJ4LTSAawGWFn5tDhLMYz6nWeU2wJfIhmIJBefcd/A5FWQWGgrWzyORZ3Q6HuV+Jf0Bj+BTX69fm1zWgK7By1YTXchFDORywnfQ7GpzOo6S+qECrsx2ifVQAAAABJRU5ErkJggg==');
+  }
+
+  div.callout-tip.callout-style-default .callout-caption {
+    background-color: #ccf1e3
+  }
+
+  div.callout-caution {
+    border-left-color: #fd7e14 !important;
+  }
+
+  div.callout-caution .callout-icon::before {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAIKADAAQAAAABAAAAIAAAAACshmLzAAACV0lEQVRYCdVWzWoUQRCuqp2ICBLJXgITZL1EfQDBW/bkzUMUD7klD+ATSHBEfAIfQO+iXsWDxJsHL96EHAwhgzlkg8nBg25XWb0zIb0zs9muYYWkoKeru+vn664fBqElyZNuyh167NXJ8Ut8McjbmEraKHkd7uAnAFku+VWdb3reSmRV8PKSLfZ0Gjn3a6Xlcq9YGb6tADjn+lUfTXtVmaZ1KwBIvFI11rRXlWlatwIAAv2asaa9mlB9wwygiDX26qaw1yYPzFXg2N1GgG0FMF8Oj+VIx7E/03lHx8UhvYyNZLN7BwSPgekXXLribw7w5/c8EF+DBK5idvDVYtEEwMeYefjjLAdEyQ3M9nfOkgnPTEkYU+sxMq0BxNR6jExrAI31H1rzvLEfRIdgcv1XEdj6QTQAS2wtstEALLG1yEZ3QhH6oDX7ExBSFEkFINXH98NTrme5IOaaA7kIfiu2L8A3qhH9zRbukdCqdsA98TdElyeMe5BI8Rs2xHRIsoTSSVFfCFCWGPn9XHb4cdobRIWABNf0add9jakDjQJpJ1bTXOJXnnRXHRf+dNL1ZV1MBRCXhMbaHqGI1JkKIL7+i8uffuP6wVQAzO7+qVEbF6NbS0LJureYcWXUUhH66nLR5rYmva+2tjRFtojkM2aD76HEGAD3tPtKM309FJg5j/K682ywcWJ3PASCcycH/22u+Bh7Aa0ehM2Fu4z0SAE81HF9RkB21c5bEn4Dzw+/qNOyXr3DCTQDMBOdhi4nAgiFDGCinIa2owCEChUwD8qzd03PG+qdW/4fDzjUMcE1ZpIAAAAASUVORK5CYII=');
+  }
+
+  div.callout-caution.callout-style-default .callout-caption {
+    background-color: #ffe5d0
+  }
+
+  </style>
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">tidyverts &amp; prophet</h1>
+  <p class="subtitle">Lecture 13</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Dr.&nbsp;Colin Rundel 
+</div>
+</div>
+</div>
+
+</section>
+<section>
+<section id="tidy-time-series" class="title-slide slide level1 center">
+<h1>Tidy time series</h1>
+
+</section>
+<section id="ts-objects" class="slide level2">
+<h2><code>ts</code> objects</h2>
+<p>In base R, time series are usually encoded using the <code>ts</code> S3 class,</p>
+<div class="columns">
+<div class="column small" style="width:50%;">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>co2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        Jan    Feb    Mar    Apr    May    Jun
+1959 315.42 316.31 316.50 317.56 318.13 318.00
+1960 316.27 316.81 317.42 318.87 319.87 319.43
+1961 316.73 317.54 318.38 319.31 320.42 319.61
+1962 317.78 318.40 319.53 320.42 320.85 320.45
+1963 318.58 318.92 319.70 321.22 322.08 321.31
+1964 319.41 320.07 320.74 321.40 322.06 321.73
+1965 319.27 320.28 320.73 321.97 322.00 321.71
+1966 320.46 321.43 322.23 323.54 323.91 323.59
+1967 322.17 322.34 322.88 324.25 324.83 323.93
+1968 322.40 322.99 323.73 324.86 325.40 325.20
+1969 323.83 324.26 325.47 326.50 327.21 326.54
+1970 324.89 325.82 326.77 327.97 327.91 327.50
+1971 326.01 326.51 327.01 327.62 328.76 328.40
+1972 326.60 327.47 327.58 329.56 329.90 328.92
+1973 328.37 329.40 330.14 331.33 332.31 331.90
+1974 329.18 330.55 331.32 332.48 332.92 332.08
+1975 330.23 331.25 331.87 333.14 333.80 333.43
+1976 331.58 332.39 333.33 334.41 334.71 334.17
+1977 332.75 333.24 334.53 335.90 336.57 336.10
+1978 334.80 335.22 336.47 337.59 337.84 337.72
+1979 336.05 336.59 337.79 338.71 339.30 339.12
+1980 337.84 338.19 339.91 340.60 341.29 341.00
+1981 339.06 340.30 341.21 342.33 342.74 342.08
+1982 340.57 341.44 342.53 343.39 343.96 343.18
+1983 341.20 342.35 342.93 344.77 345.58 345.14
+1984 343.52 344.33 345.11 346.88 347.25 346.62
+1985 344.79 345.82 347.25 348.17 348.74 348.07
+1986 346.11 346.78 347.68 349.37 350.03 349.37
+1987 347.84 348.29 349.23 350.80 351.66 351.07
+1988 350.25 351.54 352.05 353.41 354.04 353.62
+1989 352.60 352.92 353.53 355.26 355.52 354.97
+1990 353.50 354.55 355.23 356.04 357.00 356.07
+1991 354.59 355.63 357.03 358.48 359.22 358.12
+1992 355.88 356.63 357.72 359.07 359.58 359.17
+1993 356.63 357.10 358.32 359.41 360.23 359.55
+1994 358.34 358.89 359.95 361.25 361.67 360.94
+1995 359.98 361.03 361.66 363.48 363.82 363.30
+1996 362.09 363.29 364.06 364.76 365.45 365.01
+1997 363.23 364.06 364.61 366.40 366.84 365.68
+        Jul    Aug    Sep    Oct    Nov    Dec
+1959 316.39 314.65 313.68 313.18 314.66 315.43
+1960 318.01 315.74 314.00 313.68 314.84 316.03
+1961 318.42 316.63 314.83 315.16 315.94 316.85
+1962 319.45 317.25 316.11 315.27 316.53 317.53
+1963 319.58 317.61 316.05 315.83 316.91 318.20
+1964 320.27 318.54 316.54 316.71 317.53 318.55
+1965 321.05 318.71 317.66 317.14 318.70 319.25
+1966 322.24 320.20 318.48 317.94 319.63 320.87
+1967 322.38 320.76 319.10 319.24 320.56 321.80
+1968 323.98 321.95 320.18 320.09 321.16 322.74
+1969 325.72 323.50 322.22 321.62 322.69 323.95
+1970 326.18 324.53 322.93 322.90 323.85 324.96
+1971 327.20 325.27 323.20 323.40 324.63 325.85
+1972 327.88 326.16 324.68 325.04 326.34 327.39
+1973 330.70 329.15 327.35 327.02 327.99 328.48
+1974 331.01 329.23 327.27 327.21 328.29 329.41
+1975 331.73 329.90 328.40 328.17 329.32 330.59
+1976 332.89 330.77 329.14 328.78 330.14 331.52
+1977 334.76 332.59 331.42 330.98 332.24 333.68
+1978 336.37 334.51 332.60 332.38 333.75 334.78
+1979 337.56 335.92 333.75 333.70 335.12 336.56
+1980 339.39 337.43 335.72 335.84 336.93 338.04
+1981 340.32 338.26 336.52 336.68 338.19 339.44
+1982 341.88 339.65 337.81 337.69 339.09 340.32
+1983 343.81 342.21 339.69 339.82 340.98 342.82
+1984 345.22 343.11 340.90 341.18 342.80 344.04
+1985 346.38 344.51 342.92 342.62 344.06 345.38
+1986 347.76 345.73 344.68 343.99 345.48 346.72
+1987 349.33 347.92 346.27 346.18 347.64 348.78
+1988 352.22 350.27 348.55 348.72 349.91 351.18
+1989 353.75 351.52 349.64 349.83 351.14 352.37
+1990 354.67 352.76 350.82 351.04 352.69 354.07
+1991 356.06 353.92 352.05 352.11 353.64 354.89
+1992 356.94 354.92 352.94 353.23 354.09 355.33
+1993 357.53 355.48 353.67 353.95 355.30 356.78
+1994 359.55 357.49 355.84 356.00 357.59 359.05
+1995 361.94 359.50 358.11 357.80 359.61 360.74
+1996 363.70 361.54 359.51 359.65 360.80 362.38
+1997 364.52 362.57 360.24 360.83 362.49 364.34</code></pre>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="fu">typeof</span>(co2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "double"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="fu">class</span>(co2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "ts"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="fu">attributes</span>(co2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$tsp
+[1] 1959.000 1997.917   12.000
+
+$class
+[1] "ts"</code></pre>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="tidyverts" class="slide level2">
+<h2>tidyverts</h2>
+<p>This is an effort headed by Rob Hyndman (of forecast fame) and others to provide a consistent tidy data based framework for working with time series data and models.</p>
+<p>Core packages:</p>
+<ul>
+<li><p><code>tsibble</code> - temporal data frames and related tools</p></li>
+<li><p><code>fable</code> - tidy forecasting (modelling)</p></li>
+<li><p><code>feasts</code> - feature extraction and statistics</p></li>
+<li><p><code>tsibbledata</code> - sample tsibble data sets</p></li>
+</ul>
+</section>
+<section id="tsibble" class="slide level2">
+<h2>tsibble</h2>
+<p>A tsibble is a tibble with additional infrastructure for encoding temporal data - specifcially a tsibble is a tidy data frame with an <em>index</em> and <em>key</em> where</p>
+<ul>
+<li><p>the <em>index</em> is the variable that descibes the inherent ordering of the data (from past to present)</p></li>
+<li><p>and the <em>key</em> is one or more variables that define the unit of observation over time</p></li>
+<li><p>each observation should be uniquely identified by the <em>index</em> and <em>key</em></p></li>
+</ul>
+</section>
+<section id="global_economy" class="slide level2">
+<h2><code>global_economy</code></h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>tsibbledata<span class="sc">::</span>global_economy</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tsibble: 15,150 x 9 [1Y]
+# Key:       Country [263]
+   Country Code   Year    GDP Growth   CPI Imports
+   &lt;fct&gt;   &lt;fct&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+ 1 Afghan… AFG    1960 5.38e8     NA    NA    7.02
+ 2 Afghan… AFG    1961 5.49e8     NA    NA    8.10
+ 3 Afghan… AFG    1962 5.47e8     NA    NA    9.35
+ 4 Afghan… AFG    1963 7.51e8     NA    NA   16.9 
+ 5 Afghan… AFG    1964 8.00e8     NA    NA   18.1 
+ 6 Afghan… AFG    1965 1.01e9     NA    NA   21.4 
+ 7 Afghan… AFG    1966 1.40e9     NA    NA   18.6 
+ 8 Afghan… AFG    1967 1.67e9     NA    NA   14.2 
+ 9 Afghan… AFG    1968 1.37e9     NA    NA   15.2 
+10 Afghan… AFG    1969 1.41e9     NA    NA   15.0 
+# … with 15,140 more rows, and 2 more variables:
+#   Exports &lt;dbl&gt;, Population &lt;dbl&gt;</code></pre>
+</div>
+</div>
+</section>
+<section id="vic_elec" class="slide level2">
+<h2><code>vic_elec</code></h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a>tsibbledata<span class="sc">::</span>vic_elec</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tsibble: 52,608 x 5 [30m]
+#   &lt;Australia/Melbourne&gt;
+   Time                Demand Tempera…¹ Date      
+   &lt;dttm&gt;               &lt;dbl&gt;     &lt;dbl&gt; &lt;date&gt;    
+ 1 2012-01-01 00:00:00  4383.      21.4 2012-01-01
+ 2 2012-01-01 00:30:00  4263.      21.0 2012-01-01
+ 3 2012-01-01 01:00:00  4049.      20.7 2012-01-01
+ 4 2012-01-01 01:30:00  3878.      20.6 2012-01-01
+ 5 2012-01-01 02:00:00  4036.      20.4 2012-01-01
+ 6 2012-01-01 02:30:00  3866.      20.2 2012-01-01
+ 7 2012-01-01 03:00:00  3694.      20.1 2012-01-01
+ 8 2012-01-01 03:30:00  3562.      19.6 2012-01-01
+ 9 2012-01-01 04:00:00  3433.      19.1 2012-01-01
+10 2012-01-01 04:30:00  3359.      19.0 2012-01-01
+# … with 52,598 more rows, 1 more variable:
+#   Holiday &lt;lgl&gt;, and abbreviated variable name
+#   ¹​Temperature</code></pre>
+</div>
+</div>
+</section>
+<section id="aus_retail" class="slide level2">
+<h2><code>aus_retail</code></h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a>tsibbledata<span class="sc">::</span>aus_retail</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tsibble: 64,532 x 5 [1M]
+# Key:       State, Industry [152]
+   State          Indus…¹ Serie…²    Month Turno…³
+   &lt;chr&gt;          &lt;chr&gt;   &lt;chr&gt;      &lt;mth&gt;   &lt;dbl&gt;
+ 1 Australian Ca… Cafes,… A33498… 1982 Apr     4.4
+ 2 Australian Ca… Cafes,… A33498… 1982 May     3.4
+ 3 Australian Ca… Cafes,… A33498… 1982 Jun     3.6
+ 4 Australian Ca… Cafes,… A33498… 1982 Jul     4  
+ 5 Australian Ca… Cafes,… A33498… 1982 Aug     3.6
+ 6 Australian Ca… Cafes,… A33498… 1982 Sep     4.2
+ 7 Australian Ca… Cafes,… A33498… 1982 Oct     4.8
+ 8 Australian Ca… Cafes,… A33498… 1982 Nov     5.4
+ 9 Australian Ca… Cafes,… A33498… 1982 Dec     6.9
+10 Australian Ca… Cafes,… A33498… 1983 Jan     3.8
+# … with 64,522 more rows, and abbreviated
+#   variable names ¹​Industry, ²​`Series ID`,
+#   ³​Turnover</code></pre>
+</div>
+</div>
+</section>
+<section id="as_tsibble" class="slide level2">
+<h2>as_tsibble()</h2>
+<p>Existing ts objects can be converted to a tsibble easily,</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>tsibble<span class="sc">::</span><span class="fu">as_tsibble</span>(co2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tsibble: 468 x 2 [1M]
+      index value
+      &lt;mth&gt; &lt;dbl&gt;
+ 1 1959 Jan  315.
+ 2 1959 Feb  316.
+ 3 1959 Mar  316.
+ 4 1959 Apr  318.
+ 5 1959 May  318.
+ 6 1959 Jun  318 
+ 7 1959 Jul  316.
+ 8 1959 Aug  315.
+ 9 1959 Sep  314.
+10 1959 Oct  313.
+# … with 458 more rows</code></pre>
+</div>
+</div>
+</section>
+<section id="plotting-tsibbles" class="slide level2">
+<h2>plotting tsibbles</h2>
+<p>As the tsibble is basically just a tibble which is basically just a data frame both base and ggplot plotting methods will work.</p>
+<div class="columns small">
+<div class="column" style="width:50%;">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>tsibble<span class="sc">::</span><span class="fu">as_tsibble</span>(co2) <span class="sc">%&gt;%</span></span>
+<span id="cb17-2"><a href="#cb17-2"></a>  <span class="fu">plot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec13_files/figure-revealjs/unnamed-chunk-7-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a>tsibble<span class="sc">::</span><span class="fu">as_tsibble</span>(co2) <span class="sc">%&gt;%</span></span>
+<span id="cb18-2"><a href="#cb18-2"></a>  <span class="fu">ggplot</span>(</span>
+<span id="cb18-3"><a href="#cb18-3"></a>    <span class="fu">aes</span>(<span class="at">x=</span>lubridate<span class="sc">::</span><span class="fu">as_date</span>(index), <span class="at">y=</span>value)</span>
+<span id="cb18-4"><a href="#cb18-4"></a>  ) <span class="sc">+</span></span>
+<span id="cb18-5"><a href="#cb18-5"></a>    <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb18-6"><a href="#cb18-6"></a>    <span class="fu">geom_line</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec13_files/figure-revealjs/unnamed-chunk-8-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="autoplot" class="slide level2">
+<h2>autoplot</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="fu">library</span>(fabletools) <span class="co"># needed to support autoplot</span></span>
+<span id="cb19-2"><a href="#cb19-2"></a>tsibble<span class="sc">::</span><span class="fu">as_tsibble</span>(co2) <span class="sc">%&gt;%</span></span>
+<span id="cb19-3"><a href="#cb19-3"></a>  <span class="fu">autoplot</span>(<span class="at">.vars =</span> <span class="fu">vars</span>(value))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-9-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="multiple-variables" class="slide level2">
+<h2>Multiple variables</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a>tsibbledata<span class="sc">::</span>vic_elec <span class="sc">%&gt;%</span></span>
+<span id="cb20-2"><a href="#cb20-2"></a>  tsibble<span class="sc">::</span><span class="fu">index_by</span>(<span class="at">data =</span> <span class="sc">~</span> lubridate<span class="sc">::</span><span class="fu">as_date</span>(.)) <span class="sc">%&gt;%</span></span>
+<span id="cb20-3"><a href="#cb20-3"></a>  <span class="fu">summarize</span>(</span>
+<span id="cb20-4"><a href="#cb20-4"></a>    <span class="at">demand_avg =</span> <span class="fu">mean</span>(Demand, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb20-5"><a href="#cb20-5"></a>    <span class="at">temp_avg =</span> <span class="fu">mean</span>(Temperature, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span>
+<span id="cb20-6"><a href="#cb20-6"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb20-7"><a href="#cb20-7"></a>  <span class="fu">autoplot</span>(<span class="at">.vars =</span> <span class="fu">vars</span>(temp_avg, demand_avg))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec13_files/figure-revealjs/unnamed-chunk-10-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="ggtsdisplay-replacement" class="slide level2">
+<h2><code>ggtsdisplay()</code> replacement</h2>
+<p>The equivalent to the <code>ggtsdisplay()</code> plot is provided by <code>feasts</code> with <code>gg_tsdisplay()</code>,</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a>tsibble<span class="sc">::</span><span class="fu">as_tsibble</span>(co2) <span class="sc">%&gt;%</span></span>
+<span id="cb21-2"><a href="#cb21-2"></a>  feasts<span class="sc">::</span><span class="fu">gg_tsdisplay</span>(<span class="at">y =</span> value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-11-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="ggtsdisplay---pacf" class="slide level2">
+<h2><code>ggtsdisplay()</code> - pACF</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a>tsibble<span class="sc">::</span><span class="fu">as_tsibble</span>(co2) <span class="sc">%&gt;%</span></span>
+<span id="cb22-2"><a href="#cb22-2"></a>  feasts<span class="sc">::</span><span class="fu">gg_tsdisplay</span>(<span class="at">y =</span> value, <span class="at">plot_type =</span> <span class="st">"partial"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-12-1.png" width="960" class="r-stretch quarto-figure-center"></section></section>
+<section>
+<section id="modeling-with-fable" class="title-slide slide level1 center">
+<h1>Modeling with fable</h1>
+
+</section>
+<section id="elec_sales" class="slide level2">
+<h2><code>elec_sales</code></h2>
+<div class="cell" data-layout-align="center">
+
+</div>
+<div class="columns small">
+<div class="column" style="width:33%;">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a>( <span class="at">elec_sales =</span> <span class="fu">as_tsibble</span>(</span>
+<span id="cb23-2"><a href="#cb23-2"></a>  elec_sales</span>
+<span id="cb23-3"><a href="#cb23-3"></a>) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tsibble: 191 x 2 [1M]
+      index value
+      &lt;mth&gt; &lt;dbl&gt;
+ 1 1996 Jan  85.0
+ 2 1996 Feb  81.9
+ 3 1996 Mar  78.4
+ 4 1996 Apr  79.0
+ 5 1996 May  79.7
+ 6 1996 Jun  76.1
+ 7 1996 Jul  81.4
+ 8 1996 Aug  79.3
+ 9 1996 Sep  78.1
+10 1996 Oct  80.3
+# … with 181 more rows</code></pre>
+</div>
+</div>
+</div><div class="column" style="width:66%;">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1"></a>elec_sales <span class="sc">%&gt;%</span></span>
+<span id="cb25-2"><a href="#cb25-2"></a>  <span class="fu">autoplot</span>(value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec13_files/figure-revealjs/unnamed-chunk-15-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<aside><div>
+<p>These data were also fit in Lecture 11</p>
+</div></aside></section>
+<section id="differencing" class="slide level2">
+<h2>Differencing</h2>
+<div class="medium">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a>elec_sales <span class="sc">%&gt;%</span></span>
+<span id="cb26-2"><a href="#cb26-2"></a>  feasts<span class="sc">::</span><span class="fu">gg_tsdisplay</span>(<span class="fu">difference</span>(value), <span class="at">plot_type=</span><span class="st">"partial"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec13_files/figure-revealjs/unnamed-chunk-16-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="modeling" class="slide level2">
+<h2>Modeling</h2>
+<div class="medium">
+<p>To fit a model with fable we use the <code>model()</code> function along with a specific function for the model we are trying to fit (<code>ARIMA()</code> here).</p>
+<p>As with the rest of tidyverts - <code>fable</code> using a tidy approach for modeling which means that the model results are stored in a tibble (called a <code>mable</code>).</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a><span class="fu">library</span>(fable)</span>
+<span id="cb27-2"><a href="#cb27-2"></a>( <span class="at">m =</span> elec_sales <span class="sc">%&gt;%</span></span>
+<span id="cb27-3"><a href="#cb27-3"></a>    <span class="fu">model</span>(</span>
+<span id="cb27-4"><a href="#cb27-4"></a>      <span class="fu">ARIMA</span>(value <span class="sc">~</span> <span class="fu">pdq</span>(<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">0</span>))</span>
+<span id="cb27-5"><a href="#cb27-5"></a>    )</span>
+<span id="cb27-6"><a href="#cb27-6"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A mable: 1 x 1
+  `ARIMA(value ~ pdq(3, 1, 0))`
+                        &lt;model&gt;
+1                &lt;ARIMA(3,1,0)&gt;</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="model-summary" class="slide level2">
+<h2>Model summary</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1"></a>m <span class="sc">%&gt;%</span> </span>
+<span id="cb29-2"><a href="#cb29-2"></a>  <span class="fu">report</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Series: value 
+Model: ARIMA(3,1,0) 
+
+Coefficients:
+          ar1      ar2     ar3
+      -0.3488  -0.0386  0.3139
+s.e.   0.0690   0.0736  0.0694
+
+sigma^2 estimated as 9.853:  log likelihood=-485.67
+AIC=979.33   AICc=979.55   BIC=992.32</code></pre>
+</div>
+</div>
+</section>
+<section id="model-details-broom-yardstick" class="slide level2">
+<h2>Model details (broom + yardstick)</h2>
+<div class="cell" data-layout-align="center">
+
+</div>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1"></a>m <span class="sc">%&gt;%</span> <span class="fu">glance</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 8
+  .model                      sigma2 log_lik   AIC  AICc   BIC ar_roots  ma_roots 
+  &lt;chr&gt;                        &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;list&gt;    &lt;list&gt;   
+1 ARIMA(value ~ pdq(3, 1, 0))   9.85   -486.  979.  980.  992. &lt;cpl [3]&gt; &lt;cpl [0]&gt;</code></pre>
+</div>
+</div>
+<p>. . .</p>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1"></a>m <span class="sc">%&gt;%</span> <span class="fu">accuracy</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 10
+  .model                      .type        ME  RMSE   MAE     MPE  MAPE  MASE RMSSE    ACF1
+  &lt;chr&gt;                       &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+1 ARIMA(value ~ pdq(3, 1, 0)) Training 0.0117  3.11  2.43 -0.0435  2.56 0.296 0.281 -0.0346</code></pre>
+</div>
+</div>
+</div>
+<p>. . .</p>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1"></a>m <span class="sc">%&gt;%</span> <span class="fu">augment</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tsibble: 191 x 6 [1M]
+# Key:       .model [1]
+   .model                         index value .fitted  .resid  .innov
+   &lt;chr&gt;                          &lt;mth&gt; &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+ 1 ARIMA(value ~ pdq(3, 1, 0)) 1996 Jan  85.0    84.9  0.0850  0.0850
+ 2 ARIMA(value ~ pdq(3, 1, 0)) 1996 Feb  81.9    84.6 -2.68   -2.68  
+ 3 ARIMA(value ~ pdq(3, 1, 0)) 1996 Mar  78.4    82.7 -4.28   -4.28  
+ 4 ARIMA(value ~ pdq(3, 1, 0)) 1996 Apr  79.0    80.3 -1.25   -1.25  
+ 5 ARIMA(value ~ pdq(3, 1, 0)) 1996 May  79.7    78.0  1.76    1.76  
+ 6 ARIMA(value ~ pdq(3, 1, 0)) 1996 Jun  76.1    78.4 -2.24   -2.24  
+ 7 ARIMA(value ~ pdq(3, 1, 0)) 1996 Jul  81.4    77.5  3.87    3.87  
+ 8 ARIMA(value ~ pdq(3, 1, 0)) 1996 Aug  79.3    79.9 -0.599  -0.599 
+ 9 ARIMA(value ~ pdq(3, 1, 0)) 1996 Sep  78.1    78.7 -0.588  -0.588 
+10 ARIMA(value ~ pdq(3, 1, 0)) 1996 Oct  80.3    80.3 -0.0448 -0.0448
+# … with 181 more rows</code></pre>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="observed-vs-predicted" class="slide level2">
+<h2>Observed vs predicted</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1"></a>m <span class="sc">%&gt;%</span> </span>
+<span id="cb37-2"><a href="#cb37-2"></a>  <span class="fu">augment</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb37-3"><a href="#cb37-3"></a>  <span class="fu">autoplot</span>(<span class="fu">vars</span>(value, .fitted))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec13_files/figure-revealjs/unnamed-chunk-23-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="residuals" class="slide level2">
+<h2>Residuals</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a>m <span class="sc">%&gt;%</span> </span>
+<span id="cb38-2"><a href="#cb38-2"></a>  <span class="fu">augment</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb38-3"><a href="#cb38-3"></a>  feasts<span class="sc">::</span><span class="fu">gg_tsdisplay</span>(.resid, <span class="at">plot_type=</span><span class="st">"partial"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec13_files/figure-revealjs/unnamed-chunk-24-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="forecasting" class="slide level2">
+<h2>Forecasting</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1"></a>m <span class="sc">%&gt;%</span></span>
+<span id="cb39-2"><a href="#cb39-2"></a>  <span class="fu">forecast</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A fable: 24 x 4 [1M]
+# Key:     .model [1]
+   .model                         index      value .mean
+   &lt;chr&gt;                          &lt;mth&gt;     &lt;dist&gt; &lt;dbl&gt;
+ 1 ARIMA(value ~ pdq(3, 1, 0)) 2011 Dec N(86, 9.9)  86.2
+ 2 ARIMA(value ~ pdq(3, 1, 0)) 2012 Jan  N(88, 14)  87.6
+ 3 ARIMA(value ~ pdq(3, 1, 0)) 2012 Feb  N(87, 19)  87.0
+ 4 ARIMA(value ~ pdq(3, 1, 0)) 2012 Mar  N(87, 30)  86.5
+ 5 ARIMA(value ~ pdq(3, 1, 0)) 2012 Apr  N(87, 36)  87.2
+ 6 ARIMA(value ~ pdq(3, 1, 0)) 2012 May  N(87, 44)  86.8
+ 7 ARIMA(value ~ pdq(3, 1, 0)) 2012 Jun  N(87, 54)  86.7
+ 8 ARIMA(value ~ pdq(3, 1, 0)) 2012 Jul  N(87, 62)  87.0
+ 9 ARIMA(value ~ pdq(3, 1, 0)) 2012 Aug  N(87, 70)  86.8
+10 ARIMA(value ~ pdq(3, 1, 0)) 2012 Sep  N(87, 79)  86.8
+# … with 14 more rows</code></pre>
+</div>
+</div>
+</section>
+<section id="forecasting---autoplot" class="slide level2">
+<h2>Forecasting - autoplot</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1"></a>m <span class="sc">%&gt;%</span></span>
+<span id="cb41-2"><a href="#cb41-2"></a>  <span class="fu">forecast</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb41-3"><a href="#cb41-3"></a>  <span class="fu">autoplot</span>(elec_sales)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-26-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="comparing-models" class="slide level2">
+<h2>Comparing models</h2>
+<p>The <code>fable</code> <code>model()</code> function also has the ability to fit multiple models at the same time which then makes comparison more straight forward.</p>
+<div class="medium">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1"></a>( <span class="at">mm =</span> elec_sales <span class="sc">%&gt;%</span></span>
+<span id="cb42-2"><a href="#cb42-2"></a>    <span class="fu">model</span>(</span>
+<span id="cb42-3"><a href="#cb42-3"></a>      <span class="at">arima310 =</span> <span class="fu">ARIMA</span>(value <span class="sc">~</span> <span class="fu">pdq</span>(<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">0</span>)),</span>
+<span id="cb42-4"><a href="#cb42-4"></a>      <span class="at">arima013 =</span> <span class="fu">ARIMA</span>(value <span class="sc">~</span> <span class="fu">pdq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">3</span>)),</span>
+<span id="cb42-5"><a href="#cb42-5"></a>      <span class="at">autoarima =</span> <span class="fu">ARIMA</span>(value),</span>
+<span id="cb42-6"><a href="#cb42-6"></a>      <span class="at">autoarima_bf =</span> <span class="fu">ARIMA</span>(value, <span class="at">stepwise =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb42-7"><a href="#cb42-7"></a>    )</span>
+<span id="cb42-8"><a href="#cb42-8"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A mable: 1 x 4
+        arima310       arima013      autoarima   autoarima_bf
+         &lt;model&gt;        &lt;model&gt;        &lt;model&gt;        &lt;model&gt;
+1 &lt;ARIMA(3,1,0)&gt; &lt;ARIMA(0,1,3)&gt; &lt;ARIMA(3,1,1)&gt; &lt;ARIMA(1,1,5)&gt;</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="broom-multiple-models" class="slide level2">
+<h2>broom + multiple models</h2>
+<div class="medium">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1"></a>mm <span class="sc">%&gt;%</span> <span class="fu">glance</span>() <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(AICc)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 8
+  .model       sigma2 log_lik   AIC  AICc   BIC ar_roots  ma_roots 
+  &lt;chr&gt;         &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;list&gt;    &lt;list&gt;   
+1 autoarima      9.74   -484.  978.  978.  994. &lt;cpl [3]&gt; &lt;cpl [1]&gt;
+2 autoarima_bf   9.63   -482.  978.  979. 1001. &lt;cpl [1]&gt; &lt;cpl [5]&gt;
+3 arima310       9.85   -486.  979.  980.  992. &lt;cpl [3]&gt; &lt;cpl [0]&gt;
+4 arima013      10.2    -489.  986.  987.  999. &lt;cpl [0]&gt; &lt;cpl [3]&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="fragment">
+<div class="medium">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1"></a>mm <span class="sc">%&gt;%</span> <span class="fu">accuracy</span>() <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(RMSE)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 10
+  .model       .type          ME  RMSE   MAE     MPE  MAPE  MASE RMSSE     ACF1
+  &lt;chr&gt;        &lt;chr&gt;       &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
+1 autoarima_bf Training -0.00719  3.05  2.41 -0.0458  2.55 0.294 0.275  0.00916
+2 autoarima    Training -0.00123  3.08  2.39 -0.0429  2.52 0.291 0.278  0.00893
+3 arima310     Training  0.0117   3.11  2.43 -0.0435  2.56 0.296 0.281 -0.0346 
+4 arima013     Training  0.0105   3.17  2.40 -0.0486  2.53 0.292 0.286 -0.0210 </code></pre>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="forecasting---autoplot-1" class="slide level2">
+<h2>Forecasting - autoplot</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1"></a>mm <span class="sc">%&gt;%</span></span>
+<span id="cb48-2"><a href="#cb48-2"></a>  <span class="fu">forecast</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb48-3"><a href="#cb48-3"></a>  <span class="fu">autoplot</span>(elec_sales)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-30-1.png" width="960" class="r-stretch quarto-figure-center"></section></section>
+<section>
+<section id="cross-validation" class="title-slide slide level1 center">
+<h1>Cross validation</h1>
+
+</section>
+<section id="test-train-split" class="slide level2">
+<h2>Test train split</h2>
+<div class="small">
+<p>The general approach is to keep the data ordered and split the first <code>prop</code>% into the training data and the remainder as testing data.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="imgs/Lec13/fpp3-cv1.png" style="width:100.0%"></p>
+</figure>
+</div>
+</div>
+<div class="fragment">
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1"></a>elec_sales_split <span class="ot">=</span> rsample<span class="sc">::</span><span class="fu">initial_time_split</span>(elec_sales, <span class="at">prop=</span><span class="fl">0.9</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</div>
+<div class="columns small">
+<div class="column" style="width:50%;">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1"></a>rsample<span class="sc">::</span><span class="fu">training</span>(elec_sales_split)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tsibble: 171 x 2 [1M]
+      index value
+      &lt;mth&gt; &lt;dbl&gt;
+ 1 1996 Jan  85.0
+ 2 1996 Feb  81.9
+ 3 1996 Mar  78.4
+ 4 1996 Apr  79.0
+ 5 1996 May  79.7
+ 6 1996 Jun  76.1
+ 7 1996 Jul  81.4
+ 8 1996 Aug  79.3
+ 9 1996 Sep  78.1
+10 1996 Oct  80.3
+# … with 161 more rows</code></pre>
+</div>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1"></a>rsample<span class="sc">::</span><span class="fu">testing</span>(elec_sales_split)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tsibble: 20 x 2 [1M]
+      index value
+      &lt;mth&gt; &lt;dbl&gt;
+ 1 2010 Apr  90.8
+ 2 2010 May  89.7
+ 3 2010 Jun  95.4
+ 4 2010 Jul  91.0
+ 5 2010 Aug  94.5
+ 6 2010 Sep  88.3
+ 7 2010 Oct  91.1
+ 8 2010 Nov  97.2
+ 9 2010 Dec  89.8
+10 2011 Jan  97.0
+11 2011 Feb  93.7
+12 2011 Mar  95.4
+13 2011 Apr  94.9
+14 2011 May  97.1
+15 2011 Jun  94.5
+16 2011 Jul  94.3
+17 2011 Aug  93.3
+18 2011 Sep  86.6
+19 2011 Oct  88.7
+20 2011 Nov  88.2</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="model-fit-training" class="slide level2">
+<h2>Model fit (training)</h2>
+<div class="medium">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1"></a>( <span class="at">mm =</span> rsample<span class="sc">::</span><span class="fu">training</span>(elec_sales_split) <span class="sc">%&gt;%</span></span>
+<span id="cb54-2"><a href="#cb54-2"></a>    <span class="fu">model</span>(</span>
+<span id="cb54-3"><a href="#cb54-3"></a>      <span class="at">arima310 =</span> <span class="fu">ARIMA</span>(value <span class="sc">~</span> <span class="fu">pdq</span>(<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">0</span>)),</span>
+<span id="cb54-4"><a href="#cb54-4"></a>      <span class="at">arima013 =</span> <span class="fu">ARIMA</span>(value <span class="sc">~</span> <span class="fu">pdq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">3</span>)),</span>
+<span id="cb54-5"><a href="#cb54-5"></a>      <span class="at">autoarima =</span> <span class="fu">ARIMA</span>(value),</span>
+<span id="cb54-6"><a href="#cb54-6"></a>      <span class="at">autoarima_bf =</span> <span class="fu">ARIMA</span>(value, <span class="at">stepwise =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb54-7"><a href="#cb54-7"></a>    )</span>
+<span id="cb54-8"><a href="#cb54-8"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A mable: 1 x 4
+        arima310       arima013      autoarima   autoarima_bf
+         &lt;model&gt;        &lt;model&gt;        &lt;model&gt;        &lt;model&gt;
+1 &lt;ARIMA(3,1,0)&gt; &lt;ARIMA(0,1,3)&gt; &lt;ARIMA(3,1,0)&gt; &lt;ARIMA(3,1,0)&gt;</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="forecasting-1" class="slide level2">
+<h2>Forecasting</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1"></a>mm <span class="sc">%&gt;%</span></span>
+<span id="cb56-2"><a href="#cb56-2"></a>  <span class="fu">forecast</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb56-3"><a href="#cb56-3"></a>  <span class="fu">autoplot</span>(</span>
+<span id="cb56-4"><a href="#cb56-4"></a>    elec_sales</span>
+<span id="cb56-5"><a href="#cb56-5"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-35-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="accuracy" class="slide level2">
+<h2>Accuracy</h2>
+<p><strong>Out-of-sample:</strong></p>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1"></a>mm <span class="sc">%&gt;%</span></span>
+<span id="cb57-2"><a href="#cb57-2"></a>  <span class="fu">forecast</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb57-3"><a href="#cb57-3"></a>  <span class="fu">accuracy</span>(elec_sales)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 10
+  .model       .type    ME  RMSE   MAE   MPE  MAPE  MASE RMSSE  ACF1
+  &lt;chr&gt;        &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1 arima013     Test   7.73  8.39  7.73  8.24  8.24 0.935 0.742 0.148
+2 arima310     Test   8.60  9.17  8.60  9.18  9.18 1.04  0.811 0.162
+3 autoarima    Test   8.60  9.17  8.60  9.18  9.18 1.04  0.811 0.162
+4 autoarima_bf Test   8.60  9.17  8.60  9.18  9.18 1.04  0.811 0.162</code></pre>
+</div>
+</div>
+</div>
+<div class="fragment">
+<p><strong>Within-sample:</strong></p>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1"></a>mm <span class="sc">%&gt;%</span></span>
+<span id="cb59-2"><a href="#cb59-2"></a>  <span class="fu">accuracy</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 10
+  .model       .type           ME  RMSE   MAE     MPE  MAPE  MASE RMSSE    ACF1
+  &lt;chr&gt;        &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;
+1 arima310     Training -0.00435   3.00  2.31 -0.0535  2.42 0.279 0.265 -0.0317
+2 arima013     Training -0.000151  3.08  2.32 -0.0541  2.44 0.281 0.272 -0.0318
+3 autoarima    Training -0.00435   3.00  2.31 -0.0535  2.42 0.279 0.265 -0.0317
+4 autoarima_bf Training -0.00435   3.00  2.31 -0.0535  2.42 0.279 0.265 -0.0317</code></pre>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="rolling-forecasting-origin" class="slide level2">
+<h2>Rolling forecasting origin</h2>
+<p>One-step ahead predictive performance</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="imgs/Lec13/fpp3-cv2.png" style="width:100.0%"></p>
+</figure>
+</div>
+
+<aside><div>
+<p>From Hyndman FPP3 - Chp 5.10</p>
+</div></aside></section>
+<section id="section" class="slide level2">
+<h2></h2>
+<p>Four-step ahead predictive performance</p>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="imgs/Lec13/fpp3-cv3.png" style="width:100.0%"></p>
+</figure>
+</div>
+
+<aside><div>
+<p>From Hyndman FPP3 - Chp 5.10</p>
+</div></aside></section></section>
+<section>
+<section id="prophet" class="title-slide slide level1 center">
+<h1>Prophet</h1>
+
+</section>
+<section id="prophet-model" class="slide level2">
+<h2>Prophet model</h2>
+<p>Prophet uses a modeling framework that looks a lot like traditional GAM approaches. Specifically the time series is modeled as</p>
+<p><span class="math display">\[ y(t) = g(t) + s(t) + h(t) + \epsilon_t \]</span></p>
+<p>where</p>
+<ul>
+<li><p><span class="math inline">\(g(t)\)</span> is a piecewise linear trend component</p></li>
+<li><p><span class="math inline">\(s(t)\)</span> is a seasonal component based on Fourier terms with specified period(s) and order</p></li>
+<li><p><span class="math inline">\(h(t)\)</span> are holiday effects (specific dummy coded variables for important dates / times)</p></li>
+<li><p><span class="math inline">\(\epsilon_t\)</span> white noise error</p></li>
+</ul>
+</section>
+<section id="implementation" class="slide level2">
+<h2>Implementation</h2>
+<p>Prophet is implemented in its own R package and Python packages (<code>prophet</code>) which provide all of the basic functionality.</p>
+<p>The model fitting is done using a Bayesain approach with the specific implementation using Stan.</p>
+<p>Other frameworks like <code>fable</code> (or <code>modeltime</code>) provide higher level interfaces to this package.</p>
+</section>
+<section id="prodn-from-astsa" class="slide level2">
+<h2><code>prodn</code> from <code>astsa</code></h2>
+<p>Monthly Federal Reserve Board Production Index (1948-1978)</p>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1"></a>prodn <span class="ot">=</span> tsibble<span class="sc">::</span><span class="fu">as_tsibble</span>(astsa<span class="sc">::</span>prodn)</span>
+<span id="cb61-2"><a href="#cb61-2"></a><span class="fu">autoplot</span>(prodn, value)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-38-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="test-train-split-1" class="slide level2">
+<h2>Test train split</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1"></a>prodn_split <span class="ot">=</span> rsample<span class="sc">::</span><span class="fu">initial_time_split</span>(prodn, <span class="at">prop=</span><span class="fl">0.90</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-40-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="models" class="slide level2">
+<h2>Models</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1"></a><span class="fu">library</span>(fable.prophet)</span>
+<span id="cb63-2"><a href="#cb63-2"></a></span>
+<span id="cb63-3"><a href="#cb63-3"></a>( <span class="at">prodn_fit =</span> rsample<span class="sc">::</span><span class="fu">training</span>(prodn_split) <span class="sc">%&gt;%</span></span>
+<span id="cb63-4"><a href="#cb63-4"></a>   <span class="fu">model</span>(</span>
+<span id="cb63-5"><a href="#cb63-5"></a>     <span class="at">arima =</span> <span class="fu">ARIMA</span>(value <span class="sc">~</span> <span class="fu">pdq</span>(<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>) <span class="sc">+</span> <span class="fu">PDQ</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">3</span>)),</span>
+<span id="cb63-6"><a href="#cb63-6"></a>     <span class="at">autoarima =</span> <span class="fu">ARIMA</span>(value),</span>
+<span id="cb63-7"><a href="#cb63-7"></a>     <span class="at">prophet =</span> <span class="fu">prophet</span>(value <span class="sc">~</span> <span class="fu">season</span>(<span class="at">period =</span> <span class="dv">12</span>, </span>
+<span id="cb63-8"><a href="#cb63-8"></a>                                      <span class="at">type =</span> <span class="st">"multiplicative"</span>))</span>
+<span id="cb63-9"><a href="#cb63-9"></a>   )</span>
+<span id="cb63-10"><a href="#cb63-10"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A mable: 1 x 3
+                      arima                          autoarima   prophet
+                    &lt;model&gt;                            &lt;model&gt;   &lt;model&gt;
+1 &lt;ARIMA(1,1,0)(0,1,3)[12]&gt; &lt;ARIMA(2,0,1)(0,1,1)[12] w/ drift&gt; &lt;prophet&gt;</code></pre>
+</div>
+</div>
+</section>
+<section id="forecast" class="slide level2">
+<h2>Forecast</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1"></a>prodn_fc <span class="ot">=</span> <span class="fu">forecast</span>(prodn_fit, <span class="at">h=</span><span class="dv">38</span>)</span>
+<span id="cb65-2"><a href="#cb65-2"></a>prodn_fc <span class="sc">%&gt;%</span> </span>
+<span id="cb65-3"><a href="#cb65-3"></a>  <span class="fu">autoplot</span>(prodn)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-42-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="forecast---zoom" class="slide level2">
+<h2>Forecast - zoom</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1"></a>prodn_fc <span class="ot">=</span> <span class="fu">forecast</span>(prodn_fit, <span class="at">h=</span><span class="dv">38</span>)</span>
+<span id="cb66-2"><a href="#cb66-2"></a>prodn_fc <span class="sc">%&gt;%</span> </span>
+<span id="cb66-3"><a href="#cb66-3"></a>  <span class="fu">autoplot</span>(</span>
+<span id="cb66-4"><a href="#cb66-4"></a>    prodn <span class="sc">%&gt;%</span> <span class="fu">filter</span>(index <span class="sc">&gt;=</span> <span class="fu">make_yearmonth</span>(1970L, 1L))</span>
+<span id="cb66-5"><a href="#cb66-5"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-43-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="accuracy-1" class="slide level2">
+<h2>Accuracy</h2>
+<p><strong>Out-of-sample:</strong></p>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1"></a>prodn_fit <span class="sc">%&gt;%</span></span>
+<span id="cb67-2"><a href="#cb67-2"></a>  <span class="fu">forecast</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb67-3"><a href="#cb67-3"></a>  <span class="fu">accuracy</span>(prodn)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 10
+  .model    .type    ME  RMSE   MAE    MPE  MAPE  MASE RMSSE  ACF1
+  &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1 arima     Test  7.93   8.29  7.93 5.95    5.95 1.56  1.34  0.755
+2 autoarima Test  6.52   6.93  6.52 4.91    4.91 1.28  1.12  0.759
+3 prophet   Test  0.145  3.22  2.65 0.0162  2.01 0.522 0.521 0.833</code></pre>
+</div>
+</div>
+</div>
+<div class="fragment">
+<p><strong>Within-sample:</strong></p>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1"></a>prodn_fit <span class="sc">%&gt;%</span></span>
+<span id="cb69-2"><a href="#cb69-2"></a>  <span class="fu">accuracy</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 10
+  .model    .type           ME  RMSE   MAE     MPE  MAPE  MASE RMSSE     ACF1
+  &lt;chr&gt;     &lt;chr&gt;        &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
+1 arima     Training -0.00242   1.14 0.821  0.0129  1.11 0.162 0.185 -0.0348 
+2 autoarima Training  0.000504  1.17 0.831 -0.0402  1.11 0.164 0.189  0.00432
+3 prophet   Training  0.000883  3.83 2.87  -0.234   3.70 0.565 0.620  0.950  </code></pre>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="components" class="slide level2">
+<h2>Components</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb71"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1"></a>prodn_fit <span class="sc">%&gt;%</span></span>
+<span id="cb71-2"><a href="#cb71-2"></a>  <span class="fu">select</span>(prophet) <span class="sc">%&gt;%</span></span>
+<span id="cb71-3"><a href="#cb71-3"></a>  <span class="fu">components</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb71-4"><a href="#cb71-4"></a>  <span class="fu">autoplot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec13_files/figure-revealjs/unnamed-chunk-46-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section></section>
+<section>
+<section id="complex-seasonality" class="title-slide slide level1 center">
+<h1>Complex seasonality</h1>
+
+</section>
+<section id="half-hourly-electricity-demand---vic_elec" class="slide level2">
+<h2>Half-hourly electricity demand - <code>vic_elec</code></h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1"></a>tsibbledata<span class="sc">::</span>vic_elec</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tsibble: 52,608 x 5 [30m] &lt;Australia/Melbourne&gt;
+   Time                Demand Temperature Date       Holiday
+   &lt;dttm&gt;               &lt;dbl&gt;       &lt;dbl&gt; &lt;date&gt;     &lt;lgl&gt;  
+ 1 2012-01-01 00:00:00  4383.        21.4 2012-01-01 TRUE   
+ 2 2012-01-01 00:30:00  4263.        21.0 2012-01-01 TRUE   
+ 3 2012-01-01 01:00:00  4049.        20.7 2012-01-01 TRUE   
+ 4 2012-01-01 01:30:00  3878.        20.6 2012-01-01 TRUE   
+ 5 2012-01-01 02:00:00  4036.        20.4 2012-01-01 TRUE   
+ 6 2012-01-01 02:30:00  3866.        20.2 2012-01-01 TRUE   
+ 7 2012-01-01 03:00:00  3694.        20.1 2012-01-01 TRUE   
+ 8 2012-01-01 03:30:00  3562.        19.6 2012-01-01 TRUE   
+ 9 2012-01-01 04:00:00  3433.        19.1 2012-01-01 TRUE   
+10 2012-01-01 04:30:00  3359.        19.0 2012-01-01 TRUE   
+# … with 52,598 more rows</code></pre>
+</div>
+</div>
+
+<aside><div>
+<p>For another treatment of these data with some additional feature engineering see FPP3 - Chp 12.1 &amp; 12.2</p>
+</div></aside></section>
+<section id="full-data" class="slide level2">
+<h2>Full data</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1"></a>tsibbledata<span class="sc">::</span>vic_elec <span class="sc">%&gt;%</span></span>
+<span id="cb74-2"><a href="#cb74-2"></a>  <span class="fu">autoplot</span>(<span class="fu">vars</span>(Demand, Temperature))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec13_files/figure-revealjs/unnamed-chunk-48-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="data---december-2014" class="slide level2">
+<h2>Data - December 2014</h2>
+<div class="small">
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1"></a>tsibbledata<span class="sc">::</span>vic_elec <span class="sc">%&gt;%</span></span>
+<span id="cb75-2"><a href="#cb75-2"></a>  <span class="fu">filter</span>(Time <span class="sc">&gt;=</span> lubridate<span class="sc">::</span><span class="fu">ymd</span>(<span class="st">"2014/12/01"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb75-3"><a href="#cb75-3"></a>  <span class="fu">autoplot</span>(<span class="fu">vars</span>(Demand, Temperature))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Lec13_files/figure-revealjs/unnamed-chunk-49-1.png" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="seasonality---yearly" class="slide level2">
+<h2>Seasonality - Yearly</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb76"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1"></a>tsibbledata<span class="sc">::</span>vic_elec <span class="sc">%&gt;%</span></span>
+<span id="cb76-2"><a href="#cb76-2"></a>  feasts<span class="sc">::</span><span class="fu">gg_season</span>(</span>
+<span id="cb76-3"><a href="#cb76-3"></a>    <span class="at">y=</span>Demand, <span class="at">period =</span> <span class="st">"year"</span>, <span class="at">alpha=</span><span class="fl">0.5</span></span>
+<span id="cb76-4"><a href="#cb76-4"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-50-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="seasonality---weekly" class="slide level2">
+<h2>Seasonality - Weekly</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1"></a>tsibbledata<span class="sc">::</span>vic_elec <span class="sc">%&gt;%</span></span>
+<span id="cb77-2"><a href="#cb77-2"></a>  feasts<span class="sc">::</span><span class="fu">gg_season</span>(</span>
+<span id="cb77-3"><a href="#cb77-3"></a>    <span class="at">y=</span>Demand, <span class="at">period =</span> <span class="st">"week"</span></span>
+<span id="cb77-4"><a href="#cb77-4"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-51-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="seasonality---daily" class="slide level2">
+<h2>Seasonality - Daily</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1"></a>tsibbledata<span class="sc">::</span>vic_elec <span class="sc">%&gt;%</span></span>
+<span id="cb78-2"><a href="#cb78-2"></a>  feasts<span class="sc">::</span><span class="fu">gg_season</span>(</span>
+<span id="cb78-3"><a href="#cb78-3"></a>    <span class="at">y =</span> Demand, <span class="at">period =</span> <span class="st">"day"</span></span>
+<span id="cb78-4"><a href="#cb78-4"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-52-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="model" class="slide level2">
+<h2>Model</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1"></a>( <span class="at">vic_elec_fit =</span> tsibbledata<span class="sc">::</span>vic_elec <span class="sc">%&gt;%</span></span>
+<span id="cb79-2"><a href="#cb79-2"></a>    <span class="fu">model</span>(</span>
+<span id="cb79-3"><a href="#cb79-3"></a>      <span class="at">p =</span> <span class="fu">prophet</span>(Demand <span class="sc">~</span> Temperature  <span class="sc">+</span> Holiday <span class="sc">+</span></span>
+<span id="cb79-4"><a href="#cb79-4"></a>                  <span class="fu">season</span>(<span class="at">period =</span> <span class="st">"day"</span>, <span class="at">order =</span> <span class="dv">10</span>) <span class="sc">+</span></span>
+<span id="cb79-5"><a href="#cb79-5"></a>                  <span class="fu">season</span>(<span class="at">period =</span> <span class="st">"week"</span>, <span class="at">order =</span> <span class="dv">5</span>) <span class="sc">+</span></span>
+<span id="cb79-6"><a href="#cb79-6"></a>                  <span class="fu">season</span>(<span class="at">period =</span> <span class="st">"year"</span>, <span class="at">order =</span> <span class="dv">3</span>))</span>
+<span id="cb79-7"><a href="#cb79-7"></a>    )</span>
+<span id="cb79-8"><a href="#cb79-8"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A mable: 1 x 1
+          p
+    &lt;model&gt;
+1 &lt;prophet&gt;</code></pre>
+</div>
+</div>
+</section>
+<section id="components-1" class="slide level2">
+<h2>Components</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb81"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1"></a>vic_elec_fit <span class="sc">%&gt;%</span></span>
+<span id="cb81-2"><a href="#cb81-2"></a>  <span class="fu">components</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb81-3"><a href="#cb81-3"></a>  <span class="fu">autoplot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-54-1.png" width="960" class="r-stretch quarto-figure-center"></section>
+<section id="residuals-1" class="slide level2">
+<h2>Residuals</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb82"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1"></a>vic_elec_fit <span class="sc">%&gt;%</span></span>
+<span id="cb82-2"><a href="#cb82-2"></a>  feasts<span class="sc">::</span><span class="fu">gg_tsresiduals</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+</div>
+<img data-src="Lec13_files/figure-revealjs/unnamed-chunk-55-1.png" width="960" class="r-stretch quarto-figure-center"><div class="footer footer-default">
+<p>Sta 344 - Fall 2022</p>
+</div>
+</section></section>
+    </div>
+  </div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="Lec13_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="Lec13_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="Lec13_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="Lec13_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="Lec13_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="Lec13_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="Lec13_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="Lec13_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="Lec13_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="Lec13_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': true,
+'previewLinksAuto': false,
+'smaller': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: false,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: true,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1050,
+
+        height: 700,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 0.1,
+
+        math: {
+          mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    
+    <script>
+      // htmlwidgets need to know to resize themselves when slides are shown/hidden.
+      // Fire the "slideenter" event (handled by htmlwidgets.js) when the current
+      // slide changes (different for each slide format).
+      (function () {
+        // dispatch for htmlwidgets
+        function fireSlideEnter() {
+          const event = window.document.createEvent("Event");
+          event.initEvent("slideenter", true, true);
+          window.document.dispatchEvent(event);
+        }
+
+        function fireSlideChanged(previousSlide, currentSlide) {
+          fireSlideEnter();
+
+          // dispatch for shiny
+          if (window.jQuery) {
+            if (previousSlide) {
+              window.jQuery(previousSlide).trigger("hidden");
+            }
+            if (currentSlide) {
+              window.jQuery(currentSlide).trigger("shown");
+            }
+          }
+        }
+
+        // hookup for slidy
+        if (window.w3c_slidy) {
+          window.w3c_slidy.add_observer(function (slide_num) {
+            // slide_num starts at position 1
+            fireSlideChanged(null, w3c_slidy.slides[slide_num - 1]);
+          });
+        }
+
+      })();
+    </script>
+
+    <script id="quarto-html-after-body" type="application/javascript">
+    window.document.addEventListener("DOMContentLoaded", function (event) {
+      const toggleBodyColorMode = (bsSheetEl) => {
+        const mode = bsSheetEl.getAttribute("data-mode");
+        const bodyEl = window.document.querySelector("body");
+        if (mode === "dark") {
+          bodyEl.classList.add("quarto-dark");
+          bodyEl.classList.remove("quarto-light");
+        } else {
+          bodyEl.classList.add("quarto-light");
+          bodyEl.classList.remove("quarto-dark");
+        }
+      }
+      const toggleBodyColorPrimary = () => {
+        const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+        if (bsSheetEl) {
+          toggleBodyColorMode(bsSheetEl);
+        }
+      }
+      toggleBodyColorPrimary();  
+      const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+      tabsets.forEach(function(tabset) {
+        const tabby = new Tabby('#' + tabset.id);
+      });
+      const clipboard = new window.ClipboardJS('.code-copy-button', {
+        target: function(trigger) {
+          return trigger.previousElementSibling;
+        }
+      });
+      clipboard.on('success', function(e) {
+        // button target
+        const button = e.trigger;
+        // don't keep focus
+        button.blur();
+        // flash "checked"
+        button.classList.add('code-copy-button-checked');
+        var currentTitle = button.getAttribute("title");
+        button.setAttribute("title", "Copied!");
+        let tooltip;
+        if (window.bootstrap) {
+          button.setAttribute("data-bs-toggle", "tooltip");
+          button.setAttribute("data-bs-placement", "left");
+          button.setAttribute("data-bs-title", "Copied!");
+          tooltip = new bootstrap.Tooltip(button, 
+            { trigger: "manual", 
+              customClass: "code-copy-button-tooltip",
+              offset: [0, -8]});
+          tooltip.show();    
+        }
+        setTimeout(function() {
+          if (tooltip) {
+            tooltip.hide();
+            button.removeAttribute("data-bs-title");
+            button.removeAttribute("data-bs-toggle");
+            button.removeAttribute("data-bs-placement");
+          }
+          button.setAttribute("title", currentTitle);
+          button.classList.remove('code-copy-button-checked');
+        }, 1000);
+        // clear code selection
+        e.clearSelection();
+      });
+      function tippyHover(el, contentFn) {
+        const config = {
+          allowHTML: true,
+          content: contentFn,
+          maxWidth: 500,
+          delay: 100,
+          arrow: false,
+          appendTo: function(el) {
+              return el.closest('section.slide') || el.parentElement;
+          },
+          interactive: true,
+          interactiveBorder: 10,
+          theme: 'quarto-reveal',
+          placement: 'bottom-start'
+        };
+          config['offset'] = [0,0];
+          config['maxWidth'] = 700;
+        window.tippy(el, config); 
+      }
+      const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+      for (var i=0; i<noterefs.length; i++) {
+        const ref = noterefs[i];
+        tippyHover(ref, function() {
+          // use id or data attribute instead here
+          let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+          try { href = new URL(href).hash; } catch {}
+          const id = href.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          return note.innerHTML;
+        });
+      }
+      const findCites = (el) => {
+        const parentEl = el.parentElement;
+        if (parentEl) {
+          const cites = parentEl.dataset.cites;
+          if (cites) {
+            return {
+              el,
+              cites: cites.split(' ')
+            };
+          } else {
+            return findCites(el.parentElement)
+          }
+        } else {
+          return undefined;
+        }
+      };
+      var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+      for (var i=0; i<bibliorefs.length; i++) {
+        const ref = bibliorefs[i];
+        const citeInfo = findCites(ref);
+        if (citeInfo) {
+          tippyHover(citeInfo.el, function() {
+            var popup = window.document.createElement('div');
+            citeInfo.cites.forEach(function(cite) {
+              var citeDiv = window.document.createElement('div');
+              citeDiv.classList.add('hanging-indent');
+              citeDiv.classList.add('csl-entry');
+              var biblioDiv = window.document.getElementById('ref-' + cite);
+              if (biblioDiv) {
+                citeDiv.innerHTML = biblioDiv.innerHTML;
+              }
+              popup.appendChild(citeDiv);
+            });
+            return popup.innerHTML;
+          });
+        }
+      }
+    });
+    </script>
+    
+
+</body></html>
