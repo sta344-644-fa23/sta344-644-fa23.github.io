@@ -21,7 +21,12 @@ schedule:
   - text: Matrix Cookbook
     link: https://www.math.uwaterloo.ca/~hwolkowi/matrixcookbook.pdf
   notes: 
-  
+
+- week: 2
+  day: 0
+  lecture: <i>No lab</i> - Labor day
+  lab: true
+
 - week: 2
   day: 2
   lecture: Diagnostics and Model Evaluation
