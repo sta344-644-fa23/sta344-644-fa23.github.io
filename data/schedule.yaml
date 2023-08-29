@@ -10,7 +10,7 @@ schedule:
 - week: 1
   day: 2
   lecture: Introduction & Syllabus
-  slides: 
+  slides: Lec01
   screencast: 
 
 - week: 1
