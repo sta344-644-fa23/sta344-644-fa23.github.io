@@ -11,7 +11,7 @@ schedule:
   day: 2
   lecture: Introduction & Syllabus
   slides: Lec01
-  screencast: 
+  screencast: https://youtu.be/o1O5tqvwA_w
 
 - week: 1
   day: 4
