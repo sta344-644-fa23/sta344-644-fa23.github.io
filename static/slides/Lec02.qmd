@@ -1,0 +1,395 @@
+---
+title: "Linear Models"
+subtitle: "Lecture 02"
+author: "Dr. Colin Rundel"
+footer: "Sta 344/644 - Fall 2023"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+execute: 
+  echo: true
+  warning: false
+---
+
+
+```{r setup}
+#| include: false
+library(tidyverse)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+```
+
+
+## Linear Models Basics
+
+Pretty much everything we a going to see in this course will fall under the umbrella of either linear or generalized linear models. 
+
+In previous classes most of your time has likely been spent with the *iid* case,
+
+$$ y_i = \beta_0 + \beta_1 \, x_{i1} + \cdots + \beta_p \, x_{ip} + \epsilon_i $$
+$$ \epsilon_i \overset{iid}{\sim} N(0, \sigma^2) $$
+
+these models can also be expressed as,
+
+$$ y_i \overset{iid}{\sim} N(\beta_0 + \beta_1 \, x_{i1} + \cdots + \beta_p \, x_{ip},~ \sigma^2) $$
+
+## Some notes on notation
+
+* Observed values and scalars will usually be lower case letters, e.g. $x_i, y_i, z_{ij}$.
+
+* Parameters will usually be greek symbols, e.g.  $\mu, \sigma, \rho$.
+
+* Vectors and matrices will be shown in bold, e.g. $\boldsymbol{\mu}, \boldsymbol{X}, \boldsymbol{\Sigma}$. 
+
+* Elements of a matrix (or vector) will be referenced with {}s, e.g.$\big\{ \boldsymbol{Y} \big\}_{i}, \big\{ \boldsymbol{\Sigma} \big\}_{ij}$
+
+* Random variables will be indicated by \~, e.g. $x \sim \text{Norm}(0,1), z \sim \text{Gamma}(1,1)$
+
+* Matrix / vector transposes will be indicated with $'$, e.g. $\boldsymbol{A}', (1-\boldsymbol{B})'$
+
+
+## Linear model - matrix notation
+
+We can also express a linear model using matrix notation as follows,
+
+$$
+\begin{aligned}
+\underset{n \times 1}{\boldsymbol{Y}} = \underset{n \times p}{\boldsymbol{X}} \, \underset{p \times 1}{\boldsymbol{\beta}} + \underset{n \times 1}{\boldsymbol{\epsilon}} \\
+\underset{n \times 1}{\boldsymbol{\epsilon}} \sim N(\underset{n \times 1}{\boldsymbol{0}}, \; \sigma^2 \underset{n \times n}{\mathbb{1}_n})
+\end{aligned}
+$$
+
+or alternatively as,
+
+$$ 
+\underset{n \times 1}{\boldsymbol{Y}} \sim N\left(\underset{n \times p}{\boldsymbol{X}} \, \underset{p \times 1}{\boldsymbol{\beta}},~  \sigma^2 \underset{n \times n}{\mathbb{1}_n}\right)
+$$
+
+::: {.aside}
+Where possible I will include the dimensions of matrices and vectors as these provide a useful sanity check that the dimensions conform.
+:::
+
+
+## Multivariate Normal Distribution - Review
+
+For an $n$-dimension multivate normal distribution with covariance $\boldsymbol{\Sigma}$ (positive semidefinite) can be written as
+
+$$
+\underset{n \times 1}{\boldsymbol{Y}} \sim N(\underset{n \times 1}{\boldsymbol{\mu}}, \; \underset{n \times n}{\boldsymbol{\Sigma}}) 
+$$
+
+where $\big\{\boldsymbol{\Sigma}\big\}_{ij} = \rho_{ij} \sigma_i \sigma_j$
+
+$$
+\begin{pmatrix}
+y_1\\ y_2\\ \vdots\\ y_n
+\end{pmatrix}
+\sim N\left(
+\begin{pmatrix}
+\mu_1\\ \mu_2\\ \vdots\\ \mu_n
+\end{pmatrix}, \,
+\begin{pmatrix}
+\rho_{11}\sigma_1\sigma_1 & \rho_{12}\sigma_1\sigma_2 & \cdots & \rho_{1n}\sigma_1\sigma_n \\
+\rho_{21}\sigma_2\sigma_1 & \rho_{22}\sigma_2\sigma_2 & \cdots & \rho_{2n}\sigma_2\sigma_n\\
+\vdots & \vdots & \ddots & \vdots \\
+\rho_{n1}\sigma_n\sigma_1 & \rho_{n2}\sigma_n\sigma_2 & \cdots & \rho_{nn}\sigma_n\sigma_n \\
+\end{pmatrix}
+\right)
+$$
+
+
+## Multivariate Normal Distribution - Density
+
+For the $n$ dimensional multivate normal given on the last slide, its density is given by
+
+$$
+f\big(\boldsymbol{Y} | \boldsymbol{\mu}, \boldsymbol{\Sigma}\big) = (2\pi)^{-n/2} \; \det(\boldsymbol{\Sigma})^{-1/2} \; \exp{\left(-\frac{1}{2} \underset{1 \times n}{(\boldsymbol{Y}-\boldsymbol{\mu})'} \underset{n \times n}{\boldsymbol{\Sigma}^{-1}} \underset{n \times 1}{(\boldsymbol{Y}-\boldsymbol{\mu})}\right)} 
+$$
+
+and its log density is given by
+
+$$
+\log f\big(\boldsymbol{Y} | \boldsymbol{\mu}, \boldsymbol{\Sigma}\big) = -\frac{n}{2} \log 2\pi - \frac{1}{2} \log \det(\boldsymbol{\Sigma}) - \frac{1}{2} \underset{1 \times n}{(\boldsymbol{Y}-\boldsymbol{\mu})'} \underset{n \times n}{\boldsymbol{\Sigma}^{-1}} \underset{n \times 1}{(\boldsymbol{Y}-\boldsymbol{\mu})}
+$$
+
+
+## Some useful matrix identities
+
+The following come from the [Matrix Cookbook](https://www.math.uwaterloo.ca/~hwolkowi/matrixcookbook.pdf) Chapters 1 & 2.
+
+:::: {.columns}
+::: {.column width='50%'}
+$$
+\begin{aligned}
+(\boldsymbol{A} \boldsymbol{B})' &=  \boldsymbol{B}' \boldsymbol{A}' \\
+(\boldsymbol{A} + \boldsymbol{B})' &=  \boldsymbol{A}' + \boldsymbol{B}' \\
+(\boldsymbol{A}')^{-1} &= (\boldsymbol{A}^{-1})' \\
+(\boldsymbol{A}\boldsymbol{B}\boldsymbol{C}\ldots)^{-1} &= \ldots\boldsymbol{C}^{-1}  \boldsymbol{B}^{-1} \boldsymbol{A}^{-1} \\
+\\
+\det(\boldsymbol{A}') &= \det(\boldsymbol{A}) \\
+\det(\boldsymbol{A} \boldsymbol{B}) &= \det(\boldsymbol{A})  \det(\boldsymbol{B}) \\
+\det(c\boldsymbol{A}) &= c^n \det(\boldsymbol{A}) \\
+\det(\boldsymbol{A}^n) &= \det(\boldsymbol{A})^n \\
+\end{aligned}
+$$
+:::
+
+::: {.column width='50%'}
+
+$$
+\begin{aligned}
+\partial \boldsymbol{A} &= 0 \qquad\qquad \text{(where $\boldsymbol{A}$ is constant)}\\
+\partial (a\boldsymbol{X}) &= a (\partial \boldsymbol{A})\\
+\partial (\boldsymbol{X} + \boldsymbol{Y}) &= \partial \boldsymbol{X} + \partial \boldsymbol{Y} \\
+\partial (\boldsymbol{X} \boldsymbol{Y}) &= (\partial \boldsymbol{X}) \boldsymbol{Y} + \boldsymbol{X} (\partial \boldsymbol{Y}) \\
+\partial (\boldsymbol{X}') &= (\partial \boldsymbol{X})' \\
+\partial (\boldsymbol{X}'\boldsymbol{A}\boldsymbol{X}) &= (\boldsymbol{A} + \boldsymbol{A}')\boldsymbol{X} \\
+\end{aligned}
+$$
+:::
+::::
+
+
+
+## Maximum Likelihood - $\boldsymbol{\beta}$ (iid)
+
+
+
+## Maximum Likelihood - $\sigma^2$ (iid)
+
+
+
+
+# A Quick Example
+
+## Parameters -> Synthetic Data
+
+Lets generate some simulated data where the underlying model is known and see how various regression procedures function.
+
+:::: {.columns}
+::: {.column width='50%'}
+
+$$ Y_i = \beta_0 + \beta_1 X_{1i} + \beta_2 X_{2i} + \beta_3 X_{3i} +\epsilon_i $$ 
+$$ \epsilon_i \sim N(0,1) $$
+$$ \beta_0 = 0.7,~ \beta_1 = 1.5,~ \beta_2 = -2.2,~ \beta_3 = 0.1 $$
+
+:::
+
+::: {.column width='50%' .small}
+```{r echo=TRUE}
+set.seed(1234)
+n = 100
+beta = c(0.7, 1.5, -2.2, 0.1)
+sigma = 1
+eps = rnorm(n, 0, sd = sigma)
+
+d = data_frame(
+  X1 = rt(n,df=5),
+  X2 = rt(n,df=5),
+  X3 = rt(n,df=5)
+) |>
+  mutate(
+    Y = beta[1] + beta[2]*X1 + beta[3]*X2 + beta[4]*X3 + eps
+  )
+```
+:::
+::::
+
+
+
+## Model Matrix
+
+```{r echo=TRUE}
+X = model.matrix(~X1+X2+X3, d) 
+tbl_df(X)
+```
+
+## Pairs plot
+
+```{r echo=TRUE, out.width="0.8\\textwidth"}
+GGally::ggpairs(d, progress = FALSE)
+```
+
+
+## Least squares fit
+
+Let $\hat{\boldsymbol{Y}}$ be our estimate for $\boldsymbol{Y}$ based on our estimate of $\boldsymbol{\beta}$,
+$$ \hat{\boldsymbol{Y}} = \hat{\beta}_0 + \hat{\beta}_1 \, \boldsymbol{X}_{1} + \hat{\beta}_2 \, \boldsymbol{X}_{2} + \hat{\beta}_3 \, \boldsymbol{X}_{3} = \boldsymbol{X}\, \hat{\boldsymbol{\beta}} $$
+
+. . .
+
+The least squares estimate, $\hat{\boldsymbol{\beta}}_{ls}$, is given by
+$$ \hat{\boldsymbol{\beta}}_{ls} = \underset{\boldsymbol{\beta}}{\text{argmin}} \sum_{i=1}^n \left( Y_i - \boldsymbol{X}_{i\cdot} \boldsymbol{\beta} \right)^2 $$
+
+. . .
+
+Previously we showed that,
+$$ \hat{\boldsymbol{\beta}}_{ls} = (\boldsymbol{X}' \boldsymbol{X})^{-1} \boldsymbol{X}' \, \boldsymbol{Y} $$
+
+## Beta estimate
+
+```{r echo=TRUE}
+(beta_hat = solve(t(X) %*% X, t(X)) %*% d$Y)
+```
+
+. . .
+
+```{r echo=TRUE}
+l = lm(Y ~ X1 + X2 + X3, data=d)
+l$coefficients
+```
+
+# Bayesian regression model
+
+## Basics of Bayes
+
+We will be fitting the same model as described above, we just need to provide some additional information in the form of a prior for our model parameters (the $\beta$s and $\sigma^2$).
+
+$$
+\begin{aligned}
+f(\theta | x) &= \frac{f(x | \theta) \; \pi(\theta)}{\int f(x|\theta) d\theta} \\
+&\propto f(x|\theta) \; \pi(\theta)
+\end{aligned}
+$$
+
+. . .
+
+* The posterior ($f(\theta|x)$) reflects an updated set of beliefs about the parameters ($\theta$) based on the observed data ($x$) via the likelihood ($f(x|\theta)$)
+
+* Most of the time the posterior will not have a closed form so we will use a technique like MCMC to draw samples
+
+* Our inference will be based on the posterior *distribution* and not a point estimate (e.g. MLE)
+
+## `brms`
+
+We will be using a package called [brms](https://paul-buerkner.github.io/brms/) for most of our Bayesian model fitting
+
+- it has a convenient model specification syntax
+
+- mostly sensible prior defaults
+
+- supports most of the model types we will be exploring
+
+- uses Stan behind the scenes
+
+
+## brms + linear regression
+
+::: {.small}
+```{r}
+#| echo: true
+#| warning: false
+b = brms::brm(Y ~ X1 + X2 + X3, data=d, chains = 2, silent = 2)
+```
+:::
+
+## Model results
+
+::: {.small}
+```{r echo=TRUE}
+b
+```
+:::
+
+## Model visual summary
+
+```{r}
+plot(b)
+```
+
+
+## What about the priors?
+
+::: {.medium}
+```{r}
+brms::prior_summary(b)
+```
+:::
+
+## tidybayes
+
+::: {.small}
+```{r}
+(post = b |>
+  tidybayes::gather_draws(b_Intercept, b_X1, b_X2, b_X3, sigma)
+)
+```
+:::
+
+## tidybayes - posterior summaries
+
+::: {.small}
+```{r}
+(post_sum = post |>
+  group_by(.variable, .chain) |>
+  summarize(
+    post_mean = mean(.value),
+    post_median = median(.value)
+  )
+)
+```
+:::
+
+
+## tidybayes + ggplot - traceplot
+
+::: {.small}
+```{r}
+post |>
+  ggplot(aes(x=.iteration, y=.value, color=as.character(.chain))) +
+  geom_line(alpha=0.33) +
+  facet_wrap(~.variable, scale="free_y") +
+  labs(color="Chain")
+```
+:::
+
+## Tidy Bayes + ggplot - Density plot
+
+::: {.small}
+```{r}
+post |>
+  ggplot(aes(x=.value, fill=as.character(.chain))) +
+  geom_density(alpha=0.5) +
+  facet_wrap(~.variable, scale="free_x") +
+  labs(fill="Chain")
+```
+:::
+
+## Comparing Approaches
+
+::: {.medium}
+```{r}
+#| output-location: column-fragment
+(pt_est = post_sum |> 
+  filter(.chain == 1) |>
+  ungroup() |>
+  mutate(
+    truth = c(beta, sigma),
+    ols   = c(l$coefficients, 
+              sd(l$residuals))
+  ) |>
+  select(
+    .variable, truth, 
+    ols, post_mean
+  )
+)
+```
+:::
+
+## Comparing Approaches
+
+```{r}
+#| output-location: slide
+post |>
+  filter(.chain == 1) |>
+  ggplot(aes(x=.value)) +
+  geom_density(alpha=0.5, fill="lightblue") +
+  facet_wrap(~.variable, scale="free_x") +
+  geom_vline(
+    data = pt_est |> tidyr::pivot_longer(cols = truth:post_mean, names_to = "pt_est", values_to = "value"), 
+    aes(xintercept = value, color=pt_est),
+    alpha = 0.5, size=1.5
+  )
+```

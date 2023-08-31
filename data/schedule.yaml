@@ -16,7 +16,7 @@ schedule:
 - week: 1
   day: 4
   lecture: Linear Models
-  slides: 
+  slides: Lec02
   readings:
   - text: Matrix Cookbook
     link: https://www.math.uwaterloo.ca/~hwolkowi/matrixcookbook.pdf
