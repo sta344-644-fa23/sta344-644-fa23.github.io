@@ -20,7 +20,8 @@ schedule:
   readings:
   - text: Matrix Cookbook
     link: https://www.math.uwaterloo.ca/~hwolkowi/matrixcookbook.pdf
-  notes: 
+  notes: "<a href='slides/Lec02-notes.pdf'>Notes</a>"
+  screencast: https://youtu.be/RYDPkeTh1oI
 
 - week: 2
   day: 0

@@ -495,7 +495,7 @@ f\big(\boldsymbol{Y} | \boldsymbol{\mu}, \boldsymbol{\Sigma}\big) = (2\pi)^{-n/2
 <p><span class="math display">\[
 \begin{aligned}
 \partial \boldsymbol{A} &amp;= 0 \qquad\qquad \text{(where $\boldsymbol{A}$ is constant)}\\
-\partial (a\boldsymbol{X}) &amp;= a (\partial \boldsymbol{A})\\
+\partial (a\boldsymbol{X}) &amp;= a (\partial \boldsymbol{X})\\
 \partial (\boldsymbol{X} + \boldsymbol{Y}) &amp;= \partial \boldsymbol{X} + \partial \boldsymbol{Y} \\
 \partial (\boldsymbol{X} \boldsymbol{Y}) &amp;= (\partial \boldsymbol{X}) \boldsymbol{Y} + \boldsymbol{X} (\partial \boldsymbol{Y}) \\
 \partial (\boldsymbol{X}') &amp;= (\partial \boldsymbol{X})' \\
@@ -530,7 +530,7 @@ f\big(\boldsymbol{Y} | \boldsymbol{\mu}, \boldsymbol{\Sigma}\big) = (2\pi)^{-n/2
 <span id="cb1-4"><a href="#cb1-4"></a>sigma <span class="ot">=</span> <span class="dv">1</span></span>
 <span id="cb1-5"><a href="#cb1-5"></a>eps <span class="ot">=</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="at">sd =</span> sigma)</span>
 <span id="cb1-6"><a href="#cb1-6"></a></span>
-<span id="cb1-7"><a href="#cb1-7"></a>d <span class="ot">=</span> <span class="fu">data_frame</span>(</span>
+<span id="cb1-7"><a href="#cb1-7"></a>d <span class="ot">=</span> <span class="fu">tibble</span>(</span>
 <span id="cb1-8"><a href="#cb1-8"></a>  <span class="at">X1 =</span> <span class="fu">rt</span>(n,<span class="at">df=</span><span class="dv">5</span>),</span>
 <span id="cb1-9"><a href="#cb1-9"></a>  <span class="at">X2 =</span> <span class="fu">rt</span>(n,<span class="at">df=</span><span class="dv">5</span>),</span>
 <span id="cb1-10"><a href="#cb1-10"></a>  <span class="at">X3 =</span> <span class="fu">rt</span>(n,<span class="at">df=</span><span class="dv">5</span>)</span>
@@ -546,7 +546,7 @@ f\big(\boldsymbol{Y} | \boldsymbol{\mu}, \boldsymbol{\Sigma}\big) = (2\pi)^{-n/2
 <h2>Model Matrix</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>X <span class="ot">=</span> <span class="fu">model.matrix</span>(<span class="sc">~</span>X1<span class="sc">+</span>X2<span class="sc">+</span>X3, d) </span>
-<span id="cb2-2"><a href="#cb2-2"></a><span class="fu">tbl_df</span>(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="fu">as_tibble</span>(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 100 × 4
    `(Intercept)`      X1       X2      X3
@@ -643,11 +643,34 @@ f(\theta | x) &amp;= \frac{f(x | \theta) \; \pi(\theta)}{\int f(x|\theta) d\thet
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>b <span class="ot">=</span> brms<span class="sc">::</span><span class="fu">brm</span>(Y <span class="sc">~</span> X1 <span class="sc">+</span> X2 <span class="sc">+</span> X3, <span class="at">data=</span>d, <span class="at">chains =</span> <span class="dv">2</span>, <span class="at">silent =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>
+<pre><code>Running /opt/homebrew/Cellar/r/4.3.1/lib/R/bin/R CMD SHLIB foo.c
+using C compiler: ‘Apple clang version 14.0.3 (clang-1403.0.22.14.1)’
+using SDK: ‘’
+clang -I"/opt/homebrew/Cellar/r/4.3.1/lib/R/include" -DNDEBUG   -I"/Users/rundel/Library/R/arm64/4.3/library/Rcpp/include/"  -I"/Users/rundel/Library/R/arm64/4.3/library/RcppEigen/include/"  -I"/Users/rundel/Library/R/arm64/4.3/library/RcppEigen/include/unsupported"  -I"/Users/rundel/Library/R/arm64/4.3/library/BH/include" -I"/Users/rundel/Library/R/arm64/4.3/library/StanHeaders/include/src/"  -I"/Users/rundel/Library/R/arm64/4.3/library/StanHeaders/include/"  -I"/Users/rundel/Library/R/arm64/4.3/library/RcppParallel/include/"  -I"/Users/rundel/Library/R/arm64/4.3/library/rstan/include" -DEIGEN_NO_DEBUG  -DBOOST_DISABLE_ASSERTS  -DBOOST_PENDING_INTEGER_LOG2_HPP  -DSTAN_THREADS  -DBOOST_NO_AUTO_PTR  -include '/Users/rundel/Library/R/arm64/4.3/library/StanHeaders/include/stan/math/prim/fun/Eigen.hpp'  -D_REENTRANT -DRCPP_PARALLEL_USE_TBB=1   -I/opt/homebrew/include    -fPIC  -I/opt/homebrew/include -c foo.c -o foo.o
+In file included from &lt;built-in&gt;:1:
+In file included from /Users/rundel/Library/R/arm64/4.3/library/StanHeaders/include/stan/math/prim/fun/Eigen.hpp:22:
+In file included from /Users/rundel/Library/R/arm64/4.3/library/RcppEigen/include/Eigen/Dense:1:
+In file included from /Users/rundel/Library/R/arm64/4.3/library/RcppEigen/include/Eigen/Core:88:
+/Users/rundel/Library/R/arm64/4.3/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:1: error: unknown type name 'namespace'
+namespace Eigen {
+^
+/Users/rundel/Library/R/arm64/4.3/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:628:16: error: expected ';' after top level declarator
+namespace Eigen {
+               ^
+               ;
+In file included from &lt;built-in&gt;:1:
+In file included from /Users/rundel/Library/R/arm64/4.3/library/StanHeaders/include/stan/math/prim/fun/Eigen.hpp:22:
+In file included from /Users/rundel/Library/R/arm64/4.3/library/RcppEigen/include/Eigen/Dense:1:
+/Users/rundel/Library/R/arm64/4.3/library/RcppEigen/include/Eigen/Core:96:10: fatal error: 'complex' file not found
+#include &lt;complex&gt;
+         ^~~~~~~~~
+3 errors generated.
+make[1]: *** [foo.o] Error 1
+
 SAMPLING FOR MODEL '5b915c1884e4d61e6f4b93f33ea6a1dc' NOW (CHAIN 1).
 Chain 1: 
-Chain 1: Gradient evaluation took 9e-06 seconds
-Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.09 seconds.
+Chain 1: Gradient evaluation took 1e-05 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
 Chain 1: Adjust your expectations accordingly!
 Chain 1: 
 Chain 1: 
@@ -664,15 +687,15 @@ Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
 Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 1: 
-Chain 1:  Elapsed Time: 0.011811 seconds (Warm-up)
-Chain 1:                0.01233 seconds (Sampling)
-Chain 1:                0.024141 seconds (Total)
+Chain 1:  Elapsed Time: 0.011905 seconds (Warm-up)
+Chain 1:                0.012119 seconds (Sampling)
+Chain 1:                0.024024 seconds (Total)
 Chain 1: 
 
 SAMPLING FOR MODEL '5b915c1884e4d61e6f4b93f33ea6a1dc' NOW (CHAIN 2).
 Chain 2: 
-Chain 2: Gradient evaluation took 2e-06 seconds
-Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds.
+Chain 2: Gradient evaluation took 1e-06 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.01 seconds.
 Chain 2: Adjust your expectations accordingly!
 Chain 2: 
 Chain 2: 
@@ -689,9 +712,9 @@ Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
 Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 2: 
-Chain 2:  Elapsed Time: 0.011835 seconds (Warm-up)
-Chain 2:                0.011937 seconds (Sampling)
-Chain 2:                0.023772 seconds (Total)
+Chain 2:  Elapsed Time: 0.011644 seconds (Warm-up)
+Chain 2:                0.012577 seconds (Sampling)
+Chain 2:                0.024221 seconds (Total)
 Chain 2: </code></pre>
 </div>
 </div>
@@ -712,14 +735,14 @@ Formula: Y ~ X1 + X2 + X3
 
 Population-Level Effects: 
           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-Intercept     0.55      0.11     0.34     0.77 1.00     2446     1206
-X1            1.47      0.09     1.30     1.64 1.00     2501     1408
-X2           -2.18      0.08    -2.32    -2.02 1.00     2280     1661
-X3            0.15      0.08    -0.01     0.31 1.00     2354     1455
+Intercept     0.55      0.10     0.36     0.75 1.00     2908     1697
+X1            1.47      0.09     1.29     1.64 1.00     2361     1437
+X2           -2.18      0.07    -2.32    -2.02 1.00     2366     1528
+X3            0.15      0.08    -0.01     0.30 1.00     2681     1479
 
 Family Specific Parameters: 
       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-sigma     1.03      0.08     0.90     1.19 1.00     2039     1556
+sigma     1.03      0.08     0.89     1.19 1.00     2691     1361
 
 Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
 and Tail_ESS are effective sample size measures, and Rhat is the potential
@@ -764,16 +787,16 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 # Groups:   .variable [5]
    .chain .iteration .draw .variable   .value
     &lt;int&gt;      &lt;int&gt; &lt;int&gt; &lt;chr&gt;        &lt;dbl&gt;
- 1      1          1     1 b_Intercept  0.682
- 2      1          2     2 b_Intercept  0.575
- 3      1          3     3 b_Intercept  0.535
- 4      1          4     4 b_Intercept  0.545
- 5      1          5     5 b_Intercept  0.551
- 6      1          6     6 b_Intercept  0.554
- 7      1          7     7 b_Intercept  0.516
- 8      1          8     8 b_Intercept  0.582
- 9      1          9     9 b_Intercept  0.575
-10      1         10    10 b_Intercept  0.422
+ 1      1          1     1 b_Intercept  0.440
+ 2      1          2     2 b_Intercept  0.524
+ 3      1          3     3 b_Intercept  0.544
+ 4      1          4     4 b_Intercept  0.502
+ 5      1          5     5 b_Intercept  0.567
+ 6      1          6     6 b_Intercept  0.569
+ 7      1          7     7 b_Intercept  0.373
+ 8      1          8     8 b_Intercept  0.731
+ 9      1          9     9 b_Intercept  0.379
+10      1         10    10 b_Intercept  0.514
 # ℹ 9,990 more rows</code></pre>
 </div>
 </div>
@@ -787,24 +810,24 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <span id="cb18-2"><a href="#cb18-2"></a>  <span class="fu">group_by</span>(.variable, .chain) <span class="sc">|&gt;</span></span>
 <span id="cb18-3"><a href="#cb18-3"></a>  <span class="fu">summarize</span>(</span>
 <span id="cb18-4"><a href="#cb18-4"></a>    <span class="at">post_mean =</span> <span class="fu">mean</span>(.value),</span>
-<span id="cb18-5"><a href="#cb18-5"></a>    <span class="at">post_median =</span> <span class="fu">median</span>(.value)</span>
-<span id="cb18-6"><a href="#cb18-6"></a>  )</span>
-<span id="cb18-7"><a href="#cb18-7"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb18-5"><a href="#cb18-5"></a>    <span class="at">post_median =</span> <span class="fu">median</span>(.value),</span>
+<span id="cb18-6"><a href="#cb18-6"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb18-7"><a href="#cb18-7"></a>  )</span>
+<span id="cb18-8"><a href="#cb18-8"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 4
-# Groups:   .variable [5]
    .variable   .chain post_mean post_median
    &lt;chr&gt;        &lt;int&gt;     &lt;dbl&gt;       &lt;dbl&gt;
- 1 b_Intercept      1     0.551       0.551
- 2 b_Intercept      2     0.552       0.555
+ 1 b_Intercept      1     0.556       0.555
+ 2 b_Intercept      2     0.546       0.546
  3 b_X1             1     1.47        1.47 
  4 b_X1             2     1.47        1.47 
- 5 b_X2             1    -2.17       -2.17 
+ 5 b_X2             1    -2.18       -2.18 
  6 b_X2             2    -2.18       -2.18 
- 7 b_X3             1     0.155       0.155
- 8 b_X3             2     0.153       0.155
+ 7 b_X3             1     0.157       0.157
+ 8 b_X3             2     0.151       0.149
  9 sigma            1     1.03        1.02 
-10 sigma            2     1.03        1.03 </code></pre>
+10 sigma            2     1.03        1.02 </code></pre>
 </div>
 </div>
 </div>
@@ -862,10 +885,10 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <pre><code># A tibble: 5 × 4
   .variable   truth    ols post_mean
   &lt;chr&gt;       &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;
-1 b_Intercept   0.7  0.552     0.551
+1 b_Intercept   0.7  0.552     0.556
 2 b_X1          1.5  1.47      1.47 
-3 b_X2         -2.2 -2.18     -2.17 
-4 b_X3          0.1  0.154     0.155
+3 b_X2         -2.2 -2.18     -2.18 
+4 b_X3          0.1  0.154     0.157
 5 sigma         1    1.00      1.03 </code></pre>
 </div>
 </div>
@@ -883,7 +906,7 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <span id="cb24-6"><a href="#cb24-6"></a>  <span class="fu">geom_vline</span>(</span>
 <span id="cb24-7"><a href="#cb24-7"></a>    <span class="at">data =</span> pt_est <span class="sc">|&gt;</span> tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="at">cols =</span> truth<span class="sc">:</span>post_mean, <span class="at">names_to =</span> <span class="st">"pt_est"</span>, <span class="at">values_to =</span> <span class="st">"value"</span>), </span>
 <span id="cb24-8"><a href="#cb24-8"></a>    <span class="fu">aes</span>(<span class="at">xintercept =</span> value, <span class="at">color=</span>pt_est),</span>
-<span id="cb24-9"><a href="#cb24-9"></a>    <span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">size=</span><span class="fl">1.5</span></span>
+<span id="cb24-9"><a href="#cb24-9"></a>    <span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">linewidth=</span><span class="fl">1.5</span></span>
 <span id="cb24-10"><a href="#cb24-10"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 

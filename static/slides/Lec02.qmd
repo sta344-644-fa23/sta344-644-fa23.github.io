@@ -141,7 +141,7 @@ $$
 $$
 \begin{aligned}
 \partial \boldsymbol{A} &= 0 \qquad\qquad \text{(where $\boldsymbol{A}$ is constant)}\\
-\partial (a\boldsymbol{X}) &= a (\partial \boldsymbol{A})\\
+\partial (a\boldsymbol{X}) &= a (\partial \boldsymbol{X})\\
 \partial (\boldsymbol{X} + \boldsymbol{Y}) &= \partial \boldsymbol{X} + \partial \boldsymbol{Y} \\
 \partial (\boldsymbol{X} \boldsymbol{Y}) &= (\partial \boldsymbol{X}) \boldsymbol{Y} + \boldsymbol{X} (\partial \boldsymbol{Y}) \\
 \partial (\boldsymbol{X}') &= (\partial \boldsymbol{X})' \\
