@@ -185,7 +185,7 @@ beta = c(0.7, 1.5, -2.2, 0.1)
 sigma = 1
 eps = rnorm(n, 0, sd = sigma)
 
-d = data_frame(
+d = tibble(
   X1 = rt(n,df=5),
   X2 = rt(n,df=5),
   X3 = rt(n,df=5)
@@ -390,6 +390,6 @@ post |>
   geom_vline(
     data = pt_est |> tidyr::pivot_longer(cols = truth:post_mean, names_to = "pt_est", values_to = "value"), 
     aes(xintercept = value, color=pt_est),
-    alpha = 0.5, size=1.5
+    alpha = 0.5, linewidth=1.5
   )
 ```
