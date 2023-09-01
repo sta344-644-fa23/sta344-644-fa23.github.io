@@ -530,7 +530,7 @@ f\big(\boldsymbol{Y} | \boldsymbol{\mu}, \boldsymbol{\Sigma}\big) = (2\pi)^{-n/2
 <span id="cb1-4"><a href="#cb1-4"></a>sigma <span class="ot">=</span> <span class="dv">1</span></span>
 <span id="cb1-5"><a href="#cb1-5"></a>eps <span class="ot">=</span> <span class="fu">rnorm</span>(n, <span class="dv">0</span>, <span class="at">sd =</span> sigma)</span>
 <span id="cb1-6"><a href="#cb1-6"></a></span>
-<span id="cb1-7"><a href="#cb1-7"></a>d <span class="ot">=</span> <span class="fu">data_frame</span>(</span>
+<span id="cb1-7"><a href="#cb1-7"></a>d <span class="ot">=</span> <span class="fu">tibble</span>(</span>
 <span id="cb1-8"><a href="#cb1-8"></a>  <span class="at">X1 =</span> <span class="fu">rt</span>(n,<span class="at">df=</span><span class="dv">5</span>),</span>
 <span id="cb1-9"><a href="#cb1-9"></a>  <span class="at">X2 =</span> <span class="fu">rt</span>(n,<span class="at">df=</span><span class="dv">5</span>),</span>
 <span id="cb1-10"><a href="#cb1-10"></a>  <span class="at">X3 =</span> <span class="fu">rt</span>(n,<span class="at">df=</span><span class="dv">5</span>)</span>
@@ -546,7 +546,7 @@ f\big(\boldsymbol{Y} | \boldsymbol{\mu}, \boldsymbol{\Sigma}\big) = (2\pi)^{-n/2
 <h2>Model Matrix</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>X <span class="ot">=</span> <span class="fu">model.matrix</span>(<span class="sc">~</span>X1<span class="sc">+</span>X2<span class="sc">+</span>X3, d) </span>
-<span id="cb2-2"><a href="#cb2-2"></a><span class="fu">tbl_df</span>(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="fu">as_tibble</span>(X)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 100 × 4
    `(Intercept)`      X1       X2      X3
@@ -646,8 +646,8 @@ f(\theta | x) &amp;= \frac{f(x | \theta) \; \pi(\theta)}{\int f(x|\theta) d\thet
 <pre><code>
 SAMPLING FOR MODEL '5b915c1884e4d61e6f4b93f33ea6a1dc' NOW (CHAIN 1).
 Chain 1: 
-Chain 1: Gradient evaluation took 9e-06 seconds
-Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.09 seconds.
+Chain 1: Gradient evaluation took 1e-05 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
 Chain 1: Adjust your expectations accordingly!
 Chain 1: 
 Chain 1: 
@@ -664,15 +664,15 @@ Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
 Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 1: 
-Chain 1:  Elapsed Time: 0.011811 seconds (Warm-up)
-Chain 1:                0.01233 seconds (Sampling)
-Chain 1:                0.024141 seconds (Total)
+Chain 1:  Elapsed Time: 0.011769 seconds (Warm-up)
+Chain 1:                0.012256 seconds (Sampling)
+Chain 1:                0.024025 seconds (Total)
 Chain 1: 
 
 SAMPLING FOR MODEL '5b915c1884e4d61e6f4b93f33ea6a1dc' NOW (CHAIN 2).
 Chain 2: 
-Chain 2: Gradient evaluation took 2e-06 seconds
-Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds.
+Chain 2: Gradient evaluation took 5e-06 seconds
+Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.05 seconds.
 Chain 2: Adjust your expectations accordingly!
 Chain 2: 
 Chain 2: 
@@ -689,8 +689,8 @@ Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
 Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 Chain 2: 
-Chain 2:  Elapsed Time: 0.011835 seconds (Warm-up)
-Chain 2:                0.011937 seconds (Sampling)
+Chain 2:  Elapsed Time: 0.011768 seconds (Warm-up)
+Chain 2:                0.012004 seconds (Sampling)
 Chain 2:                0.023772 seconds (Total)
 Chain 2: </code></pre>
 </div>
@@ -787,12 +787,12 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <span id="cb18-2"><a href="#cb18-2"></a>  <span class="fu">group_by</span>(.variable, .chain) <span class="sc">|&gt;</span></span>
 <span id="cb18-3"><a href="#cb18-3"></a>  <span class="fu">summarize</span>(</span>
 <span id="cb18-4"><a href="#cb18-4"></a>    <span class="at">post_mean =</span> <span class="fu">mean</span>(.value),</span>
-<span id="cb18-5"><a href="#cb18-5"></a>    <span class="at">post_median =</span> <span class="fu">median</span>(.value)</span>
-<span id="cb18-6"><a href="#cb18-6"></a>  )</span>
-<span id="cb18-7"><a href="#cb18-7"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb18-5"><a href="#cb18-5"></a>    <span class="at">post_median =</span> <span class="fu">median</span>(.value),</span>
+<span id="cb18-6"><a href="#cb18-6"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb18-7"><a href="#cb18-7"></a>  )</span>
+<span id="cb18-8"><a href="#cb18-8"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 4
-# Groups:   .variable [5]
    .variable   .chain post_mean post_median
    &lt;chr&gt;        &lt;int&gt;     &lt;dbl&gt;       &lt;dbl&gt;
  1 b_Intercept      1     0.551       0.551
@@ -883,7 +883,7 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <span id="cb24-6"><a href="#cb24-6"></a>  <span class="fu">geom_vline</span>(</span>
 <span id="cb24-7"><a href="#cb24-7"></a>    <span class="at">data =</span> pt_est <span class="sc">|&gt;</span> tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="at">cols =</span> truth<span class="sc">:</span>post_mean, <span class="at">names_to =</span> <span class="st">"pt_est"</span>, <span class="at">values_to =</span> <span class="st">"value"</span>), </span>
 <span id="cb24-8"><a href="#cb24-8"></a>    <span class="fu">aes</span>(<span class="at">xintercept =</span> value, <span class="at">color=</span>pt_est),</span>
-<span id="cb24-9"><a href="#cb24-9"></a>    <span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">size=</span><span class="fl">1.5</span></span>
+<span id="cb24-9"><a href="#cb24-9"></a>    <span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">linewidth=</span><span class="fl">1.5</span></span>
 <span id="cb24-10"><a href="#cb24-10"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 

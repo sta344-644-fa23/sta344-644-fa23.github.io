@@ -203,7 +203,7 @@ d = tibble(
 
 ```{r echo=TRUE}
 X = model.matrix(~X1+X2+X3, d) 
-tbl_df(X)
+as_tibble(X)
 ```
 
 ## Pairs plot
@@ -326,7 +326,8 @@ brms::prior_summary(b)
   group_by(.variable, .chain) |>
   summarize(
     post_mean = mean(.value),
-    post_median = median(.value)
+    post_median = median(.value),
+    .groups = "drop"
   )
 )
 ```
