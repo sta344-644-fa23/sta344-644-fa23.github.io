@@ -31,7 +31,7 @@ schedule:
 - week: 2
   day: 2
   lecture: Diagnostics and Model Evaluation
-  slides: 
+  slides: Lec03
   screencast: 
   readings:
   - text: Gelman, et. al - R^2 for Bayesian regression models

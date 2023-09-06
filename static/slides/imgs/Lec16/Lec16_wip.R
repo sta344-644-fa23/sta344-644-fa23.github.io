@@ -70,7 +70,8 @@ ml_model = "model{
 ```
 
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 if (!file.exists("results/init_model.Rdata")) {
   m = rjags::jags.model(
     textConnection(ml_model), 
@@ -113,7 +114,8 @@ alpha  = get_coda_parameter(gp_coda, "alpha")
 
 ## Diagnostics
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 r = tidybayes::gather_samples(gp_coda, sigma2[i], l[i], alpha) %>%
   ungroup() %>%
   mutate(term = fixterm(term, i))
@@ -130,7 +132,8 @@ r %>%
 
 ## Fit Components
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 if (!file.exists("results/ml_gp_fit_comp.Rdata"))
 {
   x_pred = loa$x
@@ -170,7 +173,8 @@ if (!file.exists("results/ml_gp_fit_comp.Rdata"))
 }
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 lapply(
   1:4, 
   function(i) 
@@ -189,7 +193,8 @@ lapply(
 
 ## Forecasting
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 y = loa$y
 x = loa$x
 
@@ -208,7 +213,8 @@ calc_cov = function(d,i)
 }
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 if (!file.exists("results/ml_gp_fore.Rdata"))
 {
   x_pred = noaa$x
@@ -242,7 +248,8 @@ if (!file.exists("results/ml_gp_fore.Rdata"))
 }
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 summ_80 = post_summary(y_fore, ci_width = 0.8) %>% mutate(x = noaa[["x"]])
 summ_95 = post_summary(y_fore, ci_width = 0.95) %>% mutate(x = noaa[["x"]])
 
@@ -256,7 +263,8 @@ ggplot(summ_95, aes(x=x, y=post_mean)) +
 
 ## Forecasting (zoom)
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 ggplot(summ_95, aes(x=x, y=post_mean)) +
   geom_ribbon(data=summ_95, aes(ymin=post_lower, ymax=post_upper), fill="#D3D2D6") +
   geom_ribbon(data=summ_80, aes(ymin=post_lower, ymax=post_upper), fill="#A3A5C3") +
@@ -269,7 +277,8 @@ ggplot(summ_95, aes(x=x, y=post_mean)) +
 ## Forecasting ARIMA (auto)
 
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 m5 = forecast::auto.arima(co2)
 m5_fore = forecast::forecast(m5,h = nrow(noaa))
 
@@ -281,7 +290,8 @@ autoplot(m5_fore) +
 
 ## Forecasting RMSE
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 noaa_pred_arima = data_frame(
   y_hat = m5_fore$mean %>% strip_attrs(),
   x = time(m5_fore$mean) %>% strip_attrs()
@@ -317,7 +327,8 @@ data_frame(
 
 ## Forecasting Components
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 if (!file.exists("results/ml_gp_fore_comp.Rdata"))
 {
   x_pred = noaa$x
@@ -357,7 +368,8 @@ if (!file.exists("results/ml_gp_fore_comp.Rdata"))
 }
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 lapply(
   1:4, 
   function(i) 
