@@ -564,23 +564,24 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a>( <span class="at">b_ci =</span> b_post <span class="sc">|&gt;</span></span>
 <span id="cb13-2"><a href="#cb13-2"></a>    <span class="fu">group_by</span>(.chain, .variable) <span class="sc">|&gt;</span></span>
-<span id="cb13-3"><a href="#cb13-3"></a>    tidybayes<span class="sc">::</span><span class="fu">mean_hdi</span>(.value, <span class="at">.width=</span><span class="fu">c</span>(<span class="fl">0.8</span>, <span class="fl">0.95</span>))</span>
+<span id="cb13-3"><a href="#cb13-3"></a>    ggdist<span class="sc">::</span><span class="fu">mean_hdi</span>(.value, <span class="at">.width=</span><span class="fu">c</span>(<span class="fl">0.95</span>))</span>
 <span id="cb13-4"><a href="#cb13-4"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 24 × 8
+<pre><code># A tibble: 12 × 8
    .chain .variable    .value  .lower  .upper .width .point .interval
     &lt;int&gt; &lt;chr&gt;         &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;    
- 1      1 b_Intercept -1.03   -1.44   -0.645     0.8 mean   hdi      
- 2      1 b_x          0.0683  0.0612  0.0753    0.8 mean   hdi      
- 3      1 sigma        1.55    1.40    1.69      0.8 mean   hdi      
- 4      2 b_Intercept -1.03   -1.36   -0.618     0.8 mean   hdi      
- 5      2 b_x          0.0685  0.0619  0.0749    0.8 mean   hdi      
- 6      2 sigma        1.56    1.41    1.69      0.8 mean   hdi      
- 7      3 b_Intercept -1.03   -1.35   -0.587     0.8 mean   hdi      
- 8      3 b_x          0.0683  0.0619  0.0753    0.8 mean   hdi      
- 9      3 sigma        1.55    1.39    1.68      0.8 mean   hdi      
-10      4 b_Intercept -1.02   -1.41   -0.641     0.8 mean   hdi      
-# ℹ 14 more rows</code></pre>
+ 1      1 b_Intercept -1.03   -1.61   -0.411    0.95 mean   hdi      
+ 2      1 b_x          0.0683  0.0570  0.0783   0.95 mean   hdi      
+ 3      1 sigma        1.55    1.34    1.77     0.95 mean   hdi      
+ 4      2 b_Intercept -1.03   -1.64   -0.460    0.95 mean   hdi      
+ 5      2 b_x          0.0685  0.0594  0.0796   0.95 mean   hdi      
+ 6      2 sigma        1.56    1.35    1.78     0.95 mean   hdi      
+ 7      3 b_Intercept -1.03   -1.60   -0.400    0.95 mean   hdi      
+ 8      3 b_x          0.0683  0.0567  0.0775   0.95 mean   hdi      
+ 9      3 sigma        1.55    1.32    1.76     0.95 mean   hdi      
+10      4 b_Intercept -1.02   -1.57   -0.376    0.95 mean   hdi      
+11      4 b_x          0.0684  0.0587  0.0781   0.95 mean   hdi      
+12      4 sigma        1.56    1.36    1.78     0.95 mean   hdi      </code></pre>
 </div>
 </div>
 </div>
@@ -753,7 +754,7 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 </div>
 </section>
 <section id="posterior-predictions-vs-expected-posterior-predictions" class="slide level2">
-<h2>Posterior predictions vs Expected posterior predictions</h2>
+<h2>Posterior predictions vs<br>Expected posterior predictions</h2>
 <div class="small">
 <div class="columns">
 <div class="column" style="width:50%;">
@@ -938,13 +939,14 @@ R^2
 <div class="small">
 <div class="cell columns column-output-location">
 <div class="column">
-<div class="sourceCode cell-code" id="cb39" data-code-line-numbers="|4|5|8-21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1"></a>( <span class="at">b_R2 =</span> b_post_full <span class="sc">|&gt;</span></span>
+<div class="sourceCode cell-code" id="cb39" data-code-line-numbers="|4|5-6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1"></a>( <span class="at">b_R2 =</span> b_post_full <span class="sc">|&gt;</span></span>
 <span id="cb39-2"><a href="#cb39-2"></a>    <span class="fu">group_by</span>(.iteration) <span class="sc">|&gt;</span></span>
 <span id="cb39-3"><a href="#cb39-3"></a>    <span class="fu">summarize</span>(</span>
 <span id="cb39-4"><a href="#cb39-4"></a>      <span class="at">R2_classic =</span> <span class="fu">var</span>(y_hat) <span class="sc">/</span> <span class="fu">var</span>(y),</span>
-<span id="cb39-5"><a href="#cb39-5"></a>      <span class="at">R2_bayes   =</span> <span class="fu">var</span>(y_hat) <span class="sc">/</span> (<span class="fu">var</span>(y_hat) <span class="sc">+</span> <span class="fu">var</span>(resid))</span>
-<span id="cb39-6"><a href="#cb39-6"></a>    )</span>
-<span id="cb39-7"><a href="#cb39-7"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb39-5"><a href="#cb39-5"></a>      <span class="at">R2_bayes   =</span> <span class="fu">var</span>(y_hat) <span class="sc">/</span> </span>
+<span id="cb39-6"><a href="#cb39-6"></a>                  (<span class="fu">var</span>(y_hat) <span class="sc">+</span> <span class="fu">var</span>(resid))</span>
+<span id="cb39-7"><a href="#cb39-7"></a>    )</span>
+<span id="cb39-8"><a href="#cb39-8"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div><div class="column">
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 1,000 × 3
@@ -971,8 +973,8 @@ R^2
 <h2>Uh oh …</h2>
 
 <img data-src="Lec03_files/figure-revealjs/unnamed-chunk-33-1.png" width="960" class="r-stretch"></section>
-<section id="sanity-check" class="slide level2">
-<h2>Sanity check</h2>
+<section id="frequentist-sanity-check" class="slide level2">
+<h2>Frequentist sanity check</h2>
 <div class="small">
 <div class="columns">
 <div class="column" style="width:50%;">
@@ -1119,9 +1121,10 @@ R^2
 <h1>Back to our example</h1>
 
 </section>
-<section id="rmse---haty" class="slide level2">
-<h2>RMSE - <span class="math inline">\(\hat{y}\)</span></h2>
-<div class="small">
+<section id="rmse" class="slide level2">
+<h2>RMSE</h2>
+<div class="columns small">
+<div class="column" style="width:50%;">
 <div class="cell">
 <div class="sourceCode cell-code" id="cb51"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1"></a>broom<span class="sc">::</span><span class="fu">augment</span>(l) <span class="sc">|&gt;</span></span>
 <span id="cb51-2"><a href="#cb51-2"></a>  yardstick<span class="sc">::</span><span class="fu">rmse</span>(y, .fitted)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1131,6 +1134,9 @@ R^2
   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
 1 rmse    standard        1.52</code></pre>
 </div>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb53"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1"></a>( <span class="at">b_rmse =</span> b_post_full <span class="sc">|&gt;</span></span>
 <span id="cb53-2"><a href="#cb53-2"></a>    <span class="fu">group_by</span>(.chain, .iteration) <span class="sc">|&gt;</span></span>
 <span id="cb53-3"><a href="#cb53-3"></a>    <span class="fu">summarize</span>(</span>
@@ -1156,9 +1162,10 @@ R^2
 </div>
 </div>
 </div>
+</div>
 </section>
-<section id="rmse---haty---results" class="slide level2">
-<h2>RMSE - <span class="math inline">\(\hat{y}\)</span> - Results</h2>
+<section id="rmse-cont" class="slide level2">
+<h2>RMSE (cont)</h2>
 <div class="medium">
 <div class="columns">
 <div class="column" style="width:50%;">
@@ -1185,15 +1192,15 @@ R^2
 <span id="cb57-5"><a href="#cb57-5"></a>  ) <span class="sc">+</span></span>
 <span id="cb57-6"><a href="#cb57-6"></a>  <span class="fu">guides</span>(<span class="at">fill=</span><span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img data-src="Lec03_files/figure-revealjs/unnamed-chunk-45-1.png" width="960"></p>
+<p><img data-src="Lec03_files/figure-revealjs/unnamed-chunk-46-1.png" width="960"></p>
 </div>
 </div>
 </div>
 </div>
 </div>
 </section>
-<section id="crps---haty" class="slide level2">
-<h2>CRPS - <span class="math inline">\(\hat{y}\)</span></h2>
+<section id="crps" class="slide level2">
+<h2>CRPS</h2>
 <div class="medium">
 <div class="columns">
 <div class="column" style="width:50%;">
@@ -1243,8 +1250,8 @@ R^2
 </div>
 </div>
 </section>
-<section id="empirical-coverage---haty" class="slide level2">
-<h2>Empirical Coverage - <span class="math inline">\(\hat{y}\)</span></h2>
+<section id="empirical-coverage-1" class="slide level2">
+<h2>Empirical Coverage</h2>
 <div class="medium">
 <div class="cell">
 <div class="sourceCode cell-code" id="cb62"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1"></a>( <span class="at">b_cover =</span> b_post_full <span class="sc">|&gt;</span> </span>

@@ -120,7 +120,7 @@ b_post |>
 ```{r}
 ( b_ci = b_post |>
     group_by(.chain, .variable) |>
-    tidybayes::mean_hdi(.value, .width=c(0.8, 0.95))
+    ggdist::mean_hdi(.value, .width=c(0.95))
 )
 ```
 :::
@@ -265,7 +265,7 @@ options(width = 80)
 ```
 
 
-## Posterior predictions vs Expected posterior predictions
+## Posterior predictions vs<br/>Expected posterior predictions
 
 ::::: {.small}
 :::: {.columns}
@@ -332,7 +332,7 @@ b_post_epred |>
     geom_point() +
     geom_ribbon(
       data = broom::augment(l, interval="confidence"),
-      aes(ymin=.lower, ymax=.upper), col="blue", fill="blue", alpha=0.10
+      aes(ymin=.lower, ymax=.upper), col="blue", fill="blue", alpha=0.30
     ) +
     ggdist::stat_lineribbon(
       aes(y=.epred), alpha=0.25
@@ -353,7 +353,7 @@ b_post_pred |>
     geom_point() +
     geom_ribbon(
       data = broom::augment(l, interval="prediction"),
-      aes(ymin=.lower, ymax=.upper), col="blue", fill="blue", alpha=0.10
+      aes(ymin=.lower, ymax=.upper), col="blue", fill="blue", alpha=0.30
     ) + 
     ggdist::stat_lineribbon(
       aes(y=.prediction), alpha=0.25
@@ -445,13 +445,14 @@ When we compute any statistic for our model we want to do so at each iteration s
 
 ::: {.small}
 ```{r}
-#| code-line-numbers: "|4|5|8-21"
+#| code-line-numbers: "|4|5-6"
 #| output-location: column
 ( b_R2 = b_post_full |>
     group_by(.iteration) |>
     summarize(
       R2_classic = var(y_hat) / var(y),
-      R2_bayes   = var(y_hat) / (var(y_hat) + var(resid))
+      R2_bayes   = var(y_hat) / 
+                  (var(y_hat) + var(resid))
     )
 )
 ```
@@ -468,7 +469,7 @@ b_R2 |>
   geom_vline(xintercept=broom::glance(l)$r.squared, size=1)
 ```
 
-## Sanity check
+## Frequentist sanity check
 
 ```{r}
 #| include: false
@@ -694,14 +695,19 @@ tibble(
 
 # Back to our example 
 
-## RMSE - $\hat{y}$
+## RMSE
 
-::: {.small}
+:::: {.columns .small}
+::: {.column width='50%'}
 ```{r}
 #| message: false
 broom::augment(l) |>
   yardstick::rmse(y, .fitted)
+```
+:::
 
+::: {.column width='50%'}
+```{r}
 ( b_rmse = b_post_full |>
     group_by(.chain, .iteration) |>
     summarize(
@@ -710,8 +716,10 @@ broom::augment(l) |>
 )
 ```
 :::
+::::
 
-## RMSE - $\hat{y}$ - Results
+
+## RMSE (cont)
 
 :::: {.medium}
 :::: {.columns}
@@ -737,12 +745,7 @@ ggplot(b_rmse) +
 ::::
 
 
-
-
-
-
-
-## CRPS - $\hat{y}$
+## CRPS
 
 :::: {.medium}
 :::: {.columns}
@@ -770,7 +773,7 @@ b_crps |>
 ::::
 ::::
 
-## Empirical Coverage - $\hat{y}$
+## Empirical Coverage
 
 ::: {.medium}
 ```{r}
