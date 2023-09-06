@@ -48,7 +48,7 @@ params:
       hours:
       - loc: 204 Old Chemistry / Zoom
         day: Thursdays
-        time: 2-3 pm
+        time: "2-3 pm"
     - name: 
       email: 
       hours:
