@@ -41,7 +41,7 @@ schedule:
 - week: 2
   day: 4
   lecture: Generalized Linear Models (pt. 1)
-  slides: 
+  slides: Lec04
   screencast: 
   readings:
   - text: "Gelman & Hill 6"
