@@ -104,7 +104,7 @@ options(width=80)
 ```
 
 ::: {.aside}
-`dukestm()` also has implementations of `predicted_draws_fix()` and `residual_draws_fix()`
+`dukestm` also has implementations of `predicted_draws_fix()` and `residual_draws_fix()`
 :::
 
 
@@ -166,11 +166,10 @@ predicted_draws_fix(b, newdata=d) |>
 ```
 :::
 
-## RMSE
+## RMSE -$\hat{y}$ vs $y$
 
 :::: {.columns .small}
 ::: {.column width='50%'}
-$\hat{y}$
 ```{r}
 y_hat_rmse = epred_draws_fix(b, newdata=d) |> 
   group_by(.iteration, .chain) |>
@@ -191,7 +190,6 @@ y_hat_rmse |>
 :::
 
 ::: {.column width='50%'}
-$y$
 ```{r}
 y_rmse = predicted_draws_fix(b, newdata=d) |> 
   group_by(.iteration, .chain) |>
@@ -528,7 +526,7 @@ ggplot(g_pred_pearson, aes(x=year, y=.resid)) +
 
 ## Deviance
 
-Deviance is a way of measuring the difference between a GLM's fit and the fit of the perfect model (i.e. where $\theta_{best} = E(Y_i|X) = Y_i$).
+Deviance is a way of measuring the difference between a GLM's fit and the fit of a perfect model (i.e. where $\theta_{best} = E(Y_i|X) = Y_i$).
 
 It is defined as twice the log of the ratio between the likelihood of the perfect model and the likelihood of the given model,
 $$ 
@@ -678,24 +676,20 @@ g2_pred |>
 
 ::: {.small}
 ```{r}
-#| results: hide
 ( g_bayes = brms::brm(
     cases~year, data=aids, family=poisson,
     silent=2, refresh=0
 ) )
 ```
-
-```{r}
-#| echo: false
-g_bayes
-```
 :::
 
 ## Model priors
 
+::: {.medium}
 ```{r}
 brms::prior_summary(g_bayes)
 ```
+:::
 
 ## MCMC Diagnostics
 
@@ -740,6 +734,73 @@ aids_base +
     ),
     aes(y=.prediction),
     alpha=0.25
+  )
+```
+:::
+
+## Residuals
+
+```{r}
+( g_bayes_resid = residual_draws_fix(
+  g_bayes, newdata = aids
+) )
+```
+
+## Residual plot
+
+::: {.small}
+```{r}
+g_bayes_resid |> 
+  ggplot(aes(y = .residual, x = year, color=as.factor(.chain), group=.chain)) +
+    ggdist::stat_pointinterval(alpha=0.2) +
+    geom_hline(yintercept = 0, color='grey', linetype=2)
+```
+:::
+
+## Standardized residuals?
+
+::: {.small}
+```{r}
+residual_draws_fix(
+  g_bayes, newdata = aids, type = "pearson"
+) |> 
+  ggplot(aes(y = .residual, x = year, color=as.factor(.chain), group=.chain)) +
+    ggdist::stat_pointinterval(alpha=0.2) +
+    geom_hline(yintercept = 0, color='grey', linetype=2)
+```
+:::
+
+## Model performance - rmse, crps
+
+::: {.medium}
+```{r}
+predicted_draws_fix(g_bayes, newdata = aids) |>
+  group_by(.chain, .row) |>
+  summarize(
+    rmse = yardstick::rmse_vec(cases, .prediction),
+    crps = dukestm::calc_crps(.prediction, cases)
+  ) |>
+  group_by(.chain) |>
+  summarize(
+    rmse = mean(rmse),
+    crps = mean(crps)
+  )
+```
+:::
+
+## Model performance - emp coverage
+
+::: {.medium}
+```{r}
+predicted_draws_fix(g_bayes, newdata = aids) |>
+  group_by(.row, cases) |>
+  ggdist::mean_hdi(
+    .prediction, .width = c(0.5,0.9,0.95)
+  ) |>
+  mutate(contains = cases >= .lower & cases <= .upper) %>%
+  group_by(.width) |>
+  summarize(
+    emp_cov = sum(contains)/n()
   )
 ```
 :::
