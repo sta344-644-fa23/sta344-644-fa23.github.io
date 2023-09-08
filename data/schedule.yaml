@@ -42,10 +42,10 @@ schedule:
   day: 4
   lecture: Generalized Linear Models (pt. 1)
   slides: Lec04
-  screencast: 
+  screencast: https://youtu.be/JIVeAQXgC5k
   readings:
   - text: "Gelman & Hill 6"
-  notes: 
+  notes: "<a href='slides/Lec04-Notes.pdf'>notes</a>"
 
 - week: 3
   day: 2
@@ -67,6 +67,10 @@ schedule:
 
 - week: 4
   day: 2
+  lecture: <i>No class</i> - Posit Conf
+
+- week: 4
+  day: 4
   lecture: Discrete Time Series
   slides: 
   screencast: 
@@ -74,8 +78,8 @@ schedule:
   - text: "Shumway 1.2-1.6, 2, 3.1-3.4"
   notes: 
 
-- week: 4
-  day: 4
+- week: 5
+  day: 2
   lecture: CCF, Differencing, & AR(1) models
   slides: 
   screencast: 
@@ -84,17 +88,13 @@ schedule:
   notes: 
 
 - week: 5
-  day: 2
+  day: 4
   lecture: AR, MA, and ARMA models
   slides: 
   screencast: 
   readings:
   - text: "Shumway 3.7, 3.8"
   notes:   
-
-- week: 5
-  day: 4
-  lecture: TBD
 
 - week: 6
   day: 2
