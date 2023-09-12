@@ -1,0 +1,720 @@
+---
+title: "Logistic Regression and Residual Analysis"
+subtitle: "Lecture 05"
+author: "Dr. Colin Rundel"
+footer: "Sta 344/644 - Fall 2023"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+    self-contained: true
+execute:
+  echo: true
+  collapse: true
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(dukestm)
+library(patchwork)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+```
+
+# Last time
+
+## Last time
+
+```{r echo=FALSE}
+aids = tibble(
+  year = 1981:1993,
+  cases = c(12, 14, 33, 50, 67, 74, 123, 141, 165, 204, 253, 246, 240) %>% as.integer()
+)
+
+aids_base = ggplot(aids, aes(x=year, y=cases)) + 
+  geom_point() +
+  labs(title="AIDS cases in Belgium")
+```
+
+:::: {.columns}
+::: {.column width='20%'}
+::: {.small}
+```{r}
+aids
+```
+:::
+:::
+::: {.column width='80%'}
+```{r}
+#| echo: false
+aids_base
+```
+:::
+::::
+
+## Model Fit
+
+```{r}
+g = glm(cases~year, data=aids, family=poisson)
+g_pred = broom::augment(
+  g, type.predict = "response", 
+  newdata = tibble(year=seq(1981,1993,by=0.1))
+)
+
+aids_base + 
+  geom_line(data=g_pred, aes(y=.fitted), size=1.2, alpha=0.3)
+```
+
+## Bayesian Poisson Regression Model
+
+::: {.small}
+```{r}
+( g_bayes = brms::brm(
+    cases~year, data=aids, family=poisson,
+    refresh=0, backend = "cmdstanr"
+) )
+```
+:::
+
+## Model fit - $Y$ CI
+
+::: {.small}
+```{r}
+#| output-location: column
+aids_base +
+  ggdist::stat_lineribbon(
+    data = tidybayes::predicted_draws(
+      g_bayes,
+      newdata = tibble(year=seq(1981,1993,by=0.1))
+    ),
+    aes(y=.prediction),
+    alpha=0.25
+  )
+```
+:::
+
+## Model performance - rmse, crps
+
+::: {.medium}
+```{r}
+predicted_draws_fix(g_bayes, newdata = aids) |>
+  group_by(.chain, .row) |>
+  summarize(
+    rmse = yardstick::rmse_vec(cases, .prediction),
+    crps = dukestm::calc_crps(.prediction, cases)
+  ) |>
+  group_by(.chain) |>
+  summarize(
+    rmse = mean(rmse),
+    crps = mean(crps)
+  )
+```
+:::
+
+## Model performance - emp coverage
+
+::: {.medium}
+```{r}
+predicted_draws_fix(g_bayes, newdata = aids) |>
+  group_by(.row, cases) |>
+  ggdist::mean_hdi(
+    .prediction, .width = c(0.5,0.9,0.95)
+  ) |>
+  mutate(contains = cases >= .lower & cases <= .upper) %>%
+  group_by(.width) |>
+  summarize(
+    emp_cov = sum(contains)/n()
+  )
+```
+
+# Updating the model
+
+## Quadratic fit
+
+```{r}
+g2 = glm(cases~year+I(year^2), data=aids, family=poisson)
+
+g2_pred = broom::augment(
+  g2, type.predict = "response",
+  newdata=tibble(year=seq(1981,1993,by=0.1))
+) 
+```
+
+
+```{r echo=FALSE}
+aids_base + 
+  geom_line(data=g2_pred, aes(y=.fitted), size=1.2, alpha=0.3)
+```
+
+## Quadratic fit - residuals
+
+```{r}
+#| echo: false
+g2_pred = aids %>%
+  mutate(
+    .fitted = predict(g2, type="response"),
+    standard = cases - .fitted,
+    pearson  = residuals(g2, type="pearson"),
+    deviance = residuals(g2, type="deviance")
+  )
+  
+g2_pred %>%
+  tidyr::pivot_longer(-(year:.fitted), names_to = "type", values_to = ".resid") %>%
+  mutate(type = forcats::as_factor(type)) %>%
+  ggplot(aes(x=year, y=.resid, color=type)) +
+    geom_point() + geom_segment(aes(xend=year, yend=0)) +
+    facet_wrap(~type, scales = "free_y") + 
+    guides(color="none")
+```
+
+## Bayesian quadratic fit
+
+::: {.medium}
+```{r}
+( g2_bayes = brms::brm(
+  cases~year+I(year^2), data=aids, family=poisson,
+  refresh=0, backend = "cmdstanr"
+) )
+```
+:::
+
+## Diagnostics
+
+```{r}
+#| error: true
+plot(g2_bayes)
+```
+
+## PP Checks
+
+```{r}
+brms::pp_check(g2_bayes, ndraws=100)
+```
+
+
+## Bayesian quadratic fit (fixed)
+
+::: {.medium}
+```{r}
+( g2_bayes = brms::brm(
+  cases~I(year-min(year))+I((year-min(year))^2), data=aids, family=poisson,
+  refresh=0, backend = "cmdstanr"
+) )
+```
+:::
+
+## Diagnostics
+
+```{r}
+plot(g2_bayes)
+```
+
+## PP Checks
+
+```{r}
+brms::pp_check(g2_bayes, ndraws=100)
+```
+
+
+## Model fit - $Y$ CI
+
+```{r}
+#| echo: false
+g2_bayes_pred = tidybayes::predicted_draws(
+  g2_bayes, newdata = tibble(year=seq(1981,1993,by=0.1))
+)
+```
+
+::: {.small}
+```{r}
+aids_base +
+  tidybayes::stat_lineribbon(
+    data = g2_bayes_pred, aes(y=.prediction), alpha=0.25
+  )
+```
+:::
+
+## Residuals (pearson)
+
+::: {.small}
+```{r}
+residual_draws_fix(g2_bayes, newdata = aids, type = "pearson") |> 
+  ggplot(aes(y = .residual, x = year, color=as.factor(.chain), group=.chain)) +
+    tidybayes::stat_pointinterval(alpha=0.2) +
+    geom_hline(yintercept = 0, color='grey', linetype=2)
+```
+:::
+
+## Model performance - rmse, crps
+
+::: {.medium}
+```{r}
+predicted_draws_fix(g2_bayes, newdata = aids) |>
+  group_by(.chain, .row) |>
+  summarize(
+    rmse = yardstick::rmse_vec(cases, .prediction),
+    crps = calc_crps(.prediction, cases)
+  ) |>
+  group_by(.chain) |>
+  summarize(
+    rmse = mean(rmse),
+    crps = mean(crps)
+  )
+```
+:::
+
+## Model performance - emp coverage
+
+::: {.medium}
+```{r}
+predicted_draws_fix(g2_bayes, newdata = aids) |>
+  group_by(.row, cases) |>
+  tidybayes::mean_hdi(
+    .prediction, .width = c(0.5,0.9,0.95)
+  ) |>
+  mutate(contains = cases >= .lower & cases <= .upper) %>%
+  group_by(.width) |>
+  summarize(
+    emp_cov = sum(contains)/n()
+  )
+```
+:::
+
+
+
+# Logistic regression
+
+## Logistic regression as a GLM
+
+This is another case of a generalized linear model, specifically where the outcome is 0-1 data (i.e. Bernoulli draws),
+
+
+$$
+\begin{aligned}
+Y_i &\sim \text{Bern}(p_i)\\
+\text{logit} \, E(Y_i|\boldsymbol{X}_{i\cdot}) &= \text{logit}(p_i) = \underset{1 \times p}{\boldsymbol{X}_{i\cdot}}\underset{p \times 1}{\boldsymbol{\beta}} \\
+\\
+E(Y_i) &= p_i \\
+Var(Y_i) &= p_i(1-p_i) \\
+\\
+\text{logit}(p_i) &= \log \frac{p_i}{1-p_i} \\
+\text{logit}^{-1}(x) &= \frac{\exp(x)}{1+\exp(x)} = \frac{1}{1+\exp(-x)}
+\end{aligned}
+$$
+
+
+## Background
+
+Next we'll be looking at data on the presence and absence of the short-finned eel (Anguilla australis) at a number of sites in New Zealand. 
+
+These data come from 
+
+* Leathwick, J. R., Elith, J., Chadderton, W. L., Rowe, D. and Hastie, T. (2008), Dispersal, disturbance and the contrasting biogeographies of New Zealand’s diadromous and non-diadromous fish species. Journal of Biogeography, 35: 1481–1497.
+
+```{r}
+#| echo: false
+#| out-width: "50%"
+knitr::include_graphics("imgs/Lec05/eel.png")
+```
+
+
+## Species Distribution
+
+```{r}
+#| echo: false
+#| out-width: "50%"
+knitr::include_graphics("imgs/Lec05/new_zealand.png")
+```
+
+## Codebook:
+
+:::: {.small}
+* `presence` - presence (`1`) or absence (`0`) of Anguilla australis at the sampling location
+* `SegSumT` -	Summer air temperature (degrees C)
+* `DSDist` - Distance to coast (km)
+* `DSMaxSlope` - Maximum downstream slope (degrees)	
+* `USRainDays` - days per month with rain greater than 25 mm
+* `USSlope` - average slope in the upstream catchment (degrees)	
+* `USNative` - area with indigenous forest (proportion)
+* `DSDam` -	Presence of known downstream obstructions, mostly dams
+* `Method` -	fishing method (`electric`, `net`, `spot`, `trap`, or `mixture`)
+* `LocSed` -	weighted average of proportional cover of bed sediment
+    
+  :::: {.columns}
+  ::: {.column width='50%'}
+  1. mud
+  2. sand
+  3. fine gravel
+  4. coarse gravel
+  :::
+  ::: {.column width='50%'}
+  5. cobble
+  6. boulder
+  7. bedrock
+  :::
+  ::::
+::::
+
+
+## Data
+
+::: {.medium}
+```{r}
+load("data/anguilla.Rdata")
+( anguilla = as_tibble(anguilla) )
+```
+:::
+
+## Test / train split
+
+```{r}
+set.seed(20220908)
+part = rsample::initial_split(anguilla, prop = 3/4)
+
+anguilla_train = rsample::training(part)
+anguilla_test  = rsample::testing(part)
+```
+
+:::: {.columns}
+::: {.column width='50%'}
+```{r}
+dim(anguilla_train)
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+dim(anguilla_test)
+```
+:::
+::::
+
+
+
+## EDA
+
+```{r}
+#| echo: false
+GGally::ggpairs(
+  anguilla_train %>%
+    mutate(
+      presence = factor(presence),
+      DSDam = factor(DSDam)
+    ),
+  lower = list(continuous = GGally::wrap("points", alpha=0.05))
+)
+```
+
+## EDA (part 1)
+
+```{r}
+#| echo: false
+GGally::ggpairs(
+  anguilla_train %>%
+    mutate(
+      presence = factor(presence),
+      DSDam = factor(DSDam)
+    ) %>%
+    select(1:5),
+  lower = list(continuous = GGally::wrap("points", alpha=0.05))
+)
+```
+
+
+## EDA (part 2)
+
+```{r}
+#| echo: false
+GGally::ggpairs(
+  anguilla_train %>%
+    mutate(
+      presence = factor(presence),
+      DSDam = factor(DSDam)
+    ) %>%
+    select(1,6:10),
+  lower = list(continuous = GGally::wrap("points", alpha=0.05))
+)
+```
+
+## EDA (part 3)
+
+```{r}
+#| echo: false
+GGally::ggpairs(
+  anguilla_train %>%
+    mutate(
+      presence = factor(presence),
+      DSDam = factor(DSDam)
+    ) %>%
+    select(1,2),
+  lower = list(continuous = GGally::wrap("points", alpha=0.05))
+)
+```
+
+# Basic Model
+
+
+## Model
+
+::: {.small}
+```{r}
+g = glm(presence~SegSumT, family=binomial, data=anguilla_train)
+summary(g)
+```
+:::
+
+## Fit
+
+```{r}
+( g_pred = broom::augment(g, type.predict = "response") )
+```
+
+## Visually
+
+```{r echo=FALSE}
+full_logit = broom::augment(
+  g, type.predict = "response",
+  newdata = tibble(SegSumT = seq(10,25,by=0.1))
+)
+
+ggplot(g_pred, aes(x=SegSumT, y=presence, color=as.factor(presence))) +
+  geom_jitter(height=0.1, alpha=0.5) +
+  geom_line(data=full_logit, aes(y=.fitted), color="black") +
+  labs(color="presence")
+```
+
+
+## Separation
+
+```{r}
+ggplot(g_pred, aes(x=.fitted, y=presence, color=as.factor(presence))) +
+  geom_jitter(height=0.1, alpha=0.5) +
+  labs(color="presence")
+```
+
+
+## Standard Residuals
+
+::: {.small}
+```{r}
+g_std =  broom::augment(g, type.predict = "response") |>
+  mutate(.resid = presence - .fitted)
+```
+
+```{r}
+#| echo: false
+g_std |>
+  ggplot(aes(x=.fitted, y=.resid)) +
+    geom_jitter(height=0.05, alpha=0.2)
+```
+:::
+
+
+## Binned Residuals
+
+::: {.small}
+```{r}
+bin_width = 0.05
+g_std_bin = g_std |>
+  mutate(bin = .fitted - (.fitted %% bin_width) + bin_width/2) |>
+  group_by(bin) |>
+  summarize(.resid_bin = mean(presence - .fitted))
+```
+
+```{r}
+#| echo: false
+g_std_bin |>
+  ggplot(aes(y=.resid_bin, x=bin)) +
+    geom_point()
+```
+:::
+
+
+## Pearson Residuals
+
+:::: {.columns .small}
+::: {.column width='50%'}
+$$ r_i = \frac{Y_i - E(Y_i)}{\sqrt{Var(Y_i)}} = \frac{Y_i - \hat{p}_i}{\sqrt{\hat{p}_i(1-\hat{p}_i)}} $$
+:::
+
+::: {.column width='50%'}
+```{r}
+g_pearson = broom::augment(
+  g, type.predict="response", 
+  type.residuals="pearson"
+)
+```
+:::
+::::
+
+```{r}
+#| echo: false
+g_pearson %>%
+  ggplot(aes(x=.fitted, y=.resid)) + 
+    geom_jitter(height=0.2, alpha=0.2)
+```
+
+
+## Binned Pearson Residuals
+
+::: {.small}
+```{r}
+g_pearson_bin = g_pearson |>
+  mutate(bin = .fitted - (.fitted %% bin_width) + bin_width/2) |>
+  group_by(bin) |>
+  summarize(.resid_bin = mean(.resid))
+```
+
+```{r}
+#| echo: false
+g_pearson_bin |>
+  ggplot(aes(y=.resid_bin, x=bin)) +
+    geom_point()
+```
+:::
+
+## Deviance Residuals
+
+:::: {.columns .small}
+::: {.column width='50%'}
+$$ 
+\begin{aligned}
+d_i = &\text{sign}(Y_i-\hat{p_i}) \, \times \\ 
+      &\sqrt{ -2 \left(Y_i \log \hat{p}_i+(1-Y_i)\log (1 - \hat{p}_i) \right) }
+\end{aligned}
+$$
+:::
+
+::: {.column width='50%'}
+```{r}
+g_deviance = broom::augment(
+  g, type.predict = "response", 
+  type.residuals = "deviance"
+)
+```
+:::
+::::
+
+```{r}
+#| echo: false
+g_deviance %>%
+  ggplot(aes(x=.fitted, y=.resid)) +
+    geom_jitter(height=0.2, alpha=0.2)   
+```
+
+
+## Binned Deviance Residuals
+
+```{r}
+g_deviance_bin = g_deviance |>
+  mutate(bin = .fitted - (.fitted %% bin_width) + bin_width/2) |>
+  group_by(bin) |>
+  summarize(.resid_bin = mean(.resid))
+```
+
+```{r}
+#| echo: false
+g_deviance_bin |>
+  ggplot(aes(y=.resid_bin, x=bin)) +
+    geom_point()
+```
+
+
+## Checking Deviance
+
+::: {.small}
+```{r}
+g
+```
+
+```{r}
+summarize(g_deviance, sum(.resid^2))
+```
+:::
+
+
+# Full Model
+
+## Model
+
+::: {.small}
+
+```{r}
+f = glm(presence~., family=binomial, data=anguilla_train)
+summary(f)
+```
+
+:::
+
+## Separation
+
+```{r}
+#| echo: false
+f_std = broom::augment(f, type.predict = "response") |>
+  mutate(.resid = presence - .fitted)
+f_pear = broom::augment(f, type.predict = "response", type.residuals = "pearson")
+f_dev = broom::augment(f, type.predict = "response", type.residuals = "deviance")
+
+f_resid = bind_rows(
+  f_std  |> mutate(type = "standard"),
+  f_pear |> mutate(type = "pearson"),
+  f_dev  |> mutate(type = "deviance")
+) |>
+  mutate(type = as_factor(type))
+
+f_resid_bin = f_resid |>
+  group_by(type) |>
+  mutate(bin = .fitted - (.fitted %% bin_width) + bin_width/2) |>
+  group_by(type, bin) |>
+  summarize(.resid_bin = mean(.resid), .groups="drop")
+```
+
+```{r}
+#| echo: false
+
+g = glm(presence~SegSumT, family=binomial, data=anguilla_train)
+g_std =  broom::augment(g, type.predict = "response") |>
+  mutate(.resid = presence - .fitted)
+g_pear = broom::augment(g, type.predict="response", type.residuals="pearson")
+g_dev = broom::augment(g, type.predict="response", type.residuals="deviance")
+
+( ggplot(g_std, aes(x=.fitted, y=presence, color=as.factor(presence))) +
+    geom_jitter(height=0.1, alpha=0.5) +
+    labs(color="presence", title="SegSumT Model")
++
+  ggplot(f_std, aes(x=.fitted, y=presence, color=as.factor(presence))) +
+    geom_jitter(height=0.1, alpha=0.5) +
+    labs(color="presence", title="Full Model")
++ plot_layout(ncol=1)
+)
+```
+
+## Residuals vs fitted
+
+::: {.small}
+```{r}
+f_resid |>
+  ggplot(aes(x=.fitted, y=.resid, color=type)) +
+  geom_jitter(height=0.2, alpha=0.2) +
+  facet_wrap(~type, ncol=3, scale="free_y") +
+  geom_smooth(se = FALSE, color="black")
+```
+:::
+
+## Residuals (binned) vs fitted
+
+::: {.small}
+```{r}
+f_resid_bin |>
+  mutate(type = as_factor(type)) |>
+  ggplot(aes(x=bin, y=.resid_bin, color=type)) +
+  geom_point() +
+  facet_wrap(~type, ncol=3, scales = "free_y")
+```
+:::

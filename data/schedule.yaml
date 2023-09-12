@@ -50,7 +50,7 @@ schedule:
 - week: 3
   day: 2
   lecture: Generalized Linear Models (pt. 2)
-  slides: 
+  slides: Lec05
   screencast: 
   readings:
   - text: "Gelman & Hill 5.6-5.8"
