@@ -124,18 +124,23 @@ schedule:
   screencast: 
   readings:
 
+
 - week: 7
   day: 4
-  lecture: tidyverts + Prophet
-  slides: 
-  screencast: 
-  readings:
-  - text: "Hyndman (fpp3)  5"
-    link: https://otexts.com/fpp3/toolbox.html
-  - text: "Hyndman (fpp3) 12.2"
-    link: https://otexts.com/fpp3/prophet.html
-  - text: "Forecasting at scale"
-    link: https://peerj.com/preprints/3190/
+  lecture: <b>Midterm 1</b>
+
+#- week: 7
+#  day: 4
+#  lecture: tidyverts + Prophet
+#  slides: 
+#  screencast: 
+#  readings:
+#  - text: "Hyndman (fpp3)  5"
+#    link: https://otexts.com/fpp3/toolbox.html
+#  - text: "Hyndman (fpp3) 12.2"
+#    link: https://otexts.com/fpp3/prophet.html
+#  - text: "Forecasting at scale"
+#    link: https://peerj.com/preprints/3190/
 
 - week: 8
   day: 0
@@ -185,10 +190,6 @@ schedule:
 
 - week: 10
   day: 2
-  lecture: TBD
-
-- week: 10
-  day: 4
   lecture: Spatial Data and Cartography (pt. 2)
   slides: 
   screencast: 
@@ -198,8 +199,8 @@ schedule:
   - text: "Geocomputation with R"
     link: "https://geocompr.robinlovelace.net/"
   
-- week: 11
-  day: 2
+- week: 10
+  day: 4
   lecture: Models for areal data
   slides: 
   screencast: 
@@ -208,7 +209,7 @@ schedule:
   notes: 
 
 - week: 11
-  day: 4
+  day: 2
   lecture: Fitting CAR and SAR models
   slides: 
   screencast: 
@@ -217,20 +218,27 @@ schedule:
     link: https://mhooten.github.io/publications/VerHoef_etal_SpatStat_2018.pdf
   notes: 
   
-- week: 12
-  day: 2
+- week: 11
+  day: 4
   lecture: GLMs for areal data + Point referenced data (pt. 1)
   slides: 
   screencast: 
   
 - week: 12
-  day: 4
+  day: 2
   lecture: Point referenced data (pt. 2)
   slides: 
   screencast:
   readings:
   - text: Diggle (2007)
     link: https://www.researchgate.net/profile/Valerie-Obsomer/publication/6124441_Spatial_modelling_and_the_prediction_of_Loa_loa_risk_Decision_making_under_uncertainty/links/0fcfd5081417290b82000000/Spatial-modelling-and-the-prediction-of-Loa-loa-risk-Decision-making-under-uncertainty.pdf
+
+- week: 12
+  day: 4
+  lecture: Computation and GP Models
+  slides: 
+  notes: 
+  screencast: 
 
 - week: 13
   day: 0
@@ -245,17 +253,13 @@ schedule:
   day: 4
   lecture: <i>No class - Thanksgiving </i>
 
-
 - week: 14
   day: 2
-  lecture: Computation and GP Models
-  slides: 
-  notes: 
-  screencast: 
-
-- week: 14
-  day: 4
   lecture: Spatio-temporal models
   slides: 
 
+- week: 14
+  day: 4
+  lecture: <b>Midterm 2</b>
+  slides: 
 
