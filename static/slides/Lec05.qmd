@@ -62,11 +62,16 @@ aids_base
 
 ```{r}
 g = glm(cases~year, data=aids, family=poisson)
-g_pred = broom::augment(
+( g_pred = broom::augment(
   g, type.predict = "response", 
   newdata = tibble(year=seq(1981,1993,by=0.1))
-)
+) )
+```
 
+##
+
+```{r}
+#| echo: false
 aids_base + 
   geom_line(data=g_pred, aes(y=.fitted), size=1.2, alpha=0.3)
 ```
@@ -82,11 +87,11 @@ aids_base +
 ```
 :::
 
-## Model fit - $Y$ CI
+## Model fit
 
 ::: {.small}
 ```{r}
-#| output-location: column
+#| echo: false
 aids_base +
   ggdist::stat_lineribbon(
     data = tidybayes::predicted_draws(
@@ -132,6 +137,7 @@ predicted_draws_fix(g_bayes, newdata = aids) |>
     emp_cov = sum(contains)/n()
   )
 ```
+:::
 
 # Updating the model
 
@@ -298,7 +304,7 @@ This is another case of a generalized linear model, specifically where the outco
 $$
 \begin{aligned}
 Y_i &\sim \text{Bern}(p_i)\\
-\text{logit} \, E(Y_i|\boldsymbol{X}_{i\cdot}) &= \text{logit}(p_i) = \underset{1 \times p}{\boldsymbol{X}_{i\cdot}}\underset{p \times 1}{\boldsymbol{\beta}} \\
+\text{logit} \, E(Y_i|\boldsymbol{X}_{i\cdot}) &= \text{logit}(p_i) = \boldsymbol{X}_{i\cdot}\boldsymbol{\beta} \\
 \\
 E(Y_i) &= p_i \\
 Var(Y_i) &= p_i(1-p_i) \\
@@ -366,10 +372,13 @@ knitr::include_graphics("imgs/Lec05/new_zealand.png")
 
 ::: {.medium}
 ```{r}
-load("data/anguilla.Rdata")
-( anguilla = as_tibble(anguilla) )
+( anguilla = readRDS("data/anguilla.rds") )
 ```
 :::
+
+::: aside
+See <https://github.com/sta344-644-fa23/sta344-644-fa23.github.io/tree/main/static/slides/data> for all data sets
+::: 
 
 ## Test / train split
 
@@ -510,8 +519,9 @@ g_std =  broom::augment(g, type.predict = "response") |>
 ```{r}
 #| echo: false
 g_std |>
-  ggplot(aes(x=.fitted, y=.resid)) +
-    geom_jitter(height=0.05, alpha=0.2)
+  ggplot(aes(x=.fitted, y=.resid, color=as.factor(presence))) +
+    geom_jitter(height=0.05, alpha=0.2) +
+    labs(color="presence")
 ```
 :::
 
