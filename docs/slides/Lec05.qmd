@@ -62,10 +62,11 @@ aids_base
 
 ```{r}
 g = glm(cases~year, data=aids, family=poisson)
-( g_pred = broom::augment(
+g_pred = broom::augment(
   g, type.predict = "response", 
   newdata = tibble(year=seq(1981,1993,by=0.1))
-) )
+)
+g
 ```
 
 ##
