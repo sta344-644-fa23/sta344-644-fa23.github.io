@@ -116,7 +116,7 @@ f_resid_bin |>
   mutate(type = as_factor(type)) |>
   ggplot(aes(x=bin, y=.resid_bin, color=type)) +
   geom_point() +
-  facet_wrap(~type, ncol=3)
+  facet_wrap(~type, ncol=3, scales = "free_y")
 ```
 :::
 
@@ -160,10 +160,10 @@ conf |>
     labs(color="presence", title="Full Model")
 ```
 :::
-::: {.column width='20%' .small}
+::: {.column width='20%' .medium}
 ```{r conf_table}
 #| echo: false
-conf |> count(result)
+conf |> count(result) |> knitr::kable()
 ```
 :::
 ::::
@@ -181,7 +181,7 @@ threshold = 0.25
 #| echo: false
 ```
 :::
-::: {.column width='20%' .small}
+::: {.column width='20%' .medium}
 ```{r ref.label="conf_table"}
 #| echo: false
 ```
@@ -202,7 +202,7 @@ threshold = 0.75
 #| echo: false
 ```
 :::
-::: {.column width='20%' .small}
+::: {.column width='20%' .medium}
 ```{r ref.label="conf_table"}
 #| echo: false
 ```
@@ -304,7 +304,7 @@ model_pr |>
   autoplot()
 ```
 
-## Precision Recall auc
+## Precision Recall AUC
 
 ```{r}
 model_comb |>
@@ -316,7 +316,7 @@ model_comb |>
 
 <br/>
 
-A model that randomly assigns classes to the data is expected to achieve an PR-AUC of # successes / n while a perfect model would achieve an AUC of 1 (a point at a coordinate of (1,1)).
+A model that randomly assigns classes to the data is expected to achieve an PR-AUC of # successes / n while a perfect model would achieve an PR-AUC of 1 (a point at a coordinate of (1,1)).
 
 
 
