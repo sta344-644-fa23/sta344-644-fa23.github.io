@@ -1,0 +1,676 @@
+---
+title: "Discrete Time Series"
+subtitle: "Lecture 07"
+author: "Dr. Colin Rundel"
+footer: "Sta 344/644 - Fall 2023"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+    self-contained: true
+execute:
+  echo: true
+  warning: false
+  collapse: true
+---
+  
+```{r setup}
+#| include: false
+library(tidyverse)
+library(patchwork)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+options(width=70)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+```
+
+# Random variable review
+
+
+## Mean and variance of RVs
+
+* Expected Value
+
+::: {.medium}
+$$
+E(X) = \begin{cases}
+  \sum_x x \; P(X = x)                     & \text{$X$ is discrete}\\
+  \int_{-\infty}^{\infty} x \; f(x) \; dx  & \text{$X$ is continuous}
+\end{cases}
+$$
+:::
+
+* Variance
+
+::: {.medium}
+$$
+\begin{aligned}
+Var(X) &= E\Big(\big(X-E(X)\big)^2\Big) = E(X^2)-E(X)^2 \\
+       &= \begin{cases}
+            \sum_x \big(x - E(X)\big)^2 \; P(X = x)                   & \text{$X$ is discrete}\\
+            \int_{-\infty}^{\infty} \big(x-E(X)\big)^2 \; f(x) \; dx  & \text{$X$ is continuous}
+          \end{cases}
+\end{aligned}
+$$
+:::
+
+## Covariance of RVs
+
+::: {.medium}
+$$
+\begin{aligned}
+Cov(X,Y) &= E\Big(\big(X-E(X)\big)\big(Y-E(Y)\big)\Big) = E(XY)-E(X)E(Y) \\
+       &= \begin{cases}
+            \sum_x \big(x - E(X)\big)\big(y - E(Y)\big) \; P(X = x, Y=y)                           & \text{$X$ is discrete}\\
+            \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} \big(x-E(X)\big)\big(y-E(Y)\big) \; f(x,y) \; dx \; dy & \text{$X$ is continuous} 
+          \end{cases} \\
+\\
+Corr(X,Y) &= \frac{Cov(X,Y)}{\sqrt{Var(X)\,Var(Y)}}
+\end{aligned}
+$$
+:::
+
+
+
+## Properties of Expected Value
+
+:::: {.columns .medium .padded-li}
+::: {.column width='50%'}
+
+* *Constant*
+
+  $E(c) = c$ if $c$ is constant
+
+* *Constant Multiplication*
+  
+  $E(cX) = cE(X)$
+
+* *Constant Addition*
+  
+  $E(X+c) = E(X)+c$
+
+* *Addition*
+  
+  $E(X+Y) = E(X)+E(Y)$
+:::
+
+::: {.column width='50%'}
+* *Subtraction*
+  
+  $E(X-Y) = E(X)-E(Y)$
+
+* *Multiplication*
+
+  $E(XY) = E(X)\,E(Y)$ 
+  
+  if $X$ and $Y$ are independent
+:::
+::::
+
+
+## Properties of Variance
+
+
+:::: {.columns .medium .padded-li}
+::: {.column width='40%'}
+* *Constant* 
+
+  $Var(c) = 0$ if $c$ is constant
+
+* *Constant Multiplication*
+  
+  $Var(cX) = c^2~Var(x)$
+
+* *Constant Addition*
+  
+  $Var(X+c) = Var(X)$
+:::
+
+::: {.column width='60%'}
+* *Addition*
+  
+  $Var(X+Y) = Var(X)+Var(Y)$ 
+  
+  if $X$ and $Y$ are independent.
+
+* *Subtraction*
+   
+  $Var(X-Y) = Var(X)+Var(Y)$ 
+  
+  if $X$ and $Y$ are independent.
+
+:::
+::::
+
+
+## Properties of Covariance
+
+:::: {.medium .padded-li}
+:::: {.columns}
+::: {.column width='50%'}
+* *Constant*
+
+  $Cov(X,c) = 0$ if $c$ is constant
+
+* *Identity*
+
+  $Cov(X,X) = Var(X)$
+
+* *Symmetric*
+
+  $Cov(X,Y) = Cov(Y,X)$
+:::
+
+::: {.column width='50%'}
+* *Constant Multiplication*
+
+  $Cov(aX, bY) = ab ~ Cov(X,Y)$
+
+* *Constant Addition*
+
+  $Cov(X+a, Y+b) = Cov(X,Y)$
+:::
+::::
+
+* *Distribution*
+
+  $Cov(aX+bY,cV+dW) = ac~Cov(X,V) + ad~Cov(X,W)+bc~Cov(Y,V)+bd~Cov(Y,W)$
+
+::::
+
+
+# Discrete Time Series
+
+
+## Stationary Processes
+
+A stocastic process (i.e. a time series) is considered to be *strictly stationary* if the properties of the process are not changed by a shift in origin. 
+
+. . .
+
+In the time series context this means that the joint distribution of $\{y_{t_1}, \ldots, y_{t_n}\}$ must be identical to the distribution of $\{y_{t_1+k}, \ldots, y_{t_n+k}\}$ for any value of $n$ and $k$.
+
+
+## Weakly Stationary
+
+::: {.medium}
+Strict stationary is unnecessarily strong / restrictive for many applications, so instead we often opt for *weak stationary* which requires the following,
+
+1. The process must have finite variance / second moment 
+$$E(y_t^2) < \infty \text{ for all $t$}$$
+
+2. The mean of the process must be constant 
+$$E(y_t) = \mu \text{ for all $t$}$$
+
+3. The cross moment (covariance) may only depends on the lag (i.e. $t-s$ for $y_t$ and $y_s$)
+$$Cov(y_t,y_s) = Cov(y_{t+k},y_{s+k}) \text{ for all $t,s,k$}$$
+:::
+
+. . . 
+
+::: {.medium}
+When we say stationary in class we will almost always mean *weakly stationary*.
+:::
+
+## Autocorrelation
+
+For a stationary time series, where $E(y_t)=\mu$ and $\text{Var}(y_t)=\sigma^2$ for all $t$, we define the autocorrelation at lag $k$ as
+
+$$
+\begin{aligned}
+\rho_k &= Cor(y_t, \, y_{t+k}) 
+        = \frac{Cov(y_t, y_{t+k})}{\sqrt{Var(y_t)Var(y_{t+k})}} \\
+       &= \frac{E\left( (y_t-\mu)(y_{t+k}-\mu) \right)}{\sigma^2}
+\end{aligned}
+$$
+
+. . .
+
+this can be written in terms of the autocovariance function ($\gamma_k$) as
+$$
+\begin{aligned}
+\gamma_k &= \gamma(t,t+k) = Cov(y_t, y_{t+k}) \\
+\rho_k &= \frac{\gamma(t,t+k)}{\sqrt{\gamma(t,t) \gamma(t+k,t+k)}} = \frac{\gamma(k)}{\gamma(0)}
+\end{aligned}
+$$
+
+
+## Covariance Structure
+
+Based on our definition of a (weakly) stationary process, it implies a covariance of the following structure,
+
+
+::: {.small}
+$$
+\boldsymbol{\Sigma} = \left(
+\begin{matrix}
+\gamma(0)   & \gamma(1)   & \gamma(2)   & \gamma(3)   & \cdots & \gamma(n-1) &\gamma(n)   \\
+\gamma(1)   & \gamma(0)   & \gamma(1)   & \gamma(2)   & \cdots & \gamma(n-2) &\gamma(n-1) \\
+\gamma(2)   & \gamma(1)   & \gamma(0)   & \gamma(1)   & \cdots & \gamma(n-3) &\gamma(n-2) \\
+\gamma(3)   & \gamma(2)   & \gamma(1)   & \gamma(0)   & \cdots & \gamma(n-4) &\gamma(n-3) \\
+\vdots      & \vdots      & \vdots      & \vdots      & \ddots & \vdots      & \vdots     \\
+\gamma(n-1) & \gamma(n-2) & \gamma(n-3) & \gamma(n-4) & \cdots & \gamma(0)   & \gamma(1)  \\
+\gamma(n)   & \gamma(n-1) & \gamma(n-2) & \gamma(n-3) & \cdots & \gamma(1)   & \gamma(0)  \\
+\end{matrix}
+\right)
+$$
+:::
+
+## Example - Random walk
+
+Let $y_t = y_{t-1} + w_t$ with $y_0=0$ and $w_t \sim N(0,1)$.
+
+```{r echo=FALSE}
+rw = tibble(
+  t = 1:1000,
+  y = cumsum(c(0, rnorm(999)))
+) |>
+  tsibble::as_tsibble(index = t)
+
+ggplot(rw, aes(x=t, y=y)) + geom_line() + labs(title="Random walk")
+```
+
+## ACF + PACF
+
+```{r echo=FALSE, fig.height=5}
+feasts::gg_tsdisplay(rw, y=y, lag_max = 25, plot_type = "partial")
+```
+
+## Stationary?
+
+Is $y_t$ stationary?
+
+
+
+
+
+## Partial Autocorrelation - pACF
+
+Given these type of patterns in the autocorrelation we often want to examine the relationship between $y_t$ and $y_{t+k}$ with the (linear) dependence of $y_t$ on $y_{t+1}$ through $y_{t+k-1}$ removed. 
+
+This is done through the calculation of a partial autocorrelation ($\alpha(k)$), which is defined as follows:
+
+$$
+\begin{aligned}
+\alpha(0) &= 1 \\
+\alpha(1) &= \rho(1) = Cor(y_t,y_{t+1})\\
+&~~\vdots \\
+\alpha(k) &= Cor(y_t - P_{t,k}(y_t),~ y_{t+k} - P_{t,k}(y_{t+k}))
+\end{aligned}
+$$
+
+
+where $P_{t,k}(y)$ is the projection of $y$ onto the space spanned by $y_{t+1},\ldots,y_{t+k-1}$.
+
+
+## pACF - Calculation
+
+Let $\rho(k)$ be the autocorrelation for the process at lag $k$ then the partial autocorrelation at lag $k$ will be $\phi(k,k)$ given by the Durbin-Levinson algorithm,
+
+$$
+\phi(k,k) = \frac{
+              \rho(k) - \sum_{t=1}^{k-1} \phi(k-1, t) \, \rho(k-t)
+            }{
+             1 - \sum_{t=1}^{k-1} \phi(k-1, t) \, \rho(t)
+            }
+$$
+where
+$$
+\phi(k,t) = \phi(k-1,t) - \phi(k,k) \, \phi(k-1, k-t) \\
+$$
+
+. . .
+
+Starting with $\phi(1,1) = \rho(1)$ we can solve iteratively for $\phi(2,2), \ldots, \phi(k,k)$.
+
+
+## Example - Random walk with drift
+
+Let $y_t = \delta + y_{t-1} + w_t$ with $y_0=0$ and $w_t \sim N(0,1)$.
+
+```{r echo=FALSE}
+rwt = tibble(
+  t = 1:1000,
+  y = cumsum(c(0, 0.1+rnorm(999)))
+) |>
+  tsibble::as_tsibble(index = t)
+
+ggplot(rwt, aes(x=t, y=y)) + geom_line() + labs(title="Random walk with trend")
+```
+
+
+## ACF + PACF
+
+```{r echo=FALSE, fig.height=5}
+feasts::gg_tsdisplay(rwt, y=y, lag_max = 25, plot_type = "partial")
+```
+
+## Stationary?
+
+Is $y_t$ stationary?
+
+
+
+## Example - Moving Average
+
+Let $w_t \sim N(0,1)$ and $y_t = w_{t-1}+w_t$.
+
+```{r echo=FALSE, warning=FALSE}
+ma = tibble(
+  t = 1:100,
+  w = rnorm(100)
+) |>
+  mutate(
+    y = (c(NA,w[-100]) + w)
+  ) |>
+  filter(!is.na(y)) |>
+  tsibble::as_tsibble(index = t)
+
+ggplot(ma, aes(x=t, y=y)) + geom_line() + labs(title="Moving Average")
+```
+
+
+## ACF + PACF
+
+```{r echo=FALSE, fig.height=4}
+feasts::gg_tsdisplay(ma, y=y, lag_max = 25, plot_type = "partial")
+```
+
+
+## Stationary?
+
+Is $y_t$ stationary?
+
+
+## Autoregressive
+
+Let $w_t \sim N(0,1)$ and $y_t = y_{t-1} - 0.9 y_{t-2} + w_t$ with $y_t = 0$ for $t < 1$.
+
+```{r echo=FALSE, warning=FALSE}
+ar = tibble(
+  t = 1:500,
+  w = rnorm(500),
+  y = NA
+)
+      
+for(i in seq_along(ar$w))
+{
+  if (i == 1)
+    ar$y[i] = ar$w[i]
+  else if (i==2)
+    ar$y[i] = ar$y[i-1] + ar$w[i]
+  else
+    ar$y[i] = ar$y[i-1] -0.9*ar$y[i-2] + ar$w[i]
+}
+
+ar = tsibble::as_tsibble(ar, index = t)
+
+ggplot(ar, aes(x=t, y=y)) + geom_line() + labs(title="Autoregressive")
+```
+
+
+## ACF + PACF
+
+```{r echo=FALSE, fig.height=4}
+feasts::gg_tsdisplay(ar, y=y, lag_max = 25, plot_type = "partial")
+```
+
+
+# Tidy time series
+
+## `ts` objects
+
+In base R, time series are usually encoded using the `ts` S3 class,
+
+:::: {.columns}
+::: {.column width='50%' .small}
+```{r}
+co2
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+typeof(co2)
+class(co2)
+attributes(co2)
+```
+:::
+::::
+
+## tidyverts
+
+This is an effort headed by Rob Hyndman (of forecast and fpp3 fame) and others to provide a consistent tidydata based framework for working with time series data and models.
+
+Core packages:
+
+* `tsibble` - temporal data frames and related tools
+
+* `fable` - tidy forecasting / modeling
+
+* `feasts` - feature extraction and statistics
+
+* `tsibbledata` - sample tsibble data sets
+
+
+## tsibble
+
+A tsibble is a tibble with additional infrastructure for encoding temporal data - specifically a tsibble is a tidy data frame with an *index* and *key* where
+
+* the *index* is the variable that describes the inherent ordering of the data (from past to present)
+
+* and the *key* is one or more variables that define the unit of observation over time
+
+* each observation should be uniquely identified by the *index* and *key*
+
+
+## `global_economy`
+
+```{r}
+tsibbledata::global_economy
+```
+
+
+## `vic_elec`
+
+```{r}
+tsibbledata::vic_elec
+```
+
+
+## `aus_retail`
+
+```{r}
+tsibbledata::aus_retail
+```
+
+
+## as_tsibble()
+
+Existing ts objects or data frames can be converted to a tsibbles easily,
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+tsibble::as_tsibble(co2)
+```
+:::
+
+::: {.column width='50%' .fragment}
+```{r}
+tibble(
+  co2 = c(co2),
+  t = c(time(co2)) |> tsibble::yearmonth()
+) |>
+  tsibble::as_tsibble(index = t)
+```
+:::
+::::
+
+
+
+
+
+## plotting tsibbles
+
+As the tsibble is basically just a tibble which is just a data frame both base and ggplot plotting methods will work with tsibbles.
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+tsibble::as_tsibble(co2) |>
+  plot()
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+tsibble::as_tsibble(co2) |>
+  ggplot(
+    aes(x=lubridate::as_date(index), y=value)
+  ) +
+    geom_point() +
+    geom_line()
+```
+:::
+::::
+
+
+## autoplot
+
+```{r}
+tsibble::as_tsibble(co2) |>
+  autoplot(.vars = vars(value))
+```
+
+## Multiple variables
+
+::: {.small}
+```{r}
+tsibbledata::vic_elec |>
+  tsibble::index_by(data = ~ lubridate::as_date(.)) |>
+  summarize(
+    demand_avg = mean(Demand, na.rm=TRUE),
+    temp_avg = mean(Temperature, na.rm=TRUE)
+  ) |>
+  autoplot(.vars = vars(temp_avg, demand_avg))
+```
+:::
+
+## gg_tsdisplay()
+
+```{r}
+tsibble::as_tsibble(co2) |>
+  feasts::gg_tsdisplay(y = value)
+```
+
+
+## gg_tsdisplay() w/ pACF
+
+```{r}
+tsibble::as_tsibble(co2) |>
+  feasts::gg_tsdisplay(y = value, plot_type = "partial")
+```
+
+
+
+
+
+
+
+
+## Example - Australian Wine Sales
+
+Australian total wine sales by wine makers in bottles <= 1 litre. Jan 1980 – Aug 1994.
+
+::: {.small}
+```{r}
+data(AustralianWine, package="Rssa")
+( aus_wine = AustralianWine |> 
+    tsibble::as_tsibble() |> 
+    filter(key == "Total", !is.na(value))
+)
+```
+:::
+
+
+## Time series
+
+```{r echo=FALSE}
+autoplot(aus_wine, .vars = value)
+```
+
+
+## Autocorrelation plots
+
+```{r echo=FALSE}
+feasts::gg_tsdisplay(aus_wine, y=value, lag_max = 36, plot_type = "partial")
+```
+
+
+## Lag plot
+
+::: {.small}
+```{r}
+feasts::gg_lag(aus_wine, lags = 1:16, geom = "point")
+```
+:::
+
+
+## Seasonal plot
+
+::: {.small}
+```{r}
+feasts::gg_season(aus_wine)
+```
+:::
+
+
+## Subseries plot
+
+::: {.small}
+```{r}
+feasts::gg_subseries(aus_wine)
+```
+:::
+
+## A model?
+
+```{r}
+l = lm(value ~ lag(value,12), data = aus_wine)
+summary(l)
+```
+
+## Predictions
+
+```{r}
+#| echo: false
+p = left_join(
+  as_tibble(aus_wine) |>
+    (\(x) mutate(x, .rownames=rownames(x)))(),
+  broom::augment(l) |>
+    select(-value),
+  by = ".rownames"
+) 
+
+p |>
+  ggplot(aes(x=as.Date(index))) +
+    geom_line(aes(y=value), color = "black", linewidth=0.85) +
+    geom_line(aes(y=.fitted), color="red")
+```
+
+
+## Observed vs predicted
+
+```{r}
+#| echo: false
+p |>
+  ggplot(aes(x=.fitted, y=value)) +
+  geom_abline(a=0,b=1, color="grey") +
+  geom_point()
+```
