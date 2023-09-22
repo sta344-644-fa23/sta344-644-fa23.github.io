@@ -313,15 +313,17 @@ where $P_{t,k}(y)$ is the projection of $y$ onto the space spanned by $y_{t+1},\
 Let $\rho(k)$ be the autocorrelation for the process at lag $k$ then the partial autocorrelation at lag $k$ will be $\phi(k,k)$ given by the Durbin-Levinson algorithm,
 
 $$
-\phi(k,k) = \frac{
-              \rho(k) - \sum_{t=1}^{k-1} \phi(k-1, t) \, \rho(k-t)
-            }{
-             1 - \sum_{t=1}^{k-1} \phi(k-1, t) \, \rho(t)
-            }
+\phi(k,k) = 
+  \frac{
+    \rho(k) - \sum_{t=1}^{k-1} \phi(k-1, t) \, \rho(k-t)
+  }{
+   1 - \sum_{t=1}^{k-1} \phi(k-1, t) \, \rho(t)
+  }
 $$
 where
+
 $$
-\phi(k,t) = \phi(k-1,t) - \phi(k,k) \, \phi(k-1, k-t) \\
+\phi(k,t) = \phi(k-1,t) - \phi(k,k) \, \phi(k-1, k-t)
 $$
 
 . . .
@@ -427,14 +429,14 @@ feasts::gg_tsdisplay(ar, y=y, lag_max = 25, plot_type = "partial")
 
 In base R, time series are usually encoded using the `ts` S3 class,
 
-:::: {.columns}
-::: {.column width='50%' .small}
+:::: {.columns .small}
+::: {.column width='75%'}
 ```{r}
 co2
 ```
 :::
 
-::: {.column width='50%'}
+::: {.column width='25%'}
 ```{r}
 typeof(co2)
 class(co2)
@@ -442,6 +444,18 @@ attributes(co2)
 ```
 :::
 ::::
+
+
+## Decomposing a ts object
+
+::: {.small}
+```{r}
+c(co2) |> head()
+time(co2) |> head()
+```
+:::
+
+
 
 ## tidyverts
 
@@ -641,10 +655,12 @@ feasts::gg_subseries(aus_wine)
 
 ## A model?
 
+::: {.medium}
 ```{r}
 l = lm(value ~ lag(value,12), data = aus_wine)
 summary(l)
 ```
+:::
 
 ## Predictions
 
@@ -664,6 +680,15 @@ p |>
     geom_line(aes(y=.fitted), color="red")
 ```
 
+
+## Residual plot
+
+```{r}
+#| echo: false
+p |>
+  ggplot(aes(x=as.Date(index), y=.resid)) +
+  geom_point()
+```
 
 ## Observed vs predicted
 
