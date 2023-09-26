@@ -85,7 +85,7 @@ schedule:
   screencast: 
   readings:
   - text: "Shumway 3.2, 3.4"
-  notes: 
+  notes: "<a href='slides/Lec08-Notes.pdf'>notes</a>"
 
 - week: 5
   day: 4
