@@ -33,7 +33,7 @@ ggplot2::theme_set(ggplot2::theme_bw())
 
 ## Southern Oscillation Index & Recruitment
 
-The Southern Oscillation Index (SOI) is an indicator of the development and intensity of El Niño (negative SOI) or La Niña (positive SOI) events in the Pacific Ocean. These data also included the estimate of "recruitment", which indicate fish population sizes in the southern hemisphere.
+The Southern Oscillation Index (SOI) is an indicator of the development and intensity of El Niño (negative SOI) or La Niña (positive SOI) events in the Pacific Ocean. These data also include the estimate of "recruitment", which indicate fish population sizes in the southern hemisphere.
 
 ::: {.small}
 ```{r echo=FALSE}
@@ -48,7 +48,7 @@ library(astsa)
 
 ## Time series
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.height=5}
 fish |>
   autoplot(.vars = vars(soi, recruitment))
 ```
@@ -81,7 +81,7 @@ feasts::gg_tsdisplay(fish, y=recruitment, lag_max=36, plot_type = "partial")
 ## Cross correlation function
 
 ```{r}
-feasts::CCF(fish, y = soi, x = recruitment) |>
+feasts::CCF(fish, y = recruitment, x = soi) |>
   autoplot()
 ```
 
@@ -122,7 +122,7 @@ fish_lags |>
     facet_wrap(~forcats::as_factor(lag)) +
     #geom_line(stat="smooth", method="loess", color='red',  size=1.2, alpha=0.75) +
     geom_line(stat="smooth", method="lm", color="blue", size=1.2, alpha=0.75) +
-    geom_text(data=corrs, aes(x=-0.75, y=5, label=round(corr,2)), size=3)
+    geom_text(data=corrs, aes(x=-0.9, y=7.5, label=round(corr,2)), size=4.5, color="blue")
 ```
 
 . . .
@@ -175,11 +175,13 @@ bind_rows(
 
 ## Residual ACF - Model 3
 
-```{r echo=FALSE}
+::: {.small}
+```{r}
 broom::augment(model3, newdata=fish) |>
-  pull(.resid) |>
-  forecast::ggtsdisplay()
+  as_tsibble(index = date) |>
+  feasts::gg_tsdisplay(y=.resid, plot_type = "partial")
 ```
+:::
 
 ## Autoregessive model 4
 
@@ -231,11 +233,13 @@ bind_rows(
 
 ## Residual ACF - Model 5
 
+::: {.small}
 ```{r}
 broom::augment(model5, newdata=fish) |>
-  pull(.resid) |>
-  forecast::ggtsdisplay()
+  as_tsibble(index = date) |>
+  feasts::gg_tsdisplay(y=.resid, plot_type = "partial")
 ```
+:::
 
 # Non-stationarity
 
@@ -280,6 +284,11 @@ ggplot(lt, aes(x=t,y=y)) +
 ## Differencing
 
 An simple approach to remove trend is to difference your response variable, specifically examine $d_t = y_t - y_{t-1}$ instead of $y_t$.
+
+. . .
+
+Is the linear trend model stationary after differencing?
+
 
 
 ## Detrending vs Differencing
@@ -344,6 +353,11 @@ ggplot(qt, aes(x=t,y=y)) +
 
 Let $d_t = y_t - y_{t-1}$ be a first order difference then $d_t - d_{t-1}$ is a 2nd order difference.
 
+. . .
+
+Is the quadratic trend model stationary after 2nd order differencing?
+
+
 
 
 ## Differencing
@@ -384,6 +398,8 @@ with(qt,
 ## AR(1)
 
 Last time we mentioned a random walk with trend process where $y_t = \delta + y_{t-1} + w_t$. 
+
+<br/>
 
 The AR(1) process is a generalization of this where we include a coefficient in front of the $y_{t-1}$ term. 
 
