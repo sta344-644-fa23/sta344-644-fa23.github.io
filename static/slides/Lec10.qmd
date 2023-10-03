@@ -1,0 +1,603 @@
+---
+title: "ARIMA Models"
+subtitle: "Lecture 09"
+author: "Dr. Colin Rundel"
+footer: "Sta 344/644 - Fall 2023"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+    self-contained: true
+execute:
+  echo: true
+  warning: false
+  collapse: true
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(forecast)
+library(fable)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+```
+
+# $MA(\infty)$
+
+## $MA(q)$
+
+From last time - a $MA(q)$ process with $w_t \overset{iid}{\sim} N(0,\sigma^2_w)$,
+$$y_t = \delta + w_t + \theta_1 \, w_{t-1} + \theta_2 \, w_{t-2} + \cdots + \theta_q \, w_{t-q} $$
+
+has the following properties,
+$$E(y_t) = \delta$$
+
+$$
+Var(y_t) = \gamma(0) = (1 + \theta_1^2 + \theta_2 + \cdots + \theta_q^2) \, \sigma_w^2
+$$
+
+$$
+Cov(y_t, y_{t+h}) = \gamma(h) = \begin{cases}
+\sigma^2_w \sum_{j=0}^{q-|h|} \theta_j \theta_{j+|h|} & \text{if $|h| \leq q$} \\
+0 & \text{if $|h| > q$}
+\end{cases}
+$$
+
+and is stationary for any values of $(\theta_1, \ldots, \theta_q)$
+
+
+## $MA(\infty)$
+
+If we let $q \to \infty$ then process will be stationary if and only if the moving average coefficients ($\theta$
+'s) are square summable, i.e.
+
+$$ \sum_{i=1}^\infty \theta_i^2 < \infty$$
+
+which is necessary so that the $Var(y_t) < \infty$ condition is met for weak stationarity.
+
+Sometimes, a slightly stronger condition known as absolute summability, 
+$\sum_{i=1}^\infty |\theta_i| < \infty$ 
+is  necessary (e.g. for some CLT related asymptotic results). 
+
+
+## Invertibility
+
+If an $MA(q)$ process, $y_t = \delta + \theta_q(L) w_t$, can be rewritten as a stationary $AR$ process then the process is said to be invertible.
+
+. . .
+
+<br/>
+
+$MA(1)$ w/ $\delta=0$ example:
+
+<!--
+$$
+\begin{aligned}
+y_t &= w_t + \theta \, w_{t-1} \\
+w_t &= y_t - \theta \, w_{t-1} \\
+\\
+w_t &= y_t - \theta \, w_{t-1} \\
+    &= y_t - \theta \, (y_{t-1} - \theta \, w_{t-2}) = y_t - \theta \, y_{t-1} + \theta^2 w_{t-2} \\
+    &= y_t - \theta \, y_{t-1} + \theta^2 (y_{t-2} - \theta w_{t-3}) = y_t - \theta \, y_{t-1} + \theta^2 y_{t-2} - \theta^3 w_{t-3} \\
+    &~~\vdots \\
+    &= y_t + \sum_{i=1}^p(-\theta)^i \, y_{t-i} + (-\theta)^{p+1} w_{t-p+1} \\
+\text{Therefore invertible if $|\theta| < 1$}
+\end{aligned}
+$$
+-->
+
+## Invertibility vs Stationarity
+
+A $MA(q)$ process is *invertible* if $y_t = \delta + \theta_q(L) \, w_t$ can be rewritten as an exclusively $AR$ process (of possibly infinite order), i.e. $\phi(L) \, y_t = \alpha + w_t$.  
+
+$~$  
+
+. . . 
+ 
+Conversely, an $AR(p)$ process is *stationary* if $\phi_p(L) \, y_t = \delta + w_t$ can be rewritten as an exclusively $MA$ process (of possibly infinite order), i.e. $y_t = \delta + \theta(L) \, w_t$.
+
+$~$
+
+. . . 
+
+So using our results w.r.t. $\phi(L)$ it follows that if all of the roots of $\theta_q(L)$ are outside the complex unit circle then the moving average process is invertible.
+
+
+# Differencing
+
+## Difference operator
+
+We will need to define one more notational tool for indicating differencing
+$$ \Delta y_t = y_t - y_{t-1} $$
+
+. . .
+
+Just like the lag operator we will indicate repeated applications of this operator using exponents
+$$ 
+\begin{aligned}
+\Delta^2 y_t 
+  &= \Delta (\Delta y_t) \\
+  &= (\Delta y_t) - (\Delta y_{t-1}) \\
+  &= (y_t - y_{t-1}) - (y_{t-1} - y_{t-2}) \\
+  &= y_t - 2y_{t-1}+y_{t-2}
+\end{aligned}
+$$
+
+. . .
+
+Note that $\Delta$ can even be expressed in terms of the lag operator $L$,
+$$ \Delta^d = (1-L)^d $$
+
+
+## Differencing and Stocastic Trend
+
+Using the two component time series model
+$$ y_t = \mu_t + x_t $$
+where $\mu_t$ is a non-stationary trend component and $x_t$ is a mean zero stationary component. 
+
+$~$
+
+We have already shown that differencing can address deterministic trend (e.g. $\mu_t = \beta_0+\beta_1 \, t$). In fact, if $\mu_t$ is any $k$-th order polynomial of $t$ then $\Delta^k y_t$ is stationary.
+
+$~$
+
+Differencing can also address stochastic trend such as in the case where $\mu_t$ follows a random walk.
+
+
+## Stochastic trend - Example 1
+
+Let $y_t = \mu_t + w_t$ where $w_t$ is white noise and $\mu_t = \mu_{t-1} + v_t$ with $v_t$ being a stationary process with mean 0. 
+
+```{r echo=FALSE}
+d = tibble(
+  w = rnorm(300,0,1),
+  v = rnorm(300,0,1),
+) |>
+  mutate(
+    t = 1:n(),
+    mu = cumsum(v),
+    y = mu + w
+  ) |>
+  tsibble::as_tsibble(index = t)
+
+feasts::gg_tsdisplay(d, y = y, plot_type = "partial")
+```
+
+## Differenced stochastic trend
+
+::: {.small}
+```{r}
+feasts::gg_tsdisplay(d, y = tsibble::difference(y), plot_type = "partial")
+```
+:::
+
+
+## Stationary?
+
+Is $y_t$ stationary?
+
+
+## Difference Stationary?
+
+Is $\Delta y_t$ stationary?
+
+<!--
+$$
+\begin{aligned}
+\Delta y_t 
+  &= (\mu_t + w_t) - (\mu_{t-1} + w_{t-1}) \\
+  &= \mu_{t-1} + v_t - \mu_{t-1} + w_{t} + w_{t-1} \\
+  &= v_t + \Delta w_{t}
+\end{aligned}
+$$
+-->
+
+
+## Stochastic trend - Example 2
+
+Let $y_t = \mu_t + w_t$ where $w_t$ is white noise and $\mu_t = \mu_{t-1} + v_t$ but now $v_t = v_{t-1} + e_t$ with $e_t$ being stationary. 
+
+```{r echo=FALSE}
+d = tibble(
+  w=rnorm(300,0,1),
+  e=rnorm(300,0,1)
+) |>
+  mutate(
+    t = 1:n(),
+    v = cumsum(e),
+    mu = cumsum(v),
+    y = mu + w
+  ) |>
+  tsibble::as_tsibble(index = t)
+
+
+feasts::gg_tsdisplay(d, y = y, plot_type = "partial")
+```
+
+## Differenced stochastic trend
+
+::: {.small}
+```{r}
+feasts::gg_tsdisplay(d, y = tsibble::difference(y), plot_type = "partial")
+```
+:::
+
+## Twice differenced stochastic trend
+
+
+::: {.small}
+```{r}
+feasts::gg_tsdisplay(d, y = tsibble::difference(y, differences = 2), plot_type = "partial")
+```
+:::
+
+## Difference stationary?
+
+Is $\Delta y_t$ stationary? 
+
+<!--
+$$
+\begin{aligned}
+\Delta y_t 
+  &= (\mu_t + w_t) - (\mu_{t-1} + w_{t-1}) \\
+  &= \mu_{t-1} + v_t - \mu_{t-1} + w_{t} + w_{t-1} \\
+  &= v_t + \Delta w_{t} \\
+\end{aligned}
+$$
+-->
+
+## 2nd order difference stationary?
+
+What about $\Delta^2 y_t$, is it stationary?
+
+<!--
+$$
+\begin{aligned}
+\Delta^2 y_t 
+  &= (v_t + \Delta w_{t}) - (v_{t-1} + \Delta w_{t-1}) \\
+  &= v_{t-1} + e_t + \Delta w_{t} - v_{t-1} - \Delta w_{t-1} \\
+  &= e_t + \Delta^2 w_t
+\end{aligned}
+$$
+-->
+
+# $ARIMA$
+
+## $ARIMA$ Models
+
+Autoregressive integrated moving average are just an extension of an $ARMA$ model to include differencing of degree $d$ to $y_t$ before including the autoregressive and moving average components.
+
+$$
+\begin{aligned}
+ARIMA(p,d,q): \qquad \phi_p(L) \; \Delta^d \, y_t &= \delta + \theta_q(L) w_t  
+\end{aligned}
+$$
+
+. . .
+
+$~$
+
+Box-Jenkins approach:
+
+1. Transform data if necessary to stabilize variance
+
+2. Choose order ($p$, $d$, $q$) of ARIMA model
+
+3. Estimate model parameters ($\delta$, $\phi$s, and $\theta$s)
+
+4. Diagnostics
+
+
+## Random walk
+
+::: {.small}
+```{r}
+rwd = arima.sim(n=500, model=list(order=c(0,1,0)), mean=0.1) |> tsibble::as_tsibble()
+feasts::gg_tsdisplay(rwd, y=value, plot_type = "partial")
+```
+:::
+
+## Differencing 
+
+:::: {.panel-tabset .small}
+
+### `differences = 1`
+
+```{r}
+feasts::gg_tsdisplay(rwd, y=tsibble::difference(value, differences = 1), plot_type = "partial")
+```
+
+### `differences = 2`
+
+```{r}
+feasts::gg_tsdisplay(rwd, y=tsibble::difference(value, differences = 2), plot_type = "partial")
+```
+
+### `differences = 3`
+
+```{r}
+feasts::gg_tsdisplay(rwd, y=tsibble::difference(value, differences = 3), plot_type = "partial")
+```
+::::
+
+
+# AR or MA?
+
+```{r echo=FALSE, fig.height=4}
+ts1 = arima.sim(n=250, model=list(order=c(0,1,2), ma=c(0.4,0.5))) |> tsibble::as_tsibble()
+ts2 = arima.sim(n=250, model=list(order=c(2,1,0), ar=c(0.4,0.5))) |> tsibble::as_tsibble()
+```
+
+## `ts1`
+
+::: {.small}
+```{r}
+feasts::gg_tsdisplay(ts1, y=value, plot_type = "partial")
+```
+:::
+
+
+
+
+## `ts1` - Finding $d$
+
+:::: {.panel-tabset .small} 
+
+### `differences = 1`
+
+```{r}
+feasts::gg_tsdisplay(ts1, y=tsibble::difference(value, differences = 1), plot_type = "partial")
+```
+
+### `differences = 2`
+
+```{r}
+feasts::gg_tsdisplay(ts1, y=tsibble::difference(value, differences = 2), plot_type = "partial")
+```
+
+### `differences = 3`
+
+```{r}
+feasts::gg_tsdisplay(ts1, y=tsibble::difference(value, differences = 3), plot_type = "partial")
+```
+
+::::
+
+
+## Residuals - `ts1`- `ARIMA(0,1,0)`  
+
+::: {.small}
+```{r}
+model(ts1, ARIMA(value ~ pdq(0,1,0))) |> 
+  feasts::gg_tsresiduals()
+```
+:::
+
+
+## Residuals - `ts1` - `ARIMA(0,1,0)`  
+
+::: {.small}
+```{r}
+model(ts1, ARIMA(value ~ pdq(0,1,0))) |> 
+  residuals() |>
+  feasts::gg_tsdisplay(y = .resid, plot_type = "partial")
+```
+:::
+
+
+## Residuals - `ts1` - `ARIMA(2,1,0)`  
+
+::: {.small}
+```{r}
+model(ts1, final = ARIMA(value ~ pdq(2,1,0))) |> 
+  residuals() |>
+  feasts::gg_tsdisplay(y = .resid, plot_type = "partial")
+```
+:::
+
+
+## `ts1` - Model comparison
+
+::: {.small}
+```{r}
+model(
+  ts1,
+  ARIMA(value ~ pdq(0,1,0)), ARIMA(value ~ pdq(1,1,0)), ARIMA(value ~ pdq(0,1,1)), 
+  ARIMA(value ~ pdq(1,1,1)), ARIMA(value ~ pdq(2,1,0)), ARIMA(value ~ pdq(0,1,2)),
+  ARIMA(value ~ pdq(2,1,1)), ARIMA(value ~ pdq(1,1,2)), ARIMA(value ~ pdq(2,1,2))
+) |>
+  glance()
+```
+:::
+
+## `ts1` - final model
+
+Truth:
+```{r eval=FALSE}
+ts1 = arima.sim(n=250, model=list(order=c(0,1,2), ma=c(0.4,0.5))) 
+```
+
+Fitted:
+```{r}
+model(ts1, final = ARIMA(value ~ pdq(0,1,2))) |> 
+  report()
+```
+
+
+
+
+
+## `ts2`
+
+::: {.small}
+```{r}
+feasts::gg_tsdisplay(ts2, y=value, plot_type = "partial")
+```
+:::
+
+
+## `ts2` - Finding $d$
+
+:::: {.panel-tabset .small} 
+
+### `differences = 1`
+
+```{r}
+feasts::gg_tsdisplay(ts2, y=tsibble::difference(value, differences = 1), plot_type = "partial")
+```
+
+### `differences = 2`
+
+```{r}
+feasts::gg_tsdisplay(ts2, y=tsibble::difference(value, differences = 2), plot_type = "partial")
+```
+
+### `differences = 3`
+
+```{r}
+feasts::gg_tsdisplay(ts2, y=tsibble::difference(value, differences = 3), plot_type = "partial")
+```
+
+::::
+
+## Residuals - `ts2` - `ARIMA(0,1,0)`  
+
+::: {.small}
+```{r}
+model(ts2, ARIMA(value ~ pdq(0,1,0))) |> 
+  residuals() |>
+  feasts::gg_tsdisplay(y = .resid, plot_type = "partial")
+```
+:::
+
+
+## Residuals - `ts2` - `ARIMA(2,1,0)`  
+
+::: {.small}
+```{r}
+model(ts2, ARIMA(value ~ pdq(2,1,0))) |> 
+  residuals() |>
+  feasts::gg_tsdisplay(y = .resid, plot_type = "partial")
+```
+
+
+
+## `ts2` - Model comparison
+
+::: {.small}
+```{r}
+model(
+  ts2,
+  ARIMA(value ~ pdq(0,1,0)), ARIMA(value ~ pdq(1,1,0)), ARIMA(value ~ pdq(0,1,1)), 
+  ARIMA(value ~ pdq(1,1,1)), ARIMA(value ~ pdq(2,1,0)), ARIMA(value ~ pdq(0,1,2)),
+  ARIMA(value ~ pdq(2,1,1)), ARIMA(value ~ pdq(1,1,2)), ARIMA(value ~ pdq(2,1,2))
+) |>
+  glance()
+```
+:::
+
+
+
+
+## `ts2` - final model
+
+Truth:
+```{r eval=FALSE}
+ts2 = arima.sim(n=250, model=list(order=c(2,1,0), ar=c(0.4,0.5))) 
+```
+
+Fitted:
+```{r}
+model(ts2, final = ARIMA(value ~ pdq(2,1,0))) |> 
+  report()
+```
+
+
+
+## Automatic model selection
+
+:::: {.columns .small}
+::: {.column width='50%'}
+`ts1`:
+```{r}
+model(ts1, final = ARIMA(value)) |> 
+  report()
+```
+:::
+::: {.column width='50%'}
+`ts2`:
+```{r}
+model(ts2, final = ARIMA(value)) |> 
+  report()
+```
+:::
+::::
+
+
+## How does `ARIMA()` work?
+
+::: {.small}
+
+* Step 1: Select no. differences `d` via [KPSS test](https://en.wikipedia.org/wiki/KPSS_test)
+
+* Step 2: Select current model (with smallest AICc) from: 
+    * `ARIMA(2, d, 2)`
+    * `ARIMA(0, d, 0)`
+    * `ARIMA(1, d, 0)`
+    * `ARIMA(0, d, 1)` 
+    
+* Step 3: Consider variations of current model:
+    * vary one of `p`, `q`, from current model by ±1; 
+    * `p`, `q` both vary from current model by ±1; 
+    * Include/exclude `c` from current model.
+  
+  Model with lowest AICc becomes current model.
+
+* Step 4: Repeat Step 3 until no lower AICc can be found.
+:::
+
+::: aside
+From Rob Hyndman's [Tidy time series and forecasting in R](https://github.com/posit-conf-2023/forecasting) workshop - Posit::conf 2023
+::: 
+
+## Search space
+
+::: {.r-stack}
+![](imgs/ARMAgridsearch1.png){fig-align="center" width="50%"}
+
+![](imgs/ARMAgridsearch2.png){.fragment fig-align="center" width="50%"}
+
+![](imgs/ARMAgridsearch3.png){.fragment fig-align="center" width="50%"}
+
+![](imgs/ARMAgridsearch4.png){.fragment fig-align="center" width="50%"}
+:::
+
+::: aside
+From Rob Hyndman's [Tidy time series and forecasting in R](https://github.com/posit-conf-2023/forecasting) workshop - Posit::conf 2023
+::: 
+
+## General Guidance
+
+::: {.medium}
+1. Positive autocorrelations out to a large number of lags usually indicates a need for differencing
+
+2. Slightly too much or slightly too little differencing can be corrected by adding AR or MA terms respectively.
+
+3. A model with no differencing usually includes a constant term, a model with two or more orders (rare) differencing usually does not include a constant term. 
+
+4. After differencing, if the PACF has a sharp cutoff then consider adding AR terms to the model.
+
+5. After differencing, if the ACF has a sharp cutoff then consider adding an MA term to the model.
+
+6. It is possible for an AR term and an MA term to cancel each other's effects, so try models with fewer AR terms and fewer MA terms.
+:::
+
+::: {.aside}
+Based on guidance in Robert Nau's notes on [regression and time series analysis](https://people.duke.edu/~rnau/411home.htm) - Chapter 5
+:::

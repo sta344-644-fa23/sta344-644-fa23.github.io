@@ -99,12 +99,12 @@ schedule:
 - week: 6
   day: 2
   lecture: ARIMA models
-  slides: 
+  slides: Lec10
   screencast: 
   notes: 
   readings:
   - text: "Shumway 3.7, 3.8"
-  notes: 
+  notes: "<a href='slides/Lec10-Notes.pdf'>notes</a>"
 
 - week: 6
   day: 4
