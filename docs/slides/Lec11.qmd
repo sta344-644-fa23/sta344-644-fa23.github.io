@@ -1,0 +1,795 @@
+---
+title: "Seasonal Arima"
+subtitle: "Lecture 11"
+author: "Dr. Colin Rundel"
+footer: "Sta 344/644 - Fall 2023"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+    self-contained: true
+execute:
+  echo: true
+  warning: false
+  collapse: true
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(forecast)
+library(tsibble)
+library(fable)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+```
+
+
+## ARIMA - General Guidance
+
+::: {.medium}
+1. Positive autocorrelations out to a large number of lags usually indicates a need for differencing
+
+2. Slightly too much or slightly too little differencing can be corrected by adding AR or MA terms respectively.
+
+3. A model with no differencing usually includes a constant term, a model with two or more orders (rare) differencing usually does not include a constant term. 
+
+4. After differencing, if the PACF has a sharp cutoff then consider adding AR terms to the model.
+
+5. After differencing, if the ACF has a sharp cutoff then consider adding an MA term to the model.
+
+6. It is possible for an AR term and an MA term to cancel each other's effects, so try models with fewer AR terms and fewer MA terms.
+:::
+
+::: {.aside}
+Based on guidance in Robert Nau's notes on [regression and time series analysis](https://people.duke.edu/~rnau/411home.htm) - Chapter 5
+:::
+
+# Electrical Equipment Sales 
+
+## Data
+
+```{r}
+#| echo: false
+data(elecequip, package = "fpp")
+elec_sales = forecast::seasadj(stl(elecequip, s.window="periodic")) |>
+  as_tsibble()
+```
+
+
+::: {.small}
+```{r}
+feasts::gg_tsdisplay(elec_sales, y=value, plot_type="partial")
+```
+:::
+
+## Differencing
+
+
+:::: {.panel-tabset .small}
+
+### `differences = 1`
+
+```{r}
+feasts::gg_tsdisplay(elec_sales, y=difference(value, differences = 1), plot_type="partial")
+```
+
+### `differences = 2`
+
+```{r}
+#| echo: false
+feasts::gg_tsdisplay(elec_sales, y=difference(value, differences = 2), plot_type="partial")
+```
+
+::::
+
+## Model
+
+```{r}
+m = model(
+  elec_sales,
+  ARIMA(value ~ pdq(3,1,0))
+) 
+
+glance(m)
+```
+
+## Residuals
+
+::: {.small}
+```{r}
+residuals(m) |> 
+  feasts::gg_tsdisplay(y=.resid, plot_type="partial")
+```
+:::
+
+## Information Criteria
+
+The fable package provides a number of different information criteria for model selection,
+
+$$
+\begin{aligned}
+AIC &= -2 \log \mathcal L + 2(p+q+k+1) \\
+\\
+AICc &= AIC + \frac{2(p+q+k+1)(p+q+k+2)}{n-p-q-k-2} \\
+\\
+BIC &= AIC + (\log (n) - 2)(p+q+k+1) \\
+\end{aligned}
+$$
+
+
+For small values of $n$, AIC can overfit the data (select too many predictors) and so AICc is preferred. BIC is a more conservative version of AIC that penalizes the number of predictors more heavily.
+
+
+
+::: {.aside}
+Note that since differencing changes the data we are fitting the ARMA model to, it does not make sense to compare any of the above across models with different levels of differencing.
+:::
+
+
+## Model Comparison
+
+Model choices:
+
+::: {.small}
+```{r}
+model(
+  elec_sales,
+  ARIMA(value ~ pdq(3,1,0)),
+  ARIMA(value ~ pdq(2,1,0)),
+  ARIMA(value ~ pdq(4,1,0)),
+  ARIMA(value ~ pdq(3,1,1))
+) |>
+  glance()
+```
+:::
+
+## Automatic selection (AICc)
+
+```{r}
+model(
+  elec_sales,
+  ARIMA(value)
+) |>
+  report()
+```
+
+## Automatic selection (AIC)
+
+```{r}
+model(
+  elec_sales,
+  ARIMA(value, ic = "aic")
+) |>
+  report()
+```
+
+## Automatic selection (BIC)
+
+```{r}
+model(
+  elec_sales,
+  ARIMA(value, ic = "bic")
+) |>
+  report()
+```
+
+
+## Model fit
+
+```{r}
+m |>
+  augment() |>
+  ggplot(aes(x=as.Date(index))) +
+    geom_line(aes(y=value), color = "black") +
+    geom_line(aes(y=.fitted), color = "red", alpha=0.75)
+```
+
+## Model forecast
+
+```{r}
+m |> 
+  forecast(h=12) |>
+  autoplot(elec_sales)
+```
+
+
+# Seasonal Models
+
+## Australian Wine Sales Example
+
+Australian total wine sales by wine makers in bottles <= 1 litre. Jan 1980 – Aug 1994.
+
+```{r}
+#| echo: false
+data(wineind, package = "forecast")
+
+wineind = wineind |>
+  as_tsibble()
+
+feasts::gg_tsdisplay(wineind, y=value, plot_type = "partial")
+```
+
+## Seasonal plot
+
+::: {.small}
+```{r}
+feasts::gg_tsdisplay(wineind, y=value, lag_max = 36)
+```
+:::
+
+
+## Differencing
+
+::: {.small}
+```{r}
+feasts::gg_tsdisplay(wineind, y=difference(value, differences = 1), lag_max = 36)
+```
+:::
+
+
+## Seasonal ARIMA
+
+We can extend the existing ARIMA model to handle these higher order lags (without including all of the intervening lags).
+
+
+Seasonal $\text{ARIMA}\,(p,d,q) \times (P,D,Q)_s$:
+$$ \Phi_P(L^s) \, \phi_p(L) \, \Delta_s^D \, \Delta^d \, y_t = \delta + \Theta_Q(L^s) \, \theta_q(L) \, w_t$$
+
+. . .
+
+where
+
+::: {.small}
+$$
+\begin{aligned}
+\phi_p(L) &= 1-\phi_1 L - \phi_2 L^2 - \ldots - \phi_p L^p\\
+\theta_q(L) &= 1+\theta_1 L + \theta_2 L^2 + \ldots + \theta_p L^q \\
+\Delta^d &= (1-L)^d\\
+\\
+\Phi_P(L^s) &= 1-\Phi_1 L^s - \Phi_2 L^{2s} - \ldots - \Phi_P L^{Ps} \\
+\Theta_Q(L^s) &= 1+\Theta_1 L + \Theta_2 L^{2s} + \ldots + \theta_p L^{Qs} \\
+\Delta_s^D &= (1-L^s)^D\\
+\end{aligned}
+$$
+:::
+
+
+
+## Seasonal Arima - Diff
+
+::: {.small}
+Lets consider an $\text{ARIMA}(0,0,0) \times (0,1,0)_{12}$:
+$$
+\begin{aligned}
+(1 - L^{12}) \, y_t = \delta + w_t \\
+y_t = y_{t-12} + \delta + w_t
+\end{aligned}
+$$
+:::
+
+::: {.small}
+```{r}
+m = model(
+  wineind, 
+  m1 = ARIMA(value ~ pdq(0,0,0) + PDQ(0,1,0, period=12))
+)
+report(m)
+```
+:::
+
+
+## Fitted - Model 1
+
+```{r}
+#| echo: false
+m |>
+  augment() |>
+  ggplot(aes(x=as.Date(index))) +
+    geom_line(aes(y=value), color = "black") +
+    geom_line(aes(y=.fitted, color = .model), alpha=0.75)
+```
+
+
+## Residuals
+
+:::: {.panel-tabset .small}
+
+### Seasonal plot
+
+```{r}
+residuals(m) |>
+  feasts::gg_tsdisplay(y=.resid, lag_max=36)
+```
+
+### pACF plot
+
+```{r}
+residuals(m) |>
+  feasts::gg_tsdisplay(y=.resid, plot_type = "partial", lag_max=36)
+```
+
+::::
+
+
+## Model 2
+
+::: {.small}
+$\text{ARIMA}(0,0,0) \times (0,1,1)_{12}$:
+
+$$
+\begin{aligned}
+(1-L^{12}) y_t = \delta + (1+\Theta_1 L^{12})  w_t \\
+y_t = \delta + y_{t-12} + w_t + \Theta_1 w_{t-12}
+\end{aligned}
+$$
+
+
+```{r}
+m = model(
+  wineind, 
+  m1 = ARIMA(value ~ pdq(0,0,0) + PDQ(0,1,0, period=12)),
+  m2 = ARIMA(value ~ pdq(0,0,0) + PDQ(0,1,1, period=12)),
+)
+glance(m)
+```
+:::
+
+
+## Fitted - Model 2
+
+```{r}
+#| echo: false
+m |>
+  augment() |>
+  ggplot(aes(x=as.Date(index))) +
+    geom_line(aes(y=value), color = "black") +
+    geom_line(aes(y=.fitted, color = .model), alpha=0.75)
+```
+
+
+## Residuals
+
+::: {.small}
+```{r}
+residuals(m) |>
+  filter(.model == "m2") |>
+  feasts::gg_tsdisplay(y=.resid, plot_type = "partial", lag_max=36)
+```
+:::
+
+
+
+## Model 3
+
+::: {.small}
+$\text{ARIMA}(0,1,0) \times (0,1,1)_{12}$
+
+$$
+\begin{aligned}
+(1-L) \, (1-L^{12}) y_t = \delta + (1 + \Theta_1 L)w_t \\
+y_t = \delta + y_{t-1}  + y_{t-12} - y_{t-13} + w_t + w_{t-12}
+\end{aligned}
+$$
+
+```{r}
+m = model(
+  wineind, 
+  m1 = ARIMA(value ~ pdq(0,0,0) + PDQ(0,1,0, period=12)),
+  m2 = ARIMA(value ~ pdq(0,0,0) + PDQ(0,1,1, period=12)),
+  m3 = ARIMA(value ~ pdq(0,1,0) + PDQ(0,1,1, period=12))
+)
+glance(m)
+```
+:::
+
+## Fitted model
+
+```{r}
+#| echo: false
+m |>
+  augment() |>
+  ggplot(aes(x=as.Date(index))) +
+    geom_line(aes(y=value), color = "black") +
+    geom_line(aes(y=.fitted, color = .model), alpha=0.75)
+```
+
+
+## Residuals
+
+::: {.small}
+```{r}
+residuals(m) |>
+  filter(.model == "m3") |>
+  feasts::gg_tsdisplay(y=.resid, plot_type = "partial", lag_max=36)
+```
+:::
+
+
+
+## Model 4
+
+::: {.small}
+$\text{ARIMA}(1,1,0) \times (0,1,1)_{12}$
+
+$$
+(1-\phi_1 L) \, (1-L)\, (1-L^{12}) y_t = \delta + (1 + \Theta_1 L)w_t \\
+y_t = \delta + (1+\phi_1) y_{t-1} - \phi_1 y_{t-2}+ y_{t-12} - (1+\phi_1) y_{t-13} + \phi_1 y_{t-14} + w_t + w_{t-12}
+$$
+
+```{r}
+m = model(
+  wineind, 
+  m1 = ARIMA(value ~ pdq(0,0,0) + PDQ(0,1,0, period=12)),
+  m2 = ARIMA(value ~ pdq(0,0,0) + PDQ(0,1,1, period=12)),
+  m3 = ARIMA(value ~ pdq(0,1,0) + PDQ(0,1,1, period=12)),
+  m4 = ARIMA(value ~ pdq(1,1,0) + PDQ(0,1,1, period=12))
+)
+glance(m)
+```
+:::
+
+## Fitted model
+
+```{r}
+#| echo: false
+m |>
+  augment() |>
+  ggplot(aes(x=as.Date(index))) +
+    geom_line(aes(y=value), color = "black") +
+    geom_line(aes(y=.fitted, color = .model), alpha=0.75)
+```
+
+
+## Residuals
+
+::: {.small}
+```{r}
+residuals(m) |>
+  filter(.model == "m4") |>
+  feasts::gg_tsdisplay(y=.resid, plot_type = "partial", lag_max=36)
+```
+:::
+
+
+
+
+## Model 5
+
+::: {.small}
+$\text{ARIMA}(1,1,2) \times (0,1,1)_{12}$
+
+$$
+(1-\phi_1 L) \, (1-L)\, (1-L^{12}) y_t = \delta + (1+\theta_1 L+\theta_2 L^2)(1 + \Theta_1 L)w_t \\
+y_t = \delta + (1+\phi_1) y_{t-1} - \phi_1 y_{t-2}+ y_{t-12} - (1+\phi_1) y_{t-13} + \phi_1 y_{t-14} \\
++ w_t + \theta_1 w_{t-1} + \theta_2 w_{t-2} + w_{t-12} + \theta_1 w_{t-13} + \theta_2 w_{t-14}
+$$
+:::
+
+::: {.small}
+```{r}
+m = model(wineind, 
+  m1 = ARIMA(value ~ pdq(0,0,0) + PDQ(0,1,0, period=12)),
+  m2 = ARIMA(value ~ pdq(0,0,0) + PDQ(0,1,1, period=12)),
+  m3 = ARIMA(value ~ pdq(0,1,0) + PDQ(0,1,1, period=12)),
+  m4 = ARIMA(value ~ pdq(1,1,0) + PDQ(0,1,1, period=12)),
+  m5 = ARIMA(value ~ pdq(1,1,2) + PDQ(0,1,1, period=12))
+); glance(m)
+```
+:::
+
+## Fitted model
+
+```{r}
+#| echo: false
+m |>
+  augment() |>
+  ggplot(aes(x=as.Date(index))) +
+    geom_line(aes(y=value), color = "black") +
+    geom_line(aes(y=.fitted, color = .model), alpha=0.75)
+```
+
+
+## Residuals
+
+::: {.small}
+```{r}
+residuals(m) |>
+  filter(.model == "m5") |>
+  feasts::gg_tsdisplay(y=.resid, plot_type = "partial", lag_max=36)
+```
+:::
+
+
+## Automated selection
+
+```{r}
+m_auto = model(
+  wineind, 
+  ARIMA(value)
+)
+
+report(m_auto)
+```
+
+
+## Forecasts
+
+::: {.small}
+```{r}
+m |> 
+  forecast(h=12) |>
+  autoplot(wineind)
+```
+:::
+
+## Forecasts (1993-1996)
+
+::: {.small}
+```{r}
+m |> 
+  forecast(h=12) |>
+  autoplot(
+    wineind |> 
+      filter(index > make_yearmonth(1993, 1))
+  )
+```
+:::
+
+
+## Forecasts
+
+::: {.small}
+```{r}
+m |> 
+  forecast(h=12) |>
+  autoplot(wineind |> filter(index > make_yearmonth(1993, 1))) +
+    facet_wrap(~.model)
+```
+:::
+
+
+
+# Federal Reserve Board Production Index
+
+
+## `prodn` from the `astsa` package
+
+Monthly Federal Reserve Board Production Index (1948-1978)
+
+::: {.small}
+```{r}
+#| echo: false
+data(prodn, package="astsa")
+prodn = as_tsibble(prodn)
+```
+
+```{r}
+feasts::gg_tsdisplay(prodn, y=value, plot_type = "partial", lag_max=36)
+```
+:::
+
+
+## Differencing
+
+Based on the ACF it seems like standard differencing may be required
+
+. . .
+
+::: {.small}
+```{r}
+feasts::gg_tsdisplay(prodn, y=difference(value), plot_type = "partial", lag_max=36)
+```
+:::
+
+Additional seasonal differencing seems warranted
+
+
+## Differencing + Seasonal Differencing
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+feasts::gg_tsdisplay(
+  prodn, 
+  y = difference(value) |> 
+    difference(lag=12),
+  plot_type = "partial", lag_max=36
+)
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+feasts::gg_tsdisplay(
+  prodn, 
+  y = difference(value, lag=12) |> 
+    difference(), 
+  plot_type = "partial", lag_max=36
+)
+```
+:::
+::::
+
+
+## Model 1  
+
+::: {.small}
+```{r}
+fr_m = model(
+  prodn, 
+  m1 = ARIMA(value ~ pdq(0,1,0) + PDQ(0,1,0, period=12)),
+)
+
+glance(fr_m)
+```
+:::
+
+
+
+
+## Residuals
+
+::: {.small}
+```{r}
+residuals(fr_m) |>
+  filter(.model == "m1") |>
+  feasts::gg_tsdisplay(y=.resid, plot_type = "partial", lag_max=36)
+```
+:::
+
+
+## Model 2 - Seasonal MA
+
+::: {.small}
+```{r}
+fr_m = model(
+  prodn, 
+  m1 = ARIMA(value ~ pdq(0,1,0) + PDQ(0,1,0, period=12)),
+  m2_1 = ARIMA(value ~ pdq(0,1,0) + PDQ(0,1,1, period=12)),
+  m2_2 = ARIMA(value ~ pdq(0,1,0) + PDQ(0,1,2, period=12)),
+  m2_3 = ARIMA(value ~ pdq(0,1,0) + PDQ(0,1,3, period=12)),
+  m2_4 = ARIMA(value ~ pdq(0,1,0) + PDQ(0,1,4, period=12))
+)
+
+glance(fr_m)
+```
+:::
+
+
+## Residuals - Model 2-3
+
+::: {.small}
+```{r}
+residuals(fr_m) |>
+  filter(.model == "m2_3") |>
+  feasts::gg_tsdisplay(y=.resid, plot_type = "partial", lag_max=36)
+```
+:::
+
+
+## Model 3 - Adding AR
+
+::: {.small}
+```{r}
+fr_m = model(
+  prodn, 
+  m1 = ARIMA(value ~ pdq(0,1,0) + PDQ(0,1,0, period=12)),
+  m2_3 = ARIMA(value ~ pdq(0,1,0) + PDQ(0,1,3, period=12)),
+  m3_1 = ARIMA(value ~ pdq(1,1,0) + PDQ(0,1,3, period=12)),
+  m3_2 = ARIMA(value ~ pdq(2,1,0) + PDQ(0,1,3, period=12))
+)
+
+glance(fr_m)
+```
+:::
+
+## Residuals - Model 3-2
+
+::: {.small}
+```{r}
+residuals(fr_m) |>
+  filter(.model == "m3_2") |>
+  feasts::gg_tsdisplay(y=.resid, plot_type = "partial", lag_max=36)
+```
+:::
+
+
+
+## Model Fit
+
+```{r}
+#| echo: false
+fr_m |>
+  augment() |>
+  filter(.model %in% c("m3_1", "m3_2")) |>
+  ggplot(aes(x=as.Date(index))) +
+    geom_line(aes(y=value), color = "black") +
+    geom_line(aes(y=.fitted, color = .model), alpha=0.75)
+```
+
+## Model Fit (1970-1979)
+
+```{r}
+#| echo: false
+fr_m |>
+  augment() |>
+  filter(
+    .model %in% c("m3_1", "m3_2"),
+    index >= make_yearmonth(1970,1)  
+  ) |>
+  ggplot(aes(x=as.Date(index))) +
+    geom_line(aes(y=value), color = "black") +
+    geom_line(aes(y=.fitted, color = .model), alpha=0.75)
+```
+
+
+## Model Forecast
+
+::: {.small}
+```{r}
+fr_m |> 
+  forecast(h=24) |>
+  filter(.model %in% c("m3_1", "m3_2")) |>
+  autoplot(
+    prodn
+  )
+```
+:::
+
+## Model Forecast (1975-1981)
+
+::: {.small}
+```{r}
+fr_m |> 
+  forecast(h=24) |>
+  filter(.model %in% c("m3_1", "m3_2")) |>
+  autoplot(
+    prodn |> filter(index > make_yearmonth(1975, 1))
+  )
+```
+:::
+
+
+## Model Forecast (comparison)
+
+::: {.small}
+```{r}
+fr_m |> 
+  forecast(h=24) |>
+  autoplot(
+    prodn |> filter(index > make_yearmonth(1975, 1))
+  ) +
+    facet_wrap(~.model)
+```
+:::
+
+
+
+
+## Auto ARIMA - Model Fit
+
+::: {.small}
+```{r}
+model(prodn, ARIMA(value)) |>
+  report()
+```
+:::
+
+
+## Exercise - Cortecosteroid Drug Sales
+
+Monthly cortecosteroid drug sales in Australia from 1992 to 2008.
+
+```{r}
+data(h02, package="fpp")
+h02 = as_tsibble(h02)
+
+feasts::gg_tsdisplay(h02, y=value, plot_type = "partial", lag_max=36)
+```
+

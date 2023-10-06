@@ -100,7 +100,7 @@ schedule:
   day: 2
   lecture: ARIMA models
   slides: Lec10
-  screencast: 
+  screencast: https://youtu.be/qZG0v2LMBDg
   notes: 
   readings:
   - text: "Shumway 3.7, 3.8"
@@ -109,7 +109,7 @@ schedule:
 - week: 6
   day: 4
   lecture: Seasonal ARIMA
-  slides: 
+  slides: Lec11
   screencast: 
   readings:
   - text: "Shumway 3.5, 3.6, 3.9"
