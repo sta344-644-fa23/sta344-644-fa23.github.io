@@ -39,7 +39,7 @@ has the following properties,
 $$E(y_t) = \delta$$
 
 $$
-Var(y_t) = \gamma(0) = (1 + \theta_1^2 + \theta_2 + \cdots + \theta_q^2) \, \sigma_w^2
+Var(y_t) = \gamma(0) = (1 + \theta_1^2 + \theta_2^2 + \cdots + \theta_q^2) \, \sigma_w^2
 $$
 
 $$

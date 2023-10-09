@@ -110,7 +110,7 @@ schedule:
   day: 4
   lecture: Seasonal ARIMA
   slides: Lec11
-  screencast: 
+  screencast: https://youtu.be/VKcAMf0yZAw
   readings:
   - text: "Shumway 3.5, 3.6, 3.9"
   - text: "Congdon 5.1, 5.2"
@@ -120,7 +120,7 @@ schedule:
 - week: 7
   day: 2
   lecture: Fitting ARIMA Models
-  slides: 
+  slides: Lec12
   screencast: 
   readings:
 

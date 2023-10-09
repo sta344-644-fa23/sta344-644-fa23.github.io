@@ -5,3 +5,4 @@ public/
 static/slides/prev/*
 .hugo_build.lock
 *.Rdata
+.DS_Store
