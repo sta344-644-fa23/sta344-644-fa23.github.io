@@ -77,6 +77,15 @@ rsample::testing(co2_split)
 ::: 
 ::::
 
+## co2 data
+
+::: {.small}
+```{r}
+gg_tsdisplay(co2, y = value, lag_max = 36)
+```
+:::
+
+
 ## Model fit (training)
 
 ::: {.small}
@@ -130,6 +139,10 @@ mm |>
 
 ## Accuracy
 
+```{r}
+#| include: false
+options(width=48)
+```
 
 :::: {.columns .small}
 ::: {.column width='50%'}
@@ -152,6 +165,10 @@ mm |>
 :::
 ::::
 
+```{r}
+#| include: false
+options(width=80)
+```
 
 
 ## Rolling forecasting origin
@@ -162,7 +179,9 @@ mm |>
 ![](imgs/Lec13/fpp3-cv3.png){fig-align="center" width="100%" .fragment}
 :::
 
-::: {.aside} From Hyndman FPP3 - Chp 5.10 :::
+::: {.aside} 
+From Hyndman FPP3 - Chp 5.10
+:::
 
 ## One-step forecasts on test data
 
@@ -296,10 +315,12 @@ report(ar1_arima)
 
 ## lm
 
+::: {.small}
 ```{r}
 ar1_lm = lm(value ~ lag(value), data=ar1)
 summary(ar1_lm)
 ```
+:::
 
 ## Bayesian AR(1) Model
 
@@ -312,18 +333,10 @@ library(brms) # must be loaded for arma to work
 
 :::
 
-. . .
+## brms Intercept vs $\delta$?
 
-::: {.small}
-
-```{r}
-brms::variables(ar1_brms)
-```
-
-## brms Intercept vs *δ*?
-
-The reported Intercept from the brms model is *E*(*y*<sub>*t*</sub>) and not
-*δ* - for an ARIMA(1,0,0)
+The reported Intercept from the brms model is $E(y_t)$ and not
+$\delta$ - for an ARIMA(1,0,0)
 $$
 E(y_t) = \frac{\delta}{1-\phi} ~~\Rightarrow~~ \delta = E(y_t) * (1-\phi)
 $$
@@ -341,10 +354,13 @@ True  $E(y_t)$:
 
 ::: {.column width='50%'} 
 Posterior mean $\delta$:
+
+::: {.small}
 ```{r}
 summary(ar1_brms)$fixed$Estimate * 
   (1 - summary(ar1_brms)$cor_pars$Estimate)
 ```
+:::
 
 ::: 
 ::::
@@ -447,6 +463,16 @@ ar1_brms |>
 ```
 :::
 
+## Forecasting (ARIMA)
+
+::: {.small}
+```{r}
+ar1_arima |>
+  forecast(h=50) |>
+  autoplot(ar1)
+```
+:::
+
 
 # Fitting AR(p)
 
@@ -498,7 +524,7 @@ These equations can be rewritten into matrix notation as follows
 $$
 \underset{p \times p}{\boldsymbol\Gamma_p} \underset{p \times 1}{\boldsymbol\phi} = \underset{p \times 1}{\boldsymbol\gamma_p}
 \qquad\qquad
-\underset{1 \times 1}{\sigma^2_w} = \underset{1 \times 1}{\gamma(0)} - \underset{1 \times p}{\boldsymbol{\phi\'}}\underset{p \times 1}{\boldsymbol{\gamma_p}}
+\underset{1 \times 1}{\sigma^2_w} = \underset{1 \times 1}{\gamma(0)} - \underset{1 \times p}{\boldsymbol{\phi'}}\underset{p \times 1}{\boldsymbol{\gamma_p}}
 $$
 
 where
@@ -506,8 +532,8 @@ where
 $$ 
 \begin{aligned}
 \underset{p \times p}{\boldsymbol{\Gamma_p}} &= \gamma(j-k)_{j,k} \\
-\underset{p \times 1}{\boldsymbol\phi} &= (\phi_1, \phi_2, \ldots, \phi_p)\' \\
-\underset{p \times 1}{\boldsymbol\gamma_p} &= (\gamma(1), \gamma(2), \ldots, \gamma(p))\'
+\underset{p \times 1}{\boldsymbol\phi} &= (\phi_1, \phi_2, \ldots, \phi_p)' \\
+\underset{p \times 1}{\boldsymbol\gamma_p} &= (\gamma(1), \gamma(2), \ldots, \gamma(p))'
 \end{aligned}
 $$
 
@@ -519,16 +545,8 @@ and solve for $\boldsymbol{\phi}$ and $\sigma^2_w$,
 $$
 \hat{\boldsymbol\phi} =\hat{\boldsymbol{\Gamma}_p}^{-1}\hat{\boldsymbol{\gamma}_p}
 \qquad\qquad
-\hat{\sigma}^2_w = \gamma(0) - \hat{\boldsymbol{\gamma}_p}\' \hat{\boldsymbol{\Gamma}_p^{-1}} \hat{\boldsymbol{\gamma}_p}
+\hat{\sigma}^2_w = \gamma(0) - \hat{\boldsymbol{\gamma}_p}' \hat{\boldsymbol{\Gamma}_p^{-1}} \hat{\boldsymbol{\gamma}_p}
 $$
-
-## Stan Code
-
-::: {.small}
-```{r}
-ar1_brms |> stancode()
-```
-:::
 
 
 # ARMA
@@ -584,7 +602,7 @@ lm(value ~ lag(value,1) + lag(value,2), data=d) |> summary()
 
 1. Estimate a high order AR (remember AR $\Leftrightarrow$ MA when stationary + invertible)
 
-2. Use AR to estimate values for unobserved $w_t$ via `lm` with `lag`s
+2. Use AR to estimate values for unobserved $w_t$ via `lm()` with `lag()`s
 
 3. Regress $y_t$ onto $y_{t-1}, \ldots, y_{t-p}, \hat{w}_{t-1}, \ldots \hat{w}_{t-q}$
 
@@ -630,7 +648,6 @@ residuals(ar) |>
 ::: {.small}
 ```{r}
 d = mutate(d, w_hat = residuals(ar)$.resid)
-
 (lm2 = lm(value ~ lag(value,1) + lag(value,2) + lag(w_hat,1) + lag(w_hat,2), data=d)) |>
   summary()
 ```
@@ -641,7 +658,6 @@ d = mutate(d, w_hat = residuals(ar)$.resid)
 ::: {.small}
 ```{r}
 d = mutate(d, w_hat = augment(lm2, newdata = d)$.resid)
-
 (lm3 = lm(value ~ lag(value,1) + lag(value,2) + lag(w_hat,1) + lag(w_hat,2), data=d)) |>
   summary()
 ```
@@ -652,7 +668,6 @@ d = mutate(d, w_hat = augment(lm2, newdata = d)$.resid)
 ::: {.small}
 ```{r}
 d = mutate(d, w_hat = augment(lm3, newdata = d)$.resid)
-
 (lm4 = lm(value ~ lag(value,1) + lag(value,2) + lag(w_hat,1) + lag(w_hat,2), data=d)) |>
   summary()
 ```
@@ -663,7 +678,6 @@ d = mutate(d, w_hat = augment(lm3, newdata = d)$.resid)
 ::: {.small}
 ```{r}
 d = mutate(d, w_hat = augment(lm4, newdata = d)$.resid)
-
 (lm5 = lm(value ~ lag(value,1) + lag(value,2) + lag(w_hat,1) + lag(w_hat,2), data=d)) |>
   summary()
 ```
@@ -675,7 +689,6 @@ d = mutate(d, w_hat = augment(lm4, newdata = d)$.resid)
 ::: {.small}
 ```{r}
 d = mutate(d, w_hat = augment(lm5, newdata = d)$.resid)
-
 (lm6 = lm(value ~ lag(value,1) + lag(value,2) + lag(w_hat,1) + lag(w_hat,2), data=d)) |>
   summary()
 ```
@@ -793,10 +806,3 @@ d |>
 ```
 :::
 
-## Stan Code
-
-::: {.small}
-```{r}
-arma22_brms |> stancode()
-```
-:::
