@@ -328,7 +328,7 @@ summary(ar1_lm)
 
 ```{r message=FALSE}
 library(brms) # must be loaded for arma to work
-( ar1_brms = brm(value ~ arma(p = 1, q = 0), data=ar1, refresh=0) )
+( ar1_brms = brm(value ~ arma(p = 1, q = 0), data=ar1, refresh=0, backend="cmdstanr") )
 ```
 
 :::
