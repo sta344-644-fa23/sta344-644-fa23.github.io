@@ -150,7 +150,7 @@ schedule:
 - week: 8
   day: 2
   lecture: Gaussian Process models
-  slides: 
+  slides: Lec13
   screencast: 
   readings:
   - text: "Rasmussen & Williams 2, 4"

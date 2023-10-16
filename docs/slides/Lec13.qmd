@@ -1,0 +1,979 @@
+---
+title: "Gaussian Process Models"
+subtitle: "Lecture 14"
+author: "Dr. Colin Rundel"
+footer: "Sta 344/644 - Fall 2023"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+    self-contained: true
+execute:
+  echo: true
+  warning: false
+  collapse: true
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(tsibble)
+library(dukestm)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+options(width=75)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+
+set.seed(20221019)
+```
+
+# Multivariate Normal
+
+## Multivariate Normal Distribution
+
+For an $n$-dimension multivariate normal distribution with covariance $\boldsymbol{\Sigma}$ (positive semidefinite) can be written as
+
+$$
+\underset{n \times 1}{\boldsymbol{y}} \sim N(\underset{n \times 1}{\boldsymbol{\mu}}, \; \underset{n \times n}{\boldsymbol{\Sigma}})
+$$
+
+
+
+$$
+\begin{pmatrix}
+y_1\\ \vdots\\ y_n
+\end{pmatrix}
+\sim N\left(
+\begin{pmatrix}
+\mu_1\\ \vdots\\ \mu_n
+\end{pmatrix}, \,
+\begin{pmatrix}
+\rho_{11}\sigma_1\sigma_1 & \cdots & \rho_{1n}\sigma_1\sigma_n \\
+\vdots & \ddots & \vdots \\
+\rho_{n1}\sigma_n\sigma_1 & \cdots & \rho_{nn}\sigma_n\sigma_n \\
+\end{pmatrix}
+\right)
+$$
+
+
+## Density
+
+For the $n$ dimensional multivate normal given on the last slide, its density is given by
+
+$$
+(2\pi)^{-n/2} \; \det(\boldsymbol{\Sigma})^{-1/2} \; \exp{\left(-\frac{1}{2} \underset{1 \times n}{(\boldsymbol{y}-\boldsymbol{\mu})'} \underset{n \times n}{\boldsymbol{\Sigma}^{-1}} \underset{n \times 1}{(\boldsymbol{y}-\boldsymbol{\mu})}\right)} 
+$$
+
+and its log density is given by
+
+$$
+-\frac{n}{2} \log 2\pi - \frac{1}{2} \log \det(\boldsymbol{\Sigma}) - -\frac{1}{2} \underset{1 \times n}{(\boldsymbol{y}-\boldsymbol{\mu})'} \underset{n \times n}{\boldsymbol{\Sigma}^{-1}} \underset{n \times 1}{(\boldsymbol{y}-\boldsymbol{\mu})}
+$$
+
+
+## Sampling
+
+To generate draws from an $n$-dimensional multivate normal with mean $\underset{n \times 1}{\boldsymbol{\mu}}$ and covariance matrix $\underset{n \times n}{\boldsymbol{\Sigma}}$, 
+
+. . .
+
+* Find a matrix $\underset{n \times n}{\boldsymbol{A}}$ such that $\boldsymbol{\Sigma} = \boldsymbol{A}\,\boldsymbol{A}^t$
+
+    * most often we use $\boldsymbol{A} = \text{Chol}(\boldsymbol{\Sigma})$ where $\boldsymbol{A}$ is a lower triangular matrix.
+
+. . .
+
+* Draw $n$ iid unit normals, $N(0,1)$, as $\underset{n \times 1}{\boldsymbol{z}}$ 
+
+. . .
+
+* Obtain multivariate normal draws using
+$$ \underset{n \times 1}{\boldsymbol{y}} = \underset{n \times 1}{\boldsymbol{\mu}} + \underset{n \times n}{\boldsymbol{A}} \, \underset{n \times 1}{\boldsymbol{z}} $$
+
+
+## Bivariate Examples
+
+$$ \boldsymbol{\mu} = \begin{pmatrix}0 \\ 0\end{pmatrix} \qquad \boldsymbol{\Sigma} = \begin{pmatrix}1 & \rho \\ \rho & 1 \end{pmatrix}$$
+
+```{r echo=FALSE}
+map_dfr(
+  c(0.9,0.7,0.5,0.1,-0.1,-0.5,-0.7,-0.9),
+  function(rho) {
+    mvtnorm::rmvnorm(1000, sigma = matrix(c(1,rho,rho,1),2)) |> 
+      as_tibble(.name_repair = ~ c("x","y")) |>
+      mutate(param = paste0("rho=",rho))
+  }
+) |>
+  ggplot(aes(x=x,y=y)) +
+    geom_density_2d() +
+    geom_point(alpha=0.1, linewidth=0.5) +
+    facet_wrap(~param, ncol=4)
+```
+
+## Marginal / conditional distributions
+
+
+
+*Proposition* - For an $n$-dimensional multivate normal with mean $\boldsymbol{\mu}$ and covariance matrix $\boldsymbol{\Sigma}$, any marginal or conditional distribution of the $y$'s will also be (multivariate) normal.
+
+. . .
+
+*Univariate marginal distribution*:
+$$ y_i = N(\boldsymbol{\mu}_i,\,\boldsymbol{\Sigma}_{ii}) $$
+
+. . .
+
+*Bivariate marginal distribution*:
+$$ \boldsymbol{y}_{ij} = N\left( \begin{pmatrix}\boldsymbol{\mu}_i \\ \boldsymbol{\mu}_j \end{pmatrix},\; \begin{pmatrix} \boldsymbol{\Sigma}_{ii} & \boldsymbol{\Sigma}_{ij} \\ \boldsymbol{\Sigma}_{ji} & \boldsymbol{\Sigma}_{jj} \end{pmatrix} \right) $$
+
+## 
+
+*$k$-dimensional marginal distribution*:
+
+$$ 
+\boldsymbol{y}_{i,\ldots,k} = 
+  N\left( 
+    \begin{pmatrix}\boldsymbol{\mu}_{i} \\ \vdots \\ \boldsymbol{\mu}_{k} \end{pmatrix},\; 
+    \begin{pmatrix} 
+      \boldsymbol{\Sigma}_{ii}  & \cdots & \boldsymbol{\Sigma}_{i k} \\ 
+      \vdots           & \ddots & \vdots \\
+      \boldsymbol{\Sigma}_{k i} & \cdots & \boldsymbol{\Sigma}_{k k} \end{pmatrix} 
+  \right) 
+$$
+
+::: {.aside}
+$i,\ldots,k$ do not need to be ordered in any particular way
+:::
+
+## Conditional Distributions
+ 
+If we partition the $n$-dimensions into two pieces such that $\boldsymbol{y} = (\boldsymbol{y}_1,\, \boldsymbol{y}_2)^t$ then
+
+::: {.small}
+$$
+\underset{n \times 1}{\boldsymbol{y}} \sim N\left(
+  \begin{pmatrix}
+    \boldsymbol{\mu}_1 \\ 
+    \boldsymbol{\mu}_2
+  \end{pmatrix},\, 
+  \begin{pmatrix} 
+    \boldsymbol{\Sigma}_{11} & \boldsymbol{\Sigma}_{12} \\ 
+    \boldsymbol{\Sigma}_{21} & \boldsymbol{\Sigma}_{22} 
+  \end{pmatrix}
+\right)
+$$
+$$ 
+\begin{aligned}
+\underset{k \times 1}{~~\boldsymbol{y}_1~~} &\sim N(\underset{k \times 1}{~~~\boldsymbol{\mu}_1~~~},\, \underset{k \times k}{~~~\boldsymbol{\Sigma}_{11}~~~}) \\ 
+\underset{n-k \times 1}{\boldsymbol{y}_2} &\sim N(\underset{n-k \times 1}{\boldsymbol{\mu}_2},\, \underset{n-k \times n-k}{\boldsymbol{\Sigma}_{22}})
+\end{aligned} 
+$$
+:::
+
+. . .
+
+then the conditional distributions are given by 
+
+::: {.small}
+$$
+\begin{aligned}
+\boldsymbol{y}_1 ~|~ \boldsymbol{y}_2 = \boldsymbol{a} ~&\sim N(\boldsymbol{\mu_1} + \boldsymbol{\Sigma_{12}} \, \boldsymbol{\Sigma_{22}}^{-1} \, (\boldsymbol{a} - \boldsymbol{\mu_2}),~ \boldsymbol{\Sigma_{11}}-\boldsymbol{\Sigma_{12}}\,\boldsymbol{\Sigma_{22}}^{-1} \, \boldsymbol{\Sigma_{21}}) \\
+\\
+\boldsymbol{y}_2 ~|~ \boldsymbol{y}_1 = \boldsymbol{b} ~&\sim N(\boldsymbol{\mu_2} + \boldsymbol{\Sigma_{21}} \, \boldsymbol{\Sigma_{11}}^{-1} \, (\boldsymbol{b} - \boldsymbol{\mu_1}),~ \boldsymbol{\Sigma_{22}}-\boldsymbol{\Sigma_{21}}\,\boldsymbol{\Sigma_{11}}^{-1} \, \boldsymbol{\Sigma_{12}})
+\end{aligned}
+$$
+:::
+
+
+## Gaussian Processes
+
+From Shumway,
+
+> A process, $\boldsymbol{y} = \{y(t) ~:~ t \in T\}$, is said to be a Gaussian process if all possible finite dimensional vectors $\boldsymbol{y} = (y_{t_1},y_{t_2},...,y_{t_n})^t$, for every collection of time points $t_1, t_2, \ldots , t_n$, and every positive integer $n$, have a multivariate normal distribution.
+
+. . .
+
+<br/>
+
+So far we have only looked at examples of time series where $T$ is discete (and evenly spaces & contiguous), it turns out things get a lot more interesting when we explore the case where $T$ is defined on a *continuous* space  (e.g. $\mathbb{R}$ or some subset of $\mathbb{R}$).
+
+
+# Gaussian Process Regression
+
+## Parameterizing a Gaussian Process
+
+Imagine we have a Gaussian process defined such that $\boldsymbol{y} = \{y(t) ~:~ t \in [0,1]\}$, 
+
+. . .
+
+* We now have an uncountably infinite set of possible $t$'s and $y(t)$s.
+
+. . .
+
+* We will only have a (small) finite number of observations $y(t_1), \ldots, y(t_n)$ with which to say something useful about this infinite dimensional process.
+
+. . .
+
+* The unconstrained covariance matrix for the observed data can have up to $n(n+1)/2$ unique values$^*$
+
+. . .
+
+* Necessary to make some simplifying assumptions:
+
+    * Stationarity
+
+    * Simple(r) parameterization of $\Sigma$
+
+
+## Covariance Functions
+
+More on these next week, but for now some common examples
+
+. . .
+
+*Exponential covariance*:
+$$ \Sigma(y_{t},y_{t'}) = \sigma^2 \exp\big(-|t-t'| \; l\,\big) $$
+
+. . .
+
+*Squared exponential covariance (Gaussian)*:
+$$ \Sigma(y_{t},y_{t'}) = \sigma^2 \exp\big(-(|t-t'| \; l\,)^2\big) $$
+
+. . .
+
+*Powered exponential covariance $\left(p \in (0,2]\right)$*:
+$$ \Sigma(y_{t},y_{t'}) = \sigma^2 \exp\big(-(|t-t'| \; l\,)^p\big) $$
+
+## Covariance Function - Correlation Decay
+
+Letting $\sigma^2 = 1$ and trying different values of the length scale $l$,
+
+```{r echo=FALSE, fig.height=4.5}
+vals = expand_grid(
+  d = seq(0, 1, length.out = 100),
+  l = seq(1, 10, length.out = 10)
+)
+
+covs = rbind(
+  mutate(vals, func="exp cov", corr = exp_cov(d,l=l)/exp_cov(0,l=l)),
+  mutate(vals, func="sq exp cov", corr = sq_exp_cov(d,l=l)/sq_exp_cov(0,l=l))
+)
+
+ggplot(covs, aes(x=d, y=corr, color=as.factor(round(l,1)))) +
+  geom_line() +
+  facet_wrap(~func, ncol=2) +
+  labs(color="l")
+```
+
+## Correlation Decay - AR(1)
+
+Recall that for a stationary AR(1) process: $\gamma(h) = \sigma^2_w \phi^{|h|}$ and $\rho(h) = \phi^{|h|}$
+
+. . .
+
+we can draw a somewhat similar picture about the decay of $\rho$ as a function of distance.
+
+```{r echo=FALSE}
+expand_grid(
+  phi = seq(0.1,0.9,0.2),
+  h = 0:8
+) |>
+  mutate(
+    rho = phi^h,
+    phi = as.factor(phi)
+  ) |>
+  ggplot(aes(x=h, y=rho, color=phi)) +
+    geom_point(size=2)
+
+```
+
+
+## Example
+
+```{r echo=FALSE, fig.align="center"}
+set.seed(1234)
+
+y_f = function(x) log(x + 0.1) + sin(5*pi*x)
+
+d_true = d = tibble(
+  t = seq(0,1,length.out = 1000)
+) |>
+  mutate(y = y_f(t) )
+
+n = 20
+d = tibble(
+  t = seq(0,1,length.out = n) + rnorm(n, sd=0.01)
+) |>
+  mutate(t = t - min(t)) |>
+  mutate(t = t / max(t)) |>
+  mutate(y = y_f(t) + rnorm(n,sd=0.2))
+
+base = ggplot(d, aes(x=t, y=y)) +
+  geom_point(size=3) +
+  geom_line(data=d_true, color="#2297E6", linewidth=1)
+base
+
+save(d, d_true, y_f, base, file="lec14_ex.Rdata")
+```
+
+## Prediction
+
+Our example has 20 observations $\left(\boldsymbol {y}_{obs} = \left(y(t_1), \ldots, y(t_{20})\right)'\right)$, which we would like to use as the basis for predicting $y(t)$ at other values of $t$ (say a regular sequence of values from 0 to 1), $\left( \boldsymbol {y}_{pred} \right)$.
+
+. . .
+
+For now lets use a squared exponential covariance with $\sigma^2 = 10$ and $l=15$, as such the covariance is given by:
+
+$$ \Sigma(y_{t},y_{t'}) = \sigma^2 \exp\big(-|t-t'| \; l\,\big) $$
+
+. . .
+
+Our goal is then to obtain samples from $\boldsymbol{y}_{pred} | \boldsymbol{y}_{obs}$ which has the following distribution,
+
+$$\boldsymbol{y}_{pred} ~|~ \boldsymbol{y}_{obs} = \boldsymbol{y} ~\sim N(\boldsymbol{\Sigma}_{po} \, \boldsymbol{\Sigma}_{obs}^{-1} \, \boldsymbol{y},~ \boldsymbol{\Sigma}_{pred}-\boldsymbol{\Sigma}_{po}\,\boldsymbol{\Sigma}_{pred}^{-1} \, \boldsymbol{\Sigma}_{op})$$
+
+```{r echo=FALSE}
+d_pred = tibble(t = seq(0,1,length.out = 501))
+y_post = cond_predict(d$y, d$t, d_pred$t, cov=sq_exp_cov, sigma2 = 10, l = 15, reps=1000)
+
+d_pred = bind_cols(
+  d_pred,
+  y_post[,1:5] |> as.data.frame() |> setNames(paste0("y",1:5))#,
+) |>
+  mutate(
+    post_mean = apply(y_post, 1, mean),
+    post_lower = apply(y_post, 1, quantile, probs=0.025),
+    post_upper = apply(y_post, 1, quantile, probs=0.975)
+  )
+```
+
+## Squared exponential covariance
+
+::: {.panel-tabset}
+### Draw 1
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### Draw 2
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=1.0, linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### Draw 3
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=1.0, linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### Draw 4
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=1.0, linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### Draw 5
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=1.0, linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### Mean
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### CI
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_ribbon(data=d_pred, fill='#61D04F', alpha=0.3, aes(ymin=post_lower, ymax=post_upper, y=post_mean)) +
+  ylim(-3.5,3.5)
+```
+:::
+
+
+## Exponential covariance
+
+Now lets consider an exponential covariance model instead where $\sigma=10$, $l = \sqrt{15}$,
+
+$$ \Sigma(y_{t},y_{t'}) = \sigma^2 \exp\big(-|t-t'| \; l\,\big) $$
+
+. . .
+
+We are still sampling from $\boldsymbol{y}_{pred} ~|~ \boldsymbol{y}_{obs}$, all that has changed is the values of the covariance matrices.
+
+. . .
+
+What "paths" do we get with this covariance? How are they similar and how are they different from the squared exponential covariance?
+
+
+```{r echo=FALSE}
+d_pred = tibble(t = seq(0,1,length.out = 1000))
+y_post = cond_predict(d$y, d$t, d_pred$t, cov = exp_cov, sigma2 = 10, l = sqrt(15), reps=1000)
+
+d_pred = cbind(
+  d_pred,
+  y_post[,1:5] |> as.data.frame() |> setNames(paste0("y",1:5))
+) |>
+  mutate(
+    post_mean = apply(y_post, 1, mean),
+    post_lower = apply(y_post, 1, quantile, probs=0.025),
+    post_upper = apply(y_post, 1, quantile, probs=0.975)
+  )
+```
+
+
+
+## Exponential Covariance
+
+::: {.panel-tabset}
+### Draw 1
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=1, linewidth=0.5)
+```
+
+### Draw 2
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=1, linewidth=0.5)
+```
+
+### Draw 3
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=1, linewidth=0.5)
+```
+
+### Draw 4
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=1, linewidth=0.5)
+```
+
+### Draw 5
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=1, linewidth=0.5)
+```
+
+
+### Mean
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=post_mean), linewidth=1) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1)
+```
+
+### CI
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=post_mean), linewidth=1) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_ribbon(data=d_pred, fill='#61D04F', alpha=0.3, aes(ymin=post_lower, ymax=post_upper, y=post_mean))
+```
+:::
+
+
+## Powered exponential covariance ($p=1.5$)
+
+```{r echo=FALSE}
+d_pred = tibble(t = seq(0,1,length.out = 1000))
+
+cov_15 = function(d, sigma2, l) pow_exp_cov(d,sigma2,l, p=1.5)
+
+y_post = cond_predict(d$y, d$t, d_pred$t, cov = cov_15, sigma2 = 10, l = 15, reps=1000)
+
+d_pred = cbind(
+  d_pred,
+  y_post[,1:5] |> as.data.frame() |> setNames(paste0("y",1:5))
+) |>
+  mutate(
+    post_mean = apply(y_post, 1, mean),
+    post_lower = apply(y_post, 1, quantile, probs=0.025),
+    post_upper = apply(y_post, 1, quantile, probs=0.975)
+  )
+```
+
+
+::: {.panel-tabset}
+
+### Mean
+
+```{r}
+#| echo: false
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=post_mean), linewidth=1) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1)
+```
+
+
+### CI
+
+```{r}
+#| echo: false
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=post_mean), linewidth=1) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_ribbon(data=d_pred, fill='#61D04F', alpha=0.3, aes(ymin=post_lower, ymax=post_upper, y=post_mean))
+```
+
+:::
+
+
+## Back to the square exponential
+
+```{r echo=FALSE}
+d_pred = tibble(t = seq(0,1,length.out = 100))
+
+y_post = cond_predict(d$y, d$t, d_pred$t, cov = sq_exp_cov, sigma2 = 10, l = 15, reps=5000)
+
+d_pred = d_pred |>
+  mutate(
+    post_mean = apply(y_post, 1, mean),
+    post_lower = apply(y_post, 1, quantile, probs=0.025),
+    post_upper = apply(y_post, 1, quantile, probs=0.975)
+  )
+
+base + 
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_ribbon(data=d_pred, fill='#61D04F', alpha=0.3, aes(ymin=post_lower, ymax=post_upper, y=post_mean))
+```
+
+
+## Changing the lengthscale ($l$)
+
+```{r echo=FALSE}
+d_pred = tibble(t = seq(0,1,length.out = 100))
+
+d_pred_l = map_dfr(
+  c(10,15,20,25),
+  function(l) {
+    cond_predict(d$y, d$t, d_pred$t, cov = sq_exp_cov, sigma2 = 10, l = l, reps=1000) |>
+    (\(y_post) {
+      d_pred |>
+      mutate(
+        post_mean = apply(y_post, 1, mean),
+        post_lower = apply(y_post, 1, quantile, probs=0.025),
+        post_upper = apply(y_post, 1, quantile, probs=0.975),
+        cov = paste0("Sq Exp Cov - sigma2=10, l=", l))
+    })()
+  }
+) |>
+  mutate(cov = forcats::as_factor(cov))
+
+base + 
+  geom_line(data=d_pred_l, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_ribbon(data=d_pred_l, fill='#61D04F', alpha=0.3, aes(ymin=post_lower, ymax=post_upper, y=post_mean)) +
+  facet_wrap(~cov)
+```
+
+## Effective range
+
+For the square exponential covariance
+$$ 
+\begin{aligned} 
+Cov(d) &= \sigma^2 \exp\left(-(l \cdot d)^2\right) \\
+Corr(d) &= \exp\left(-(l \cdot d)^2\right)
+\end{aligned} 
+$$
+
+we would like to know, for a given value of $l$, beyond what distance apart must observations be to have a correlation less than $0.05$? 
+
+. . .
+
+$$
+\begin{aligned}
+\exp\left(-(l \cdot d)^2\right) &< 0.05 \\
+-(l \cdot d)^2 &< \log 0.05 \\
+l \cdot d &< \sqrt{3} \\
+d &< \sqrt{3} / l
+\end{aligned}
+$$
+
+
+
+## Changing the scale ($\sigma^2$)
+
+```{r echo=FALSE}
+d_pred = tibble(t = seq(0,1,length.out = 100))
+
+d_pred_s = map2_dfr(
+  c(5,5,5,15,15,15), c(10,15,20,10,15,20),
+  function(s,l) {
+    cond_predict(d$y, d$t, d_pred$t, cov = sq_exp_cov, sigma2 = s, l = l, reps=1000) |> 
+    (\(y_post) {
+      d_pred |>
+      mutate(
+        post_mean = apply(y_post, 1, mean),
+        post_lower = apply(y_post, 1, quantile, probs=0.025),
+        post_upper = apply(y_post, 1, quantile, probs=0.975),
+        cov = paste0("Sq Exp Cov - sigma2=10, l=", l))
+    })()
+  }
+) |>
+  mutate(cov = forcats::as_factor(cov))
+
+base + 
+  geom_line(data=d_pred_s, color='#DF536B', aes(y=post_mean), linewidth=1) +
+  geom_ribbon(data=d_pred_s, fill='#DF536B', alpha=0.25, aes(ymin=post_lower, ymax=post_upper, y=post_mean)) +
+  facet_wrap(~cov)
+```
+
+
+## Fitting w/ BRMS
+
+::: {.small}
+```{r}
+library(brms)
+gp = brm(y ~ gp(t), data=d, cores=4, refresh=0)
+summary(gp)
+```
+:::
+
+
+## Some notes
+
+`gp()` serves a similar function to `arma()` within a brms model - it specifies the structure of the model which is then translated into stan.
+
+* The covariance function is specified using the `cov` argument, currenly only `"exp_quad"` is the default and *only* supported covariance.
+
+* The covariance parameterization used differs slightly from what was given previous (but is equivalent),
+
+$$
+k(x_i, x_j) = \text{\{sdgp\}}^2 \exp(−||x_i − x_j||^2 / (2 \,\text{\{lscale\}}^2)) 
+$$
+
+* Model fitting scales very poorly in terms of $n$ (this is a stan issue and not just a brms issue)
+
+
+## Trace plots
+
+```{r}
+plot(gp)
+```
+
+## PP Checks
+
+```{r}
+pp_check(gp, ndraws = 100)
+```
+
+## Model predictions
+
+
+```{r echo=FALSE}
+gp_pred = predicted_draws_fix(gp, newdata = tibble(t = seq(0,1,by=0.01)))
+
+base +
+  tidybayes::stat_lineribbon(
+    data = gp_pred,
+    aes(y=.prediction),
+    alpha=0.25
+  )
+```
+
+
+## Forecasting
+
+```{r echo=FALSE}
+base +
+  tidybayes::stat_lineribbon(
+    data = predicted_draws_fix(
+      gp, newdata = tibble(t = seq(0,1.5,by=0.01))
+    ),
+    aes(y=.prediction),
+    alpha=0.25
+  )
+```
+
+## brms paths
+
+```{r}
+#| echo: false
+d_gp_pred = gp_pred |>
+  filter(.iteration %in% 1:5, .chain == 1) |>
+  rename(y = .prediction) |>
+  mutate(.iteration = paste0("y", .iteration)) |>
+  pivot_wider(id_cols = t, names_from = .iteration, values_from = y) |>
+  left_join(
+    gp_pred |>
+      filter(.chain == 1) |>
+      summarize(
+        post_mean = mean(.prediction),
+        post_lower = quantile(.prediction, probs=0.025),
+        post_upper = quantile(.prediction, probs=0.975),
+        .by = t
+      ),
+    by = "t"
+  )
+```
+
+::: {.panel-tabset}
+### Draw 1
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y1), linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### Draw 2
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y2), alpha=1.0, linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### Draw 3
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y3), alpha=1.0, linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### Draw 4
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y4), alpha=1.0, linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### Draw 5
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y5), alpha=1.0, linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### Mean
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  ylim(-3.5,3.5)
+```
+
+### CI
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_gp_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_ribbon(data=d_gp_pred, fill='#61D04F', alpha=0.3, aes(ymin=post_lower, ymax=post_upper, y=post_mean)) +
+  ylim(-3.5,3.5)
+```
+:::
+
+
+
+## Why does this look different?
+
+Unlike our previous conditional samples these predictions no longer pass exactly through each observation and so we get a bit of a better behaved curve and much more reasonable intervals.
+
+. . .
+
+The model being fit by brms has one additional parameter that our previous example did not have - a nugget covariance (`sigma` in the brms summary). 
+
+. . .
+
+So what does the covariance look like?
+
+$$
+k(x_i, x_j) = \text{\{sdgp\}}^2 \exp(−||x_i − x_j||^2 / (2 \,\text{\{lscale\}}^2)) + \text{\{sigma\}}^2 \mathbb{1}_{i=j}
+$$
+
+
+
+## Squared exponential w/ nugget ($\sigma^2_w = 0.1$)
+
+
+```{r echo=FALSE}
+d_pred = tibble(t = seq(0,1,length.out = 501))
+y_post = cond_predict(d$y, d$t, d_pred$t, cov=sq_exp_cov, sigma2 = 10, l = 15, sigma2_w = 0.1, reps=1000)
+
+d_pred = bind_cols(
+  d_pred,
+  y_post[,1:5] |> as.data.frame() |> setNames(paste0("y",1:5))#,
+) |>
+  mutate(
+    post_mean = apply(y_post, 1, mean),
+    post_lower = apply(y_post, 1, quantile, probs=0.025),
+    post_upper = apply(y_post, 1, quantile, probs=0.975)
+  )
+```
+
+
+::: {.panel-tabset}
+### Draw 1
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), linewidth=1)
+```
+
+### Draw 2
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=1.0, linewidth=1)
+```
+
+### Draw 3
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=1.0, linewidth=1)
+```
+
+### Draw 4
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=1.0, linewidth=1)
+```
+
+### Draw 5
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=1.0, linewidth=1)
+```
+
+### Mean
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1)
+```
+
+### CI
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_ribbon(data=d_pred, fill='#61D04F', alpha=0.3, aes(ymin=post_lower, ymax=post_upper, y=post_mean))
+```
+:::
