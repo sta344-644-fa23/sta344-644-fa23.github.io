@@ -1,6 +1,6 @@
 ---
 title: "Gaussian Process Models"
-subtitle: "Lecture 14"
+subtitle: "Lecture 13"
 author: "Dr. Colin Rundel"
 footer: "Sta 344/644 - Fall 2023"
 format:
@@ -237,21 +237,21 @@ More on these next week, but for now some common examples
 . . .
 
 *Exponential covariance*:
-$$ \Sigma(y_{t},y_{t'}) = \sigma^2 \exp\big(-|t-t'| \; l\,\big) $$
+$$ \Sigma\left(y(t),y(t')\right) = \sigma^2 \exp\big(-|t-t'| \; l\,\big) $$
 
 . . .
 
 *Squared exponential covariance (Gaussian)*:
-$$ \Sigma(y_{t},y_{t'}) = \sigma^2 \exp\big(-(|t-t'| \; l\,)^2\big) $$
+$$ \Sigma\left(y(t),y(t')\right) = \sigma^2 \exp\big(-\left(|t-t'| \; l\,\right)^2\big) $$
 
 . . .
 
 *Powered exponential covariance $\left(p \in (0,2]\right)$*:
-$$ \Sigma(y_{t},y_{t'}) = \sigma^2 \exp\big(-(|t-t'| \; l\,)^p\big) $$
+$$ \Sigma\left(y(t),y(t')\right) = \sigma^2 \exp\big(-\left(|t-t'| \; l\,\right)^p\big) $$
 
-## Covariance Function - Correlation Decay
+## Correlation Decay
 
-Letting $\sigma^2 = 1$ and trying different values of the length scale $l$,
+Letting $\sigma^2 = 1$ and trying different values of the inverse lengthscale $l$,
 
 ```{r echo=FALSE, fig.height=4.5}
 vals = expand_grid(
@@ -276,7 +276,7 @@ Recall that for a stationary AR(1) process: $\gamma(h) = \sigma^2_w \phi^{|h|}$ 
 
 . . .
 
-we can draw a somewhat similar picture about the decay of $\rho$ as a function of distance.
+we can draw a similar picture of the decay of correlation as a function of "distance".
 
 ```{r echo=FALSE}
 expand_grid(
@@ -284,16 +284,16 @@ expand_grid(
   h = 0:8
 ) |>
   mutate(
-    rho = phi^h,
+    corr = phi^h,
     phi = as.factor(phi)
   ) |>
-  ggplot(aes(x=h, y=rho, color=phi)) +
+  ggplot(aes(x=h, y=corr, color=phi)) +
     geom_point(size=2)
 
 ```
 
 
-## Example
+## GP Example
 
 ```{r echo=FALSE, fig.align="center"}
 set.seed(1234)
@@ -318,22 +318,22 @@ base = ggplot(d, aes(x=t, y=y)) +
   geom_line(data=d_true, color="#2297E6", linewidth=1)
 base
 
-save(d, d_true, y_f, base, file="lec14_ex.Rdata")
+save(d, d_true, y_f, base, file="Lec13_ex.Rdata")
 ```
 
 ## Prediction
 
-Our example has 20 observations $\left(\boldsymbol {y}_{obs} = \left(y(t_1), \ldots, y(t_{20})\right)'\right)$, which we would like to use as the basis for predicting $y(t)$ at other values of $t$ (say a regular sequence of values from 0 to 1), $\left( \boldsymbol {y}_{pred} \right)$.
+Our example has 20 observations $\left(\boldsymbol {y}_{obs} = \left(y(t_1), \ldots, y(t_{20})\right)'\right)$, which we would like to use as the basis for predicting $y(t)$ at other values of $t$ $\left( \boldsymbol {y}_{pred} \right)$ at a regular sequence of values from 0 to 1 .
 
 . . .
 
 For now lets use a squared exponential covariance with $\sigma^2 = 10$ and $l=15$, as such the covariance is given by:
 
-$$ \Sigma(y_{t},y_{t'}) = \sigma^2 \exp\big(-|t-t'| \; l\,\big) $$
+$$ \Sigma\left(y(t),y(t')\right) = \sigma^2 \exp\big(-|t-t'| \; l\,\big) $$
 
 . . .
 
-Our goal is then to obtain samples from $\boldsymbol{y}_{pred} | \boldsymbol{y}_{obs}$ which has the following distribution,
+Our goal is to obtain samples from $\boldsymbol{y}_{pred} | \boldsymbol{y}_{obs}$ which has the following distribution,
 
 $$\boldsymbol{y}_{pred} ~|~ \boldsymbol{y}_{obs} = \boldsymbol{y} ~\sim N(\boldsymbol{\Sigma}_{po} \, \boldsymbol{\Sigma}_{obs}^{-1} \, \boldsymbol{y},~ \boldsymbol{\Sigma}_{pred}-\boldsymbol{\Sigma}_{po}\,\boldsymbol{\Sigma}_{pred}^{-1} \, \boldsymbol{\Sigma}_{op})$$
 
@@ -414,7 +414,7 @@ base +
   geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
-  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1.25) +
   ylim(-3.5,3.5)
 ```
 
@@ -427,7 +427,7 @@ base +
   geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
-  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1.25) +
   geom_ribbon(data=d_pred, fill='#61D04F', alpha=0.3, aes(ymin=post_lower, ymax=post_upper, y=post_mean)) +
   ylim(-3.5,3.5)
 ```
@@ -525,7 +525,7 @@ base +
   geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
-  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1)
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1.25)
 ```
 
 ### CI
@@ -538,7 +538,7 @@ base +
   geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
-  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1.25) +
   geom_ribbon(data=d_pred, fill='#61D04F', alpha=0.3, aes(ymin=post_lower, ymax=post_upper, y=post_mean))
 ```
 :::
@@ -566,6 +566,50 @@ d_pred = cbind(
 
 
 ::: {.panel-tabset}
+### Draw 1
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=1, linewidth=0.5)
+```
+
+### Draw 2
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=1, linewidth=0.5)
+```
+
+### Draw 3
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=1, linewidth=0.5)
+```
+
+### Draw 4
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=1, linewidth=0.5)
+```
+
+### Draw 5
+
+```{r echo=FALSE}
+base + 
+  geom_line(data=d_pred, color='#DF536B', aes(y=y1), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y2), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.2, linewidth=0.5) +
+  geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=1, linewidth=0.5)
+```
 
 ### Mean
 
@@ -578,7 +622,7 @@ base +
   geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
-  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1)
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1.25)
 ```
 
 
@@ -593,7 +637,7 @@ base +
   geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
-  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1.25) +
   geom_ribbon(data=d_pred, fill='#61D04F', alpha=0.3, aes(ymin=post_lower, ymax=post_upper, y=post_mean))
 ```
 
@@ -620,7 +664,7 @@ base +
 ```
 
 
-## Changing the lengthscale ($l$)
+## Changing the inverse lengthscale ($l$)
 
 ```{r echo=FALSE}
 d_pred = tibble(t = seq(0,1,length.out = 100))
@@ -657,7 +701,7 @@ Corr(d) &= \exp\left(-(l \cdot d)^2\right)
 \end{aligned} 
 $$
 
-we would like to know, for a given value of $l$, beyond what distance apart must observations be to have a correlation less than $0.05$? 
+we would like to know, for a given value of $l$, beyond what distance must observations be to have a correlation less than $0.05$? 
 
 . . .
 
@@ -665,6 +709,7 @@ $$
 \begin{aligned}
 \exp\left(-(l \cdot d)^2\right) &< 0.05 \\
 -(l \cdot d)^2 &< \log 0.05 \\
+-(l \cdot d)^2 &< 3 \\
 l \cdot d &< \sqrt{3} \\
 d &< \sqrt{3} / l
 \end{aligned}
@@ -715,9 +760,9 @@ summary(gp)
 
 `gp()` serves a similar function to `arma()` within a brms model - it specifies the structure of the model which is then translated into stan.
 
-* The covariance function is specified using the `cov` argument, currenly only `"exp_quad"` is the default and *only* supported covariance.
+* The covariance function is specified using the `cov` argument to `gp()`, currently `"exp_quad"` is the default and *only* supported covariance.
 
-* The covariance parameterization used differs slightly from what was given previous (but is equivalent),
+* The covariance parameterization differs slightly from what was given previous (but is equivalent),
 
 $$
 k(x_i, x_j) = \text{\{sdgp\}}^2 \exp(−||x_i − x_j||^2 / (2 \,\text{\{lscale\}}^2)) 
@@ -961,7 +1006,7 @@ base +
   geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
-  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1)
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1.25)
 ```
 
 ### CI
@@ -973,7 +1018,7 @@ base +
   geom_line(data=d_pred, color='#DF536B', aes(y=y3), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y4), alpha=0.4, linewidth=0.5) +
   geom_line(data=d_pred, color='#DF536B', aes(y=y5), alpha=0.4, linewidth=0.5) +
-  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1) +
+  geom_line(data=d_pred, color='#61D04F', aes(y=post_mean), linewidth=1.25) +
   geom_ribbon(data=d_pred, fill='#61D04F', alpha=0.3, aes(ymin=post_lower, ymax=post_upper, y=post_mean))
 ```
 :::
