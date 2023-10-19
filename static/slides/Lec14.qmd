@@ -1,0 +1,658 @@
+---
+title: "Gaussian Process Models <br/> Part 2"
+subtitle: "Lecture 14"
+author: "Dr. Colin Rundel"
+footer: "Sta 344/644 - Fall 2023"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+    self-contained: true
+execute:
+  echo: true
+  warning: false
+  collapse: true
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(tsibble)
+library(dukestm)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+#options(width=50)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+
+
+set.seed(20221019)
+```
+
+# EDA and GPs
+
+## Variogram
+
+When fitting a Gaussian process model, it is often difficult to fit the covariance parameters (they are often correlated and hard to identify). 
+
+Today we will discuss some EDA approaches for getting a sense of the values for the scale, lengthscale / effective range and nugget parameters.
+
+. . .
+
+From the spatial modeling literature the typical approach is to examine an *empirical variogram*, first we will define the *theoretical variogram* and its connection to the covariance.
+
+
+## Variogram & semivariogram
+
+#### Variogram
+$$
+2 \gamma(t_i, t_j) = \text{Var}\left(y(t_i) - y(t_j)\right)
+$$
+
+#### SemiVariogram
+$$
+\gamma(t_i, t_j) = \frac{1}{2} \text{Var}\left(y(t_i) - y(t_j)\right)
+$$
+
+
+## Properties of the Variogram / Semivariogram {.smaller}
+
+:::: {.columns}
+::: {.column width='50%'}
+* both are non-negative 
+$$\gamma(t_i, t_j) \geq 0$$
+
+* both are equal to 0 at distance 0
+$$\gamma(t_i, t_i) = 0$$
+
+* both are symmetric - 
+$$\gamma(t_i, t_j) = \gamma(t_j, t_i)$$
+
+* if observations are independent 
+$$2\gamma(t_i, t_j) = \text{Var}\big(y(t_i)\big) + \text{Var}\big(y(t_j)\big) \quad \text{ for all } i \ne j$$
+
+:::
+
+::: {.column width='50%'}
+* if the process *is not* stationary 
+$$2\gamma(t_i, t_j) = \text{Var}\big(y(t_i)\big) + \text{Var}\big(y(t_j)\big) - 2 \, \text{Cov}\big(y(t_i),y(t_j)\big)$$
+
+* if the process *is* stationary 
+$$2\,\gamma(t_i, t_j) = 2 \, \text{Var}\big(y(t_i)\big) - 2 \, \text{Cov}\big(y(t_i),y(t_j)\big)$$
+
+:::
+::::
+
+
+
+## Connection to Covariance
+
+Assuming a squared exponential covariance structure and stationarity,
+
+$$
+\begin{aligned}
+2\gamma(t_i, t_j) &= 2\text{Var}\big(y(t_i)\big) - 2 \, Cov\big(y(t_i),y(t_j)\big) \\
+\gamma(t_i, t_j) &= \text{Var}\big(y(t_i)\big) - \, Cov\big(y(t_i),y(t_j)\big) \\
+  &= \sigma^2 - \, \sigma^2 \exp\big(-(|t_i-t_j|\,l)^2\big)
+\end{aligned}
+$$
+
+
+
+## Covariance vs Semivariogram - Exponential
+
+```{r echo=FALSE}
+vals = expand_grid(
+  d = seq(0, 2, length.out = 100),
+  l = seq(1, 7, length.out = 7)
+)
+```
+
+```{r echo=FALSE, fig.height=5}
+exp = bind_rows(
+  mutate(vals, func="exp cov", y = exp_cov(d, l=l)),
+  mutate(vals, func="exp semivar", y = exp_sv(d, l=l))
+)
+
+exp |>
+  mutate(l = as.factor(round(l,1))) |>
+  ggplot(aes(x=d, y=y, color=l)) +
+    geom_line() +
+    facet_wrap(~func, ncol=2)
+```
+
+## Covariance vs Semivariogram - Sq. Exp.
+
+```{r echo=FALSE, fig.height=5}
+sq_exp = rbind(
+  mutate(vals, func="sq exp cov", y = sq_exp_cov(d, l=l)),
+  mutate(vals, func="sq exp semivar", y = sq_exp_sv(d, l=l))
+) 
+
+sq_exp |>
+  mutate(l = as.factor(round(l,1))) |>
+  ggplot(aes(x=d, y=y, color=l)) +
+    geom_line() +
+    facet_wrap(~func, ncol=2)
+```
+
+
+## Nugget variance
+
+Very often in the real world we will observe that $\gamma(t_i, t_i) = 0$ is not true - there will be an initial discontinuity in the semivariogram at $|t_i - t_j| = 0$.
+
+Why is this?
+
+. . .
+
+We can think about Gaussian process regression in the following way,
+
+$$
+y(t) = \mu(t) + w(t) + \epsilon(t) 
+$$
+
+where
+
+$$
+\begin{aligned}
+\boldsymbol{\mu}(\boldsymbol{t}) &= \boldsymbol{X} \boldsymbol{\beta} \\
+\boldsymbol{w}(\boldsymbol{t}) &\sim N(\boldsymbol{0}, \boldsymbol{\Sigma}) \\
+\epsilon(t) &\overset{iid}{\sim} N(0, \sigma^2_w)\\
+\end{aligned}
+$$
+
+## Implications
+
+With the inclusion of the $\epsilon(t)$ terms in the model we now have,
+
+$$
+\begin{aligned}
+\text{Var}\big(y(t_i)\big) &= \sigma^2_w + \Sigma_{ii} \\
+Cov\big(y(t_i), y(t_j)\big) &= \Sigma_{ij}
+\end{aligned}
+$$
+
+. . .
+
+Therefore, for a squared exponential covariance model with a nugget component the semivariogram is given by,
+
+$$
+\gamma(t_i,t_j) = \left(\sigma^2 + \sigma^2_w \right) - \sigma^2 \exp \left(- (|t_i-t_j|\,l)^2\right)
+$$
+
+. . .
+
+$$
+\begin{aligned}
+\gamma(t_i,t_i) &= \left(\sigma^2 + \sigma^2_w \right) - \sigma^2 \exp \left(- (|t_i-t_j|\,l)^2\right) \\
+&= \left(\sigma^2 + \sigma^2_w \right) - \sigma^2 \exp \left(0\right) = \sigma^2_w
+\end{aligned}
+$$
+
+
+## Semivariogram features
+
+<br/>
+
+![](imgs/variogram.jpeg){fig-align="center" width="70%"}
+
+::: {.aside}
+From <https://www.intechopen.com/chapters/39857>
+:::
+
+
+## Empirical Semivariogram
+
+We will assume that our process of interest is stationary, in which case we will parameterize the semivariagram in terms of $d = |t_i - t_j|$.
+
+#### Empirical Semivariogram:
+$$ \hat{\gamma}(d) = \frac{1}{2 \, N(d)} \sum_{|t_i-t_j| \in (d-\epsilon,d+\epsilon)} (y(t_i) - y(t_j))^2 $$
+
+
+. . .
+
+Practically, for any data set with $n$ observations there are ${n \choose 2} + n$ possible data pairs to examine. Each individually is not very informative, so we aggregate into bins and calculate the empirical semivariogram for each bin.  
+
+
+## Empirical semivariogram of white noise
+
+Where $\sigma^2_w = 1$,
+
+```{r echo=FALSE}
+n = 100
+wn = tibble(
+  t = runif(n, 0, 1),
+  y = rnorm(n)
+) 
+
+wn_emp = emp_semivariogram(
+  wn, y, t, bin=TRUE, 
+  binwidth=c(0.025, 0.05, 0.075, 0.1)
+) |>
+  mutate(
+    sv = sq_exp_sv(d, sigma2 = 0, l = 0, sigma2_w = 1)
+  )
+
+wn_emp |>
+  ggplot(aes(x=d, y=gamma)) +
+  geom_line(aes(y=sv), color='red') +
+  geom_point() +
+  facet_wrap(~bw, nrow=2) +
+  ylim(0,1.25)
+```
+
+## Empirical Variogram of GP w/ Sq Exp cov
+
+Where $\sigma^2=2$, $l=5$, and $\sigma^2_w=0.25$,
+
+```{r echo=FALSE}
+n = 100
+
+sq_exp = tibble(
+  t = runif(n, 0, 3)
+) |>
+  mutate(
+    y = c(rmvnorm(n = 1, Sigma = sq_exp_cov(fields::rdist(t), sigma2=2, l=5, sigma2_w=0.25)))
+  )
+
+sq_exp_emp = emp_semivariogram(
+  sq_exp, y, t, bin=TRUE, 
+  binwidth=c(0.025, 0.05, 0.075, 0.1)
+) |>
+  mutate(
+    sv = sq_exp_sv(d, sigma2 = 2, l = 5, sigma2_w = 0.25)
+  )
+
+sq_exp_emp |>
+  ggplot(aes(x=d, y=gamma)) +
+  geom_line(aes(y=sv), color='red') +
+  geom_point() +
+  facet_wrap(~bw, nrow=2) +
+  ylim(0,NA)
+```
+
+
+## Empirical Variogram of GP w/ Exp cov
+
+Where $\sigma^2=2$, $l=6$, and $\sigma^2_w=1$,
+
+```{r echo=FALSE}
+n = 100
+
+exp = tibble(
+  t = runif(n, 0, 3)
+) |>
+  mutate(
+    y = c(rmvnorm(n = 1, Sigma = exp_cov(fields::rdist(t), sigma2=2, l=6, sigma2_w=1)))
+  )
+
+exp_emp = emp_semivariogram(
+  exp, y, t, bin=TRUE, 
+  binwidth=c(0.025, 0.05, 0.075, 0.1)
+) |>
+  mutate(
+    sv = exp_sv(d, sigma2 = 2, l = 6, sigma2_w = 1)
+  )
+
+exp_emp |>
+  ggplot(aes(x=d, y=gamma)) +
+  geom_line(aes(y=sv), color='red') +
+  geom_point() +
+  facet_wrap(~bw, nrow=2) +
+  ylim(0,NA)
+```
+
+
+## From last time
+
+```{r echo=FALSE}
+load(file="Lec13_ex.Rdata")
+base
+```
+
+## Empirical semivariogram - no bins / cloud
+
+```{r echo=FALSE}
+#| eval: false
+d_emp_cloud = d |> emp_semivariogram(y,t)
+
+d_emp_cloud |>
+  ggplot(aes(x=d, y=gamma)) +
+  geom_point()
+```
+
+## Empirical semivariogram (binned)
+
+```{r echo=FALSE}
+d_emp = emp_semivariogram(
+  d, y, t, bin=TRUE, 
+  binwidth=c(0.0125, 0.025, 0.0375, 0.05)
+)
+
+d_emp |>
+  ggplot(aes(x=d, y=gamma)) +
+  geom_point() +
+  facet_wrap(~bw, nrow=2)
+```
+
+
+## Empirical semivariogram (binned w/ size)
+
+```{r echo=FALSE}
+d_emp |>
+  ggplot(aes(x=d, y=gamma, size=n)) +
+  geom_point() +
+  facet_wrap(~bw, nrow=2)
+```
+
+## Theoretical vs empirical semivariogram
+
+```{r echo=FALSE}
+z = summary(readRDS("Lec13_gp_brms.rds"))
+
+sigma2 =  z$gp$Estimate[1]^2
+lscale = z$gp$Estimate[2]
+l = 1/(2*lscale^2)
+sigma2_w = z$spec_pars$Estimate^2
+```
+
+After fitting the model last time we came up with a posterior mean of $\sigma^2 = `r round(sigma2,2)`$, $l=`r round(l,2)`$, and $\sigma^2_w$ = `r round(sigma2_w,2)` for a square exponential covariance.
+
+. . .
+
+$$ 
+\begin{aligned}
+Cov(d) &= \sigma^2 \exp\big(-(d\,l)^2\big) + \sigma^2_w \boldsymbol{1}_{h=0}\\
+\gamma(h) 
+  &= (\sigma^2 + \sigma^2_w) - \sigma^2 \exp\big(-(h\,l)^2\big) \\
+  &= (`r sigma2` + `r sigma2_w`) - `r sigma2` \exp\big(-(`r l`\, h)^2\big)
+\end{aligned}
+$$
+
+##
+
+```{r echo=FALSE, fig.height=5}
+d_fit = tibble(d=seq(0, 0.33 ,length.out = 100)) |>
+  mutate(gamma = sigma2 + sigma2_w - (sigma2 * exp(-(l*d)^2)))
+
+d_emp |>
+  filter(bw %in% c(0.025, 0.05)) |>
+  ggplot(aes(x=d, y=gamma)) +
+  geom_point() +
+  geom_line(data=d_fit, color='red') +
+  geom_point(x=0,y=sigma2_w, color='red') +
+  facet_wrap(~bw, ncol=2)
+```
+
+
+# Durham Average Daily Temperature
+
+## Temp Data
+
+```{r echo=FALSE}
+# load("data/frn_example.Rdata")
+# 
+# pm25 = pm25 |>
+#   mutate(Date = lubridate::mdy(Date)) |>
+#   mutate(day  = (Date - lubridate::mdy("1/1/2007") + 1) |> as.integer()) |> 
+#   select(-POC) |>
+#   setNames(., tolower(names(.)))
+# 
+# saveRDS(pm25, "data/frn_example.rds")
+
+temp = readRDS("data/avg_temp_df.rds") |>
+  slice(1:(52*3)) |>
+  mutate(week = as.numeric(date - date[1])/7)
+
+ggplot(temp, aes(x=date, y=avg_temp)) +
+  geom_line() +
+  geom_point()
+```
+
+## Empirical semivariogram
+
+```{r echo=FALSE}
+emp_semivariogram(temp, avg_temp, week, bin=TRUE, binwidth= c(3,5,7)) |> 
+  mutate(bw = paste0("binwidth=", bw)) |>
+  ggplot(aes(x=d, y=gamma, size=n)) +
+    geom_point(alpha=0.5) +
+    facet_wrap(~bw, ncol=2) +
+    ylim(0,NA)
+```
+
+## Model
+
+What does the model we are trying to fit actually look like?
+
+. . .
+
+$$ y(t) = \mu(t) + w(t) + \epsilon(t) $$
+
+where
+
+$$
+\begin{aligned}
+\boldsymbol{\mu(t)} &= \beta_0 \\
+\boldsymbol{w(t)} &\sim \mathcal{GP}(0, \boldsymbol{\Sigma}) \\
+\epsilon(t) &\sim \mathcal{N}(0, \sigma^2_w)\\
+\\
+\{\boldsymbol{\Sigma}\}_{ij} &= Cov(t_i, t_j) =  \sigma^2 \exp(- (|t_i-t_j|\,l)^2)
+\end{aligned}
+$$
+
+## BRMS Model
+
+```{r message=FALSE, eval=FALSE}
+library(brms)
+( m = brm(
+    avg_temp ~ 1 + gp(week), data=temp,
+    cores = 4, refresh=0
+) )
+```
+
+```{r include=FALSE, eval=FALSE}
+saveRDS(m, "Lec14_brms_gp.rds")
+```
+
+```{r echo=FALSE}
+(m = readRDS("Lec14_brms_gp.rds"))
+```
+
+
+
+
+
+
+## BRMS Alternatives
+
+The BRMS model (and hence Stan) took between 5-10 minutes (per chain) to attempt to fit the model and failed spectacularly. 
+
+We could potentially improve things by tweaking the priors and increasing iterations but this won't solve the slowness issue.
+
+. . .
+
+The stop gap work around - using [spBayes](https://cran.r-project.org/web/packages/spBayes/index.html)
+
+* Interface is old and clunky (inputs and outputs)
+
+* Designed for spatial GPs
+
+* Super fast (~10 seconds for 20k iterations)
+
+* `dukestm` has a wrapper, called `gplm()` to make the interface / usage not as terrible
+
+
+## Fitting the model
+
+```{r include=FALSE}
+m = readRDS("Lec14_splm_sq_exp.rds")
+```
+
+```{r}
+#| eval: false
+#| code-line-numbers: "|2,3|4|5-12|13"
+m = gplm(
+  avg_temp~1, 
+  data = temp, coords = "week",
+  cov_model = "gaussian",
+  starting=list(
+    "phi"=sqrt(3)/4, "sigma.sq"=1, "tau.sq"=1
+  ),
+  priors=list(
+    "phi.unif"=c(sqrt(3)/52, sqrt(3)/1),
+    "sigma.sq.ig"=c(2, 1),
+    "tau.sq.ig"=c(2, 1)
+  ),
+  thin=10
+)
+```
+
+```{r}
+#| eval: false
+#| echo: false
+saveRDS(m, "Lec14_splm_sq_exp.rds")
+```
+
+## Model results
+
+```{r}
+m
+```
+
+
+## Parameter posteriors
+
+```{r}
+plot(m)
+```
+
+## Fitted model
+
+```{r}
+#| output-location: slide
+predict(m, newdata = tibble(week=1:(3*52)-1+1e-6), coords = "week") |>
+  tidybayes::gather_draws(y[i]) |>
+  mutate(week = i-1) |>
+  filter(.chain == 1, week <= 3*52) |>
+  ggplot(aes(x=week, y=.value)) +
+    tidybayes::stat_lineribbon(alpha=0.33) +
+    geom_line(data=temp, aes(y=avg_temp), color="blue")
+```
+
+
+## Forecasting
+
+```{r}
+#| output-location: slide
+predict(m, newdata = tibble(week=1:(3.5*52)-1+1e-6), coords = "week") |>
+  tidybayes::gather_draws(y[i]) |>
+  mutate(week = i-1) |>
+  filter(.chain == 1) |>
+  ggplot(aes(x=week, y=.value)) +
+    tidybayes::stat_lineribbon(alpha=0.33) +
+    geom_line(data=temp, aes(y=avg_temp), color="blue") +
+    xlim(1.5*52, 3.5*52)
+```
+
+## Empirical semivariogram vs. model
+
+From the model summary we have the following, 
+
+* *posterior means*: $\sigma^2 = 258$, $\sigma^2_w = 47.3$, $l = 0.06$
+
+* *posterior medians*: $\sigma^2 = 218$, $\sigma^2_w = 46.9$, $l = 0.06$
+
+
+```{r echo=FALSE}
+emp_semivariogram(temp, avg_temp, week, bin=TRUE, binwidth=c(3,5,7)) |> 
+  mutate(bw = paste0("binwidth=", bw)) |>
+  mutate(
+    sv_mean = sq_exp_sv(d, sigma2 = 258, l = 0.06, sigma2_w = 47.3),
+    sv_med  = sq_exp_sv(d, sigma2 = 218, l = 0.06, sigma2_w = 46.9),
+  ) |>
+  ggplot(aes(x=d, y=gamma, size=n)) +
+    geom_line(aes(y=sv_mean), color='red', size=1) +
+    geom_line(aes(y=sv_med), color='blue', size=1) +
+    geom_point(alpha=0.5) +
+    facet_wrap(~bw, ncol=2) +
+    ylim(0,NA)
+```
+
+
+# Exponential model
+
+## Fitting the model
+
+```{r include=FALSE}
+m = readRDS("Lec14_splm_exp.rds")
+```
+
+```{r}
+#| eval: false
+#| code-line-numbers: "|4,6,8"
+m = gplm(
+  avg_temp~1, 
+  data = temp, coords = "week",
+  cov_model = "exponential",
+  starting=list(
+    "phi"=3/4, "sigma.sq"=1, "tau.sq"=1
+  ),
+  priors=list(
+    "phi.unif"=c(3/52, 3/1),
+    "sigma.sq.ig"=c(2, 1),
+    "tau.sq.ig"=c(2, 1)
+  ),
+  thin=10
+)
+```
+
+```{r}
+#| eval: false
+#| echo: false
+saveRDS(m, "Lec14_splm_exp.rds")
+```
+
+## Model results
+
+```{r}
+m
+```
+
+
+## Parameter posteriors
+
+```{r}
+plot(m)
+```
+
+## Fitted model
+
+```{r}
+#| output-location: slide
+predict(m, newdata = tibble(week=1:(3*52)-1+1e-6), coords = "week") |>
+  tidybayes::gather_draws(y[i]) |>
+  mutate(week = i-1) |>
+  filter(.chain == 1, week <= 3*52) |>
+  ggplot(aes(x=week, y=.value)) +
+    tidybayes::stat_lineribbon(alpha=0.33) +
+    geom_line(data=temp, aes(y=avg_temp), color="blue")
+```
+
+
+## Forecasting
+
+```{r}
+#| output-location: slide
+predict(m, newdata = tibble(week=1:(3.5*52)-1+1e-6), coords = "week") |>
+  tidybayes::gather_draws(y[i]) |>
+  mutate(week = i-1) |>
+  filter(.chain == 1) |>
+  ggplot(aes(x=week, y=.value)) +
+    tidybayes::stat_lineribbon(alpha=0.33) +
+    geom_line(data=temp, aes(y=avg_temp), color="blue") +
+    xlim(1.5*52, 3.5*52)
+```

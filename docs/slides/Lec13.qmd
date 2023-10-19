@@ -750,8 +750,14 @@ base +
 ::: {.small}
 ```{r}
 library(brms)
-gp = brm(y ~ gp(t), data=d, cores=4, refresh=0)
+gp = brm(y ~ gp(t), data=d, cores=4, refresh=0, 
+         control = list(adapt_delta = 0.99))
 summary(gp)
+```
+
+```{r}
+#| echo: false
+saveRDS(gp, "Lec13_gp_brms.rds")
 ```
 :::
 
