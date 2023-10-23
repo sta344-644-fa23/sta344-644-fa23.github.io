@@ -775,31 +775,31 @@ $$
 
 ## Model fit
 
-![](imgs/Lec16/fit.png){fig-align="center" width="100%"}
+![](imgs/Lec15/fit.png){fig-align="center" width="100%"}
 
 
 ## Fit Components
 
-![](imgs/Lec16/fit_decomposition.png){fig-align="center" width="100%"}
+![](imgs/Lec15/fit_decomposition.png){fig-align="center" width="100%"}
 
 
 ## Model fit + forecast
 
-![](imgs/Lec16/fit_forecast.png){fig-align="center" width="100%"}
+![](imgs/Lec15/fit_forecast.png){fig-align="center" width="100%"}
 
 
 ## Forecast
 
-![](imgs/Lec16/forecast_zoom.png){fig-align="center" width="100%"}
+![](imgs/Lec15/forecast_zoom.png){fig-align="center" width="100%"}
 
 
 ## Forecast components
 
-![](imgs/Lec16/forecast_decomp.png){fig-align="center" width="100%"}
+![](imgs/Lec15/forecast_decomp.png){fig-align="center" width="100%"}
 
 ## ARIMA forecast
 
-![](imgs/Lec16/forecast_arima.png){fig-align="center" width="100%"}
+![](imgs/Lec15/forecast_arima.png){fig-align="center" width="100%"}
 
 
 ## Model performance

@@ -1,0 +1,815 @@
+---
+title: "Covariance Functions"
+subtitle: "Lecture 15"
+author: "Dr. Colin Rundel"
+footer: "Sta 344/644 - Fall 2023"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+    self-contained: true
+execute:
+  echo: true
+  warning: false
+  collapse: true
+---
+
+```{r setup}
+#| include: false
+library(tidyverse)
+library(tsibble)
+library(patchwork)
+library(dukestm)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+#options(width=50)
+
+ggplot2::theme_set(
+  ggplot2::theme_bw() +
+    theme(legend.position = c(0.85,0.6),
+          legend.background = element_blank(),
+          legend.key = element_blank())
+)
+
+set.seed(20221026)
+```
+
+
+
+# More Covariance Functions
+
+## Nugget Covariance
+
+$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 {1}_{\{h=0\}} \text{   where } h = |t_i - t_j|$$
+
+```{r echo=FALSE, fig.height=3}
+n_draw = 2
+h = seq(0,10,by=0.01)
+
+cov = tibble(h = h) |>
+  mutate(C = nugget_cov(d=h, sigma2 = 1))
+
+cov_ex = dist(h) |> 
+  as.matrix() |> 
+  nugget_cov(sigma2 = 1) |>
+  rmvnorm(n_draw, Sigma=_) |> 
+  as.data.frame() |>
+  setNames(paste0("Draw ", 1:n_draw)) |>
+  mutate(x = h) |>
+  tidyr::gather(draw, y, -x)
+
+p1 = ggplot(cov, aes(x=h, y=C)) +
+    geom_point(x=0, y=1) +
+    geom_line()
+p2 = ggplot(cov_ex, aes(x=x, y=y, col=draw)) +
+      geom_line()
+
+p1 + p2
+```
+
+
+## (- / Powered / Square) Exponential Covariance
+
+$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2\exp\left(-(h\,l)^p\right) \text{   where } h = |t_i - t_j|$$
+
+```{r echo=FALSE, fig.height=4.5, fig.align="center"}
+n_draw = 2
+h = seq(0, 0.4, len=100)
+
+l = 12
+
+cov = tibble(h = h) |>
+  mutate(
+    "Exp" = exp_cov(d=h, sigma2 = 1, l=l),
+    "Pow Exp\n(p=1.5)" = pow_exp_cov(d=h, sigma2 = 1, l=l, p=1.5),
+    "Sq Exp" = sq_exp_cov(d=h, sigma2 = 1, l=l)
+  ) |>
+  tidyr::gather("Cov", "C", -h)
+
+
+cov_exp = dist(h) |> 
+    as.matrix() |> 
+    exp_cov(sigma2 = 1, l=l) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x) |> 
+    mutate(model = "Exp Cov")
+cov_pow_exp = dist(h) |> 
+    as.matrix() |> 
+    pow_exp_cov(sigma2 = 1, l=l, p=1.5) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x) |> 
+    mutate(model = "Pow Exp Cov")
+cov_sq_exp = dist(h) |> 
+    as.matrix() |> 
+    sq_exp_cov(sigma2 = 1, l=l) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x) |> 
+    mutate(model = "Sq Exp Cov")
+
+p1 = ggplot(cov, aes(x=h, y=C, color=Cov)) +
+  geom_line() + 
+  labs(title="Covariance - l=12, sigma2=1", y="Cov") +
+  theme(legend.position = c(0.85,0.6),
+        legend.background = element_blank(),
+        legend.key = element_blank())
+p2 = ggplot(cov_exp, aes(x=x, y=y, color=draw)) +
+  geom_line() + 
+  guides(color="none") +
+  labs(title="Exponential")
+p3 = ggplot(cov_pow_exp, aes(x=x, y=y, color=draw)) +
+  geom_line() +
+  guides(color="none") +
+  labs(title="Powered Exponential (p=1.5)")
+p4 = ggplot(cov_sq_exp, aes(x=x, y=y, color=draw)) +
+  geom_line() +
+  guides(color="none") +
+  labs(title="Square Exponential")
+
+p1 + p2 + p3 + p4 + plot_layout(ncol=2)
+```
+
+## Matern Covariance
+
+$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 ~ \frac{2^{1-\nu}}{\Gamma(\nu)} ~ \left(\sqrt{2\nu}\, h \cdot l\right)^\nu ~ K_\nu\left(\sqrt{2\nu} \, h \cdot l\right) \text{   where } h = |t_i - t_j|$$
+
+```{r echo=FALSE, fig.height=4.5, fig.align="center"}
+n_draw = 2
+h = seq(0, 6, len=200)
+
+l = 2
+
+cov = tibble(h = seq(0,6, len=1000)) |>
+  mutate(
+    "v=1/2" = matern_cov(d=h, sigma2 = 1, l=l, nu=1),
+    "v=3/2" = matern_cov(d=h, sigma2 = 1, l=l, nu=2),
+    "v=5/2" = matern_cov(d=h, sigma2 = 1, l=l, nu=3)
+  ) |>
+  tidyr::gather("Cov", "C", -h)
+
+
+cov_mat1 = dist(h) |> 
+    as.matrix() |> 
+    matern_cov(sigma2 = 1, l=l, nu=1/2) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+cov_mat2 = dist(h) |> 
+    as.matrix() |> 
+    matern_cov(sigma2 = 1, l=l, nu=3/2) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+cov_mat3 = dist(h) |> 
+    as.matrix() |> 
+    matern_cov(sigma2 = 1, l=l, nu=3/2) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+
+  
+
+p1 = ggplot(cov, aes(x=h, y=C, color=forcats::as_factor(Cov))) +
+  geom_line() + 
+  labs(title="Covariance - l=2, sigma2=1",color="")
+p2 = ggplot(cov_mat1, aes(x=x, y=y, color=draw)) +
+  geom_line() + 
+  guides(colour=FALSE) +
+  labs(title="Matern - v=1/2")
+p3 = ggplot(cov_mat2, aes(x=x, y=y, color=draw)) +
+  geom_line() +
+  guides(colour=FALSE) +
+  labs(title="Matern - v=3/2")
+p4 = ggplot(cov_mat3, aes(x=x, y=y, color=draw)) +
+  geom_line() +
+  guides(colour=FALSE) +
+  labs(title="Matern - v=5/2")
+
+p1 + p2 + p3 + p4 + plot_layout(ncol=2)
+```
+
+## Matern Covariance
+
+* $K_\nu()$ is the modified Bessel function of the second kind.
+
+* A Gaussian process with Matérn covariance has sample functions that are $\lceil \nu -1\rceil$ times differentiable.
+
+* When $\nu = 1/2 + p$ for $p \in \mathbb{N}^+$ then the Matern has a simplified form
+
+* When $\nu = 1/2$ the Matern is equivalent to the exponential covariance.
+
+* As $\nu \to \infty$ the Matern converges to the squared exponential covariance.
+
+
+## Rational Quadratic Covariance
+
+$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 \left(1 + \frac{h^2 \, l^2}{\alpha}\right)^{-\alpha} \text{   where } h = |t_i - t_j|$$
+
+```{r echo=FALSE, fig.height=4.5, fig.align="center"}
+n_draw = 2
+h = seq(0,1, len=100)
+
+l = 12
+
+cov = tibble(h = h) |>
+  mutate(
+    "alpha=1"  = rquad_cov(d=h, sigma2 = 1, l=l, a=1),
+    "alpha=3"  = rquad_cov(d=h, sigma2 = 1, l=l, a=3),
+    "alpha=10" = rquad_cov(d=h, sigma2 = 1, l=l, a=10)
+  ) |>
+  tidyr::gather("Cov", "C", -h)
+
+
+cov_rq1 = dist(h) |> 
+    as.matrix() |> 
+    rquad_cov(sigma2 = 1, l=l, a=1) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+cov_rq2 = dist(h) |> 
+    as.matrix() |> 
+    rquad_cov(sigma2 = 1, l=l, a=3) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+cov_rq3 = dist(h) |> 
+    as.matrix() |> 
+    rquad_cov(sigma2 = 1, l=l, a=10) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+
+  
+
+
+p1 = ggplot(cov, aes(x=h, y=C, color=forcats::as_factor(Cov))) +
+  geom_line() + 
+  labs(title="Covariance - l=12, sigma2=1", y="", color="")
+p2 = ggplot(cov_rq1, aes(x=x, y=y, color=draw)) +
+  geom_line() + 
+  guides(colour=FALSE) +
+  labs(title="Rational Quadratic - alpha=1")
+p3 = ggplot(cov_rq2, aes(x=x, y=y, color=draw)) +
+  geom_line() +
+  guides(colour=FALSE) +
+  labs(title="Rational Quadratic - alpha=3")
+p4 = ggplot(cov_rq3, aes(x=x, y=y, color=draw)) +
+  geom_line() +
+  guides(colour=FALSE) +
+  labs(title="Rational Quadratic - alpha=10")
+
+p1 + p2 + p3 + p4 + plot_layout(ncol=2)
+```
+
+
+
+
+
+## Rational Quadratic Covariance
+
+* is a scaled mixture of squared exponential covariance functions with different characteristic inverse length-scales ($l$).
+
+* As $\alpha \to \infty$ the rational quadratic converges to the square exponential covariance.
+
+* Has sample functions that are infinitely differentiable for any value of $\alpha$ 
+
+
+## Spherical Covariance
+
+$$
+\text{Cov}(y_{t_i}, y_{t_j}) = \begin{cases}
+\sigma^2\left(1 - \frac{3}{2} h \cdot l + \frac{1}{2} (h \cdot l)^3)\right) & \text{if   } 0 < h < 1/l \\
+0 & \text{otherwise}
+\end{cases}
+$$
+
+```{r echo=FALSE, fig.height=4.5, fig.align="center"}
+n_draw = 2
+h = seq(0, 1.1, len=100)
+
+l = 1
+
+cov = tibble(h = h) |>
+  mutate(
+    "l=1"   = sphere_cov(d=h, sigma2 = 1, l=1),
+    "l=3" = sphere_cov(d=h, sigma2 = 1, l=3),
+    "l=10" = sphere_cov(d=h, sigma2 = 1, l=10)
+  ) |>
+  tidyr::gather("Cov", "C", -h)
+
+
+cov_sph1 = dist(h) |> 
+    as.matrix() |> 
+    sphere_cov(sigma2 = 1, l=1) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+cov_sph2 = dist(h) |> 
+    as.matrix() |> 
+    sphere_cov(sigma2 = 1, l=3) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+cov_sph3 = dist(h) |> 
+    as.matrix() |> 
+    sphere_cov(sigma2 = 1, l=10) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+
+  
+p1 = ggplot(cov, aes(x=h, y=C, color=forcats::as_factor(Cov))) +
+  geom_line() + 
+  labs(title="Covariance - sigma2=1", y="", color="")
+p2 = ggplot(cov_sph1, aes(x=x, y=y, color=draw)) +
+  geom_line() + 
+  guides(colour=FALSE) +
+  labs(title="Spherical - l=1")
+p3 = ggplot(cov_sph2, aes(x=x, y=y, color=draw)) +
+  geom_line() +
+  guides(colour=FALSE) +
+  labs(title="Spherical - l=3")
+p4 = ggplot(cov_sph3, aes(x=x, y=y, color=draw)) +
+  geom_line() +
+  guides(colour=FALSE) +
+  labs(title="Spherical - l=10")
+
+p1 + p2 + p3 + p4 + plot_layout(ncol=2)
+```
+
+## Periodic Covariance
+
+$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 \exp\left(-2\, l^2 \sin^2\left(\pi\frac{h}{p}\right)\right)  \text{   where } h = |t_i - t_j| $$
+
+```{r echo=FALSE, fig.height=4.5, fig.align="center"}
+n_draw = 2
+h = seq(0, 6, len=200)
+
+l = 2
+
+cov = tibble(h = seq(0,4, len=1000)) |>
+  mutate(
+    "p=1" = periodic_cov(d=h, sigma2 = 1, l=l, p=1),
+    "p=2" = periodic_cov(d=h, sigma2 = 1, l=l, p=2),
+    "p=3" = periodic_cov(d=h, sigma2 = 1, l=l, p=3)
+  ) |>
+  tidyr::gather("Cov", "C", -h)
+
+
+cov_per1 = dist(h) |> 
+    as.matrix() |> 
+    periodic_cov(sigma2 = 1, l=l, p=1) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+cov_per2 = dist(h) |> 
+    as.matrix() |> 
+    periodic_cov(sigma2 = 1, l=l, p=2) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+cov_per3 = dist(h) |> 
+    as.matrix() |> 
+    periodic_cov(sigma2 = 1, l=l, p=3) |>
+    rmvnorm(n_draw, Sigma=_) |> 
+    as.data.frame() |>
+    setNames(paste0("Draw ", 1:n_draw)) |>
+    mutate(x = h) |>
+    tidyr::gather(draw, y, -x)
+
+p1 = ggplot(cov, aes(x=h, y=C, color=forcats::as_factor(Cov))) +
+  geom_line() + 
+  labs(title="Covariance - l=2, sigma2=1", y="", color="Period")
+p2 = ggplot(cov_per1, aes(x=x, y=y, color=draw)) +
+  geom_line() + 
+  guides(colour=FALSE) +
+  labs(title="Periodic - p=1")
+p3 = ggplot(cov_per2, aes(x=x, y=y, color=draw)) +
+  geom_line() +
+  guides(colour=FALSE) +
+  labs(title="Periodic - p=2")
+p4 = ggplot(cov_per3, aes(x=x, y=y, color=draw)) +
+  geom_line() +
+  guides(colour=FALSE) +
+  labs(title="Periodic - p=3")
+
+p1 + p2 + p3 + p4 + plot_layout(ncol=2)
+```
+
+
+## Linear Covariance
+
+$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2_b + \sigma^2_v~(t_i-c)(t_j-c)$$
+
+```{r echo=FALSE, fig.height=4, fig.align="center", out.width="0.7\\textwidth"}
+x = seq(0,1, length=21)
+
+n_draw = 3
+cov_lin = linear_cov(x, c=0) |> 
+  rmvnorm(n_draw, Sigma=_) |> 
+  as.data.frame() |>
+  setNames(paste0("Draw ", 1:n_draw)) |>
+  mutate(x = x) |>
+  tidyr::gather(draw, y, -x)
+
+ggplot(cov_lin, aes(x=x, y=y, color=draw)) +
+  geom_line() +
+  guides(colour=FALSE)
+```
+
+## Combining Covariances
+
+If we definite two valid covariance functions, $Cov_a(y_{t_i}, y_{t_j})$ and $Cov_b(y_{t_i}, y_{t_j})$ then the following are also valid covariance functions,
+
+$$
+\begin{aligned}
+Cov_a(y_{t_i}, y_{t_j}) + Cov_b(y_{t_i}, y_{t_j}) \\
+\\
+Cov_a(y_{t_i}, y_{t_j}) \times Cov_b(y_{t_i}, y_{t_j})
+\end{aligned}
+$$
+
+
+## Linear $\times$ Linear $\to$ Quadratic
+
+$$ Cov_a(y_{t_i}, y_{t_j}) = 1 + 2~(t_i \times t_j) $$
+$$ Cov_b(y_{t_i}, y_{t_j}) = 2 + 1~(t_i \times t_j) $$
+
+```{r echo=FALSE, fig.height=4, fig.align="center"}
+x = seq(-2,2, length=100)
+
+n_draw = 3
+cov_a = linear_cov(x, c=0, sigma2_b = 1, sigma2_v = 2)
+cov_b = linear_cov(x, c=0, sigma2_b = 2, sigma2_v = 1)
+
+cov_ll = (cov_a * cov_b) |> 
+  rmvnorm(n_draw, Sigma=_) |> 
+  as.data.frame() |>
+  setNames(paste0("Draw ", 1:n_draw)) |>
+  mutate(x = x) |>
+  tidyr::gather(draw, y, -x)
+
+ggplot(cov_ll, aes(x=x, y=y, color=draw)) +
+  geom_line() + 
+  labs(title="Cov_a * Cov_b") +
+  guides(colour=FALSE)
+```
+
+
+## Linear $\times$ Periodic
+
+$$ Cov_a(y_{t_i}, y_{t_j}) = 1 + 1~(t_i \times t_j) $$
+$$ Cov_b(y_{t_i}, y_{t_j}) = \exp\left(-2\, \sin^2\left(2\pi\,h\right)\right) $$
+
+```{r echo=FALSE, fig.height=4, fig.align="center"}
+n_draw=2
+x = seq(0,3, length=100)
+d = dist(x) |> as.matrix()
+
+cov_a = linear_cov(x, c=0, sigma2_b = 1, sigma2_v = 2)
+cov_b = periodic_cov(d, sigma2 = 1, l = 1, p = 0.5)
+
+cov_lp = (cov_a * cov_b) |> 
+  rmvnorm(n_draw, Sigma=_) |> 
+  as.data.frame() |>
+  setNames(paste0("Draw ", 1:n_draw)) |>
+  mutate(x = x) |>
+  tidyr::gather(draw, y, -x)
+
+ggplot(cov_lp, aes(x=x, y=y, color=draw)) +
+  geom_line() + 
+  labs(title="Cov_a * Cov_b") +
+  guides(colour=FALSE)
+```
+
+## Linear + Periodic
+
+
+$$ Cov_a(y_{t_i}, y_{t_j}) = 1 + 1~(t_i \times t_j) $$
+$$ Cov_b(h = |t_i - t_j|) = \exp\left(-2\, \sin^2\left(2\pi\,h\right)\right) $$
+
+```{r echo=FALSE, fig.height=4, fig.align="center"}
+n_draw=2
+x = seq(0,3, length=100)
+d = dist(x) |> as.matrix()
+
+cov_a = linear_cov(x, c=0, sigma2_b = 1, sigma2_v = 2)
+cov_b = periodic_cov(d, sigma2 = 1, l = 1, p = 0.5)
+
+cov_lp = (cov_a + cov_b) |> 
+  rmvnorm(n_draw, Sigma=_) |> 
+  as.data.frame() |>
+  setNames(paste0("Draw ", 1:n_draw)) |>
+  mutate(x = x) |>
+  tidyr::gather(draw, y, -x)
+
+ggplot(cov_lp, aes(x=x, y=y, color=draw)) +
+  geom_line() + 
+  labs(title="Cov_a + Cov_b")
+```
+
+## Sq Exp $\times$ Periodic $\to$ Locally Periodic
+
+
+$$ Cov_a(h = |t_i - t_j|) =\exp(-(1/3)h^2) $$
+$$ Cov_b(h = |t_i - t_j|) = \exp\left(-2\, \sin^2\left(\pi\,h\right)\right) $$
+
+```{r echo=FALSE, fig.height=4, fig.align="center"}
+n_draw=2
+x = seq(0,6, length=100)
+d = dist(x) |> as.matrix()
+
+cov_a = sq_exp_cov(d, sigma2 = 1, l = 1/3)
+cov_b = periodic_cov(d, sigma2 = 1, l = 1, p = 1)
+
+cov_sp = (cov_a * cov_b) |> 
+  rmvnorm(n_draw, Sigma=_) |> 
+  as.data.frame() |>
+  setNames(paste0("Draw ", 1:n_draw)) |>
+  mutate(x = x) |>
+  tidyr::gather(draw, y, -x)
+
+ggplot(cov_sp, aes(x=x, y=y, color=draw)) +
+  geom_line() + 
+  guides(colour=FALSE) +
+  labs(title="Cov_a * Cov_b")
+```
+
+
+## Sq Exp (short) + Sq Exp (long)
+
+$$ Cov_a(h = |t_i - t_j|) = (1/4) \exp(-4\sqrt{3}h^2) $$
+$$ Cov_b(h = |t_i - t_j|) = \exp(-(\sqrt{3}/2)h^2) $$
+
+```{r echo=FALSE, fig.height=4, fig.align="center"}
+n_draw=2
+x = seq(0,10, length=1000)
+d = dist(x) |> as.matrix()
+
+cov_a = sq_exp_cov(d, sigma2 = 1/4, l = 4*sqrt(3))
+cov_b = sq_exp_cov(d, sigma2 = 1, l = sqrt(3)/4)
+
+cov_ss = (cov_a + cov_b) |> 
+  rmvnorm(n_draw, Sigma=_) |> 
+  as.data.frame() |>
+  setNames(paste0("Draw ", 1:n_draw)) |>
+  mutate(x = x) |>
+  tidyr::gather(draw, y, -x)
+
+ggplot(cov_ss, aes(x=x, y=y, color=draw)) +
+  geom_line() + 
+  guides(colour=FALSE) +
+  labs(title="Cov_a + Cov_b")
+```
+
+
+## Seen another way
+
+```{r echo=FALSE, fig.height=5, fig.align="center"}
+n_draw=2
+x = seq(0,10, length=1000)
+d = dist(x) |> as.matrix()
+
+cov_a = sq_exp_cov(d, sigma2 = 1/4, l = 4*sqrt(3))
+cov_b = sq_exp_cov(d, sigma2 = 1, l = sqrt(3)/4)
+
+y_a = rmvnorm(n_draw, Sigma=cov_a) |> as.data.frame() |> setNames(paste0("Draw ", 1:n_draw))
+y_b = rmvnorm(n_draw, Sigma=cov_b) |> as.data.frame() |> setNames(paste0("Draw ", 1:n_draw))
+y_c = y_a + y_b
+
+rbind(
+  y_a |> mutate(name="Cov_A (short)", x=x),
+  y_b |> mutate(name="Cov_B (long)", x=x),
+  y_c |> mutate(name="Cov_A + Cov_B", x=x)
+) |>
+  tidyr::gather(draw, y, starts_with("Draw")) |>
+  ggplot(aes(x=x, y=y, color=draw)) +
+    geom_line() +
+    guides(colour=FALSE) +
+    facet_grid(draw~forcats::as_factor(name))
+```
+
+
+# BDA3 example
+
+## BDA3
+
+![](imgs/bda_cover.png){fig-align="center" width="40%"}
+
+::: {.aside}
+[Source](http://research.cs.aalto.fi/pml/software/gpstuff/demo_births.shtml)
+:::
+
+
+## Births (one year)
+
+:::: {.columns}
+::: {.column width='50%'}
+![](imgs/births_pic1.png){fig-align="center" width="100%"}
+:::
+
+::: {.column width='50%'}
+<br/>
+
+1. Smooth long term trend <br/> (*sq exp cov*)
+
+2. Seven day periodic trend with decay (*periodic x sq exp cov*)
+
+3. Constant mean
+:::
+::::
+
+
+## Component Contributions
+
+We can view our GP in the following ways (marginal form),
+
+$$ \boldsymbol{y} \sim N(\boldsymbol{\mu},~ \boldsymbol{\Sigma}_1 + \boldsymbol{\Sigma}_2 + \sigma^2 \boldsymbol{I}\,) $$
+
+but with appropriate conditioning we can also think of $\boldsymbol{y}$ as being the sum of multiple independent GPs (latent form)
+
+$$ \boldsymbol{y} = \boldsymbol{\mu} + w_1(\boldsymbol{t}) + w_2(\boldsymbol{t}) + w_3(\boldsymbol{t})$$
+where 
+$$
+\begin{aligned}
+w_1(\boldsymbol{t}) &\sim N(0, \boldsymbol{\Sigma}_1) & (\text{sq exp covariance}) \\
+w_2(\boldsymbol{t}) &\sim N(0, \boldsymbol{\Sigma}_2) & (\text{periodic x sq exp cov})\\
+w_3(\boldsymbol{t}) &\sim N(0, \sigma^2 \boldsymbol{I}\,) & (\text{nugget cov / white noise})
+\end{aligned}
+$$
+
+
+## Decomposition of Covariance Components
+
+$$ 
+\begin{bmatrix} 
+y \\
+w_1 \\
+w_2
+\end{bmatrix} 
+\sim N \left(
+\begin{bmatrix}
+\boldsymbol{\mu} \\ 0 \\ 0
+\end{bmatrix},~
+\begin{bmatrix}
+\Sigma_1 + \Sigma_2 + \sigma^2 \boldsymbol{I} & \Sigma_1 & \Sigma_2 \\
+\Sigma_1 & \Sigma_1 & 0\\
+\Sigma_2 & 0  & \Sigma_2 \\
+\end{bmatrix}
+\right)
+$$
+
+therefore, if we want to know the contribution of $w_1$ we have the following
+
+$$ w_1 ~|~ \boldsymbol{y},\boldsymbol{\mu},\boldsymbol{\theta} \sim N(\boldsymbol{\mu}_{cond},~ \boldsymbol{\Sigma}_{cond}) $$
+
+$$ \boldsymbol{\mu}_{cond} = 0 + \Sigma_1 ~ (\Sigma_1 + \Sigma_2 + \sigma^2 I)^{-1}(\boldsymbol{y}-\boldsymbol{\mu}) $$
+$$ \boldsymbol{\Sigma}_{cond} = \Sigma_1 - \Sigma_1 (\Sigma_1 + \Sigma_2 + \sigma^2 \boldsymbol{I})^{-1} {\Sigma_1}^t $$
+
+
+
+## Births (multiple years)
+
+![](imgs/births_pic2.png){fig-align="center" width="70%"}
+
+::: {.small}
+Full stan case study [here](https://avehtari.github.io/casestudies/Birthdays/birthdays.html) with code [here](https://github.com/avehtari/casestudies/tree/master/Birthdays)
+
+1. slowly changing trend - yearly (*sq exp cov*)
+
+2. small time scale trend - monthly (*sq exp cov*)
+
+3. 7 day periodic - day of week effect (*periodic $\times$ sq exp cov*)
+
+4. 365.25 day periodic - day of year effect (*periodic $\times$ sq exp cov*)
+
+6. special days and interaction with weekends (*linear cov*)
+
+7. independent Gaussian noise (*nugget cov*)
+
+8. constant mean
+:::
+
+
+# Mauna Loa Example
+
+## Atmospheric CO$_2$
+
+```{r echo=FALSE, message=FALSE}
+loa = data_frame(
+  y = co2 |> strip_attrs(),
+  x = time(co2) |> strip_attrs()
+)
+
+noaa = readr::read_csv("data/noaa_mauna_loa.csv") |>
+  transmute(x = year+(month-1)/12, y=average) |>
+  filter(x > max(loa$x))
+
+rbind(
+  loa |> mutate(Source="Scripps (co2)"),
+  noaa |> mutate(Source="NOAA")
+) |>
+  ggplot(aes(x=x,y=y, color=Source)) + 
+  geom_line() 
+```
+
+## GP Model
+
+Based on [Rasmussen](https://gaussianprocess.org/gpml/chapters/RW.pdf) 5.4.3 (we are using slightly different data and parameterization)
+
+$$ \boldsymbol{y} \sim \mathcal{N}(\boldsymbol{\mu},~ \boldsymbol{\Sigma}_1 + \boldsymbol{\Sigma}_2 + \boldsymbol{\Sigma}_3 + \boldsymbol{\Sigma}_4 + \sigma^2 \mathit{I}\,) $$
+
+$$\{\boldsymbol{\mu}\}_i = \bar{y}$$
+  
+::: {.small}  
+$$
+\begin{aligned}
+\{\boldsymbol{\Sigma}_1\}_{ij} &= \sigma^2_1 \exp\left(-(l_1 \cdot d_{ij})^2\right)
+&\text{smooth long term trend}
+\\
+\{\boldsymbol{\Sigma}_2\}_{ij} &= \sigma^2_2 \exp\left(-(l_2 \cdot d_{ij})^2\right)\exp\left(-2 \, (l_3)^2  \sin^2(\pi \, d_{ij} / p)\right)
+& \text{seasonal trend w/ decay}
+\\
+\{\boldsymbol{\Sigma}_3\}_{ij} &= \sigma^2_3 \left(1+\frac{(l_4 \cdot d_{ij})^2}{\alpha}\right)^{-\alpha} 
+& \text{small / medium term trend}
+\\
+\{\boldsymbol{\Sigma}_4\}_{ij} &= \sigma^2_4 \exp\left(-(l_5 \cdot d_{ij})^2\right)
+& \text{noise}
+\end{aligned}
+$$
+:::
+
+## Model fit
+
+![](imgs/Lec15/fit.png){fig-align="center" width="100%"}
+
+
+## Fit Components
+
+![](imgs/Lec15/fit_decomposition.png){fig-align="center" width="100%"}
+
+
+## Model fit + forecast
+
+![](imgs/Lec15/fit_forecast.png){fig-align="center" width="100%"}
+
+
+## Forecast
+
+![](imgs/Lec15/forecast_zoom.png){fig-align="center" width="100%"}
+
+
+## Forecast components
+
+![](imgs/Lec15/forecast_decomp.png){fig-align="center" width="100%"}
+
+## ARIMA forecast
+
+![](imgs/Lec15/forecast_arima.png){fig-align="center" width="100%"}
+
+
+## Model performance
+
+<br/><br/>
+
+| Forecast<br/>dates  | arima<br/>RMSE | gp <br/>RMSE |
+|:--------------------|:---------------|:-------------|
+| Jan 1998 - Jan 2003 | 1.10           | 1.91         |
+| Jan 1998 - Jan 2008 | 2.51           | 4.58         |
+| Jan 1998 - Jan 2013 | 3.82           | 7.71         |
+| Jan 1998 - Mar 2017 | 5.46           | 11.40        |
+
