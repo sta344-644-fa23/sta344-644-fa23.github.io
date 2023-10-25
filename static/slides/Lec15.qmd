@@ -39,9 +39,6 @@ set.seed(20221026)
 ```
 
 
-
-# More Covariance Functions
-
 ## Nugget Covariance
 
 $$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 {1}_{\{h=0\}} \text{   where } h = |t_i - t_j|$$
@@ -51,7 +48,7 @@ n_draw = 2
 h = seq(0,10,by=0.01)
 
 cov = tibble(h = h) |>
-  mutate(C = nugget_cov(d=h, sigma2 = 1))
+  mutate(Cov = nugget_cov(d=h, sigma2 = 1))
 
 cov_ex = dist(h) |> 
   as.matrix() |> 
@@ -62,11 +59,12 @@ cov_ex = dist(h) |>
   mutate(x = h) |>
   tidyr::gather(draw, y, -x)
 
-p1 = ggplot(cov, aes(x=h, y=C)) +
-    geom_point(x=0, y=1) +
-    geom_line()
-p2 = ggplot(cov_ex, aes(x=x, y=y, col=draw)) +
-      geom_line()
+p1 = ggplot(cov, aes(x=h, y=Cov)) +
+    geom_point(data=slice(cov, 1)) +
+    geom_line(data=slice(cov,-1))
+p2 = ggplot(cov_ex, aes(x=x, y=y, color=draw)) +
+      geom_line() +
+      guides(color="none")
 
 p1 + p2
 ```
@@ -74,7 +72,7 @@ p1 + p2
 
 ## (- / Powered / Square) Exponential Covariance
 
-$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2\exp\left(-(h\,l)^p\right) \text{   where } h = |t_i - t_j|$$
+$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2\exp\left(-(h\,l)^p\right) $$
 
 ```{r echo=FALSE, fig.height=4.5, fig.align="center"}
 n_draw = 2
@@ -143,7 +141,7 @@ p1 + p2 + p3 + p4 + plot_layout(ncol=2)
 
 ## Matern Covariance
 
-$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 ~ \frac{2^{1-\nu}}{\Gamma(\nu)} ~ \left(\sqrt{2\nu}\, h \cdot l\right)^\nu ~ K_\nu\left(\sqrt{2\nu} \, h \cdot l\right) \text{   where } h = |t_i - t_j|$$
+$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 ~ \frac{2^{1-\nu}}{\Gamma(\nu)} ~ \left(\sqrt{2\nu}\, h \cdot l\right)^\nu ~ K_\nu\left(\sqrt{2\nu} \, h \cdot l\right) $$
 
 ```{r echo=FALSE, fig.height=4.5, fig.align="center"}
 n_draw = 2
@@ -208,11 +206,17 @@ p1 + p2 + p3 + p4 + plot_layout(ncol=2)
 
 ## Matern Covariance
 
-* $K_\nu()$ is the modified Bessel function of the second kind.
+* $K_\nu()$ is the [modified Bessel function of the second kind](https://mathworld.wolfram.com/ModifiedBesselFunctionoftheSecondKind.html).
 
 * A Gaussian process with Matérn covariance has sample functions that are $\lceil \nu -1\rceil$ times differentiable.
 
 * When $\nu = 1/2 + p$ for $p \in \mathbb{N}^+$ then the Matern has a simplified form
+
+::: {.small}
+$$
+\text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 \exp \left(-\sqrt{2 p+1} \; h \cdot l\right) \frac{p !}{(2 p) !} \sum_{i=0}^p \frac{(p+i) !}{i !(p-i) !}\left(2 \sqrt{2 p+1} \; h \cdot l\right)^{p-i}
+$$
+:::
 
 * When $\nu = 1/2$ the Matern is equivalent to the exponential covariance.
 
@@ -221,7 +225,7 @@ p1 + p2 + p3 + p4 + plot_layout(ncol=2)
 
 ## Rational Quadratic Covariance
 
-$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 \left(1 + \frac{h^2 \, l^2}{\alpha}\right)^{-\alpha} \text{   where } h = |t_i - t_j|$$
+$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 \left(1 + \frac{h^2 \, l^2}{\alpha}\right)^{-\alpha} $$
 
 ```{r echo=FALSE, fig.height=4.5, fig.align="center"}
 n_draw = 2
@@ -291,7 +295,7 @@ p1 + p2 + p3 + p4 + plot_layout(ncol=2)
 
 ## Rational Quadratic Covariance
 
-* is a scaled mixture of squared exponential covariance functions with different characteristic inverse length-scales ($l$).
+* is a scaled mixture of squared exponential covariance functions with different characteristic (inverse) length-scales ($l$).
 
 * As $\alpha \to \infty$ the rational quadratic converges to the square exponential covariance.
 
@@ -369,7 +373,7 @@ p1 + p2 + p3 + p4 + plot_layout(ncol=2)
 
 ## Periodic Covariance
 
-$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 \exp\left(-2\, l^2 \sin^2\left(\pi\frac{h}{p}\right)\right)  \text{   where } h = |t_i - t_j| $$
+$$ \text{Cov}(y_{t_i}, y_{t_j}) = \sigma^2 \exp\left(-2\, l^2 \sin^2\left(\pi\frac{h}{p}\right)\right) $$
 
 ```{r echo=FALSE, fig.height=4.5, fig.align="center"}
 n_draw = 2
@@ -451,23 +455,23 @@ ggplot(cov_lin, aes(x=x, y=y, color=draw)) +
   guides(colour=FALSE)
 ```
 
-## Combining Covariances
+## Combining covariance functions
 
-If we definite two valid covariance functions, $Cov_a(y_{t_i}, y_{t_j})$ and $Cov_b(y_{t_i}, y_{t_j})$ then the following are also valid covariance functions,
+If we definite two valid covariance functions, $\text{Cov}_a(y_{t_i}, y_{t_j})$ and $\text{Cov}_b(y_{t_i}, y_{t_j})$ then the following are also valid covariance functions,
 
 $$
 \begin{aligned}
-Cov_a(y_{t_i}, y_{t_j}) + Cov_b(y_{t_i}, y_{t_j}) \\
+\text{Cov}_a(y_{t_i}, y_{t_j}) + \text{Cov}_b(y_{t_i}, y_{t_j}) \\
 \\
-Cov_a(y_{t_i}, y_{t_j}) \times Cov_b(y_{t_i}, y_{t_j})
+Cov_a(y_{t_i}, y_{t_j}) \times \text{Cov}_b(y_{t_i}, y_{t_j})
 \end{aligned}
 $$
 
 
 ## Linear $\times$ Linear $\to$ Quadratic
 
-$$ Cov_a(y_{t_i}, y_{t_j}) = 1 + 2~(t_i \times t_j) $$
-$$ Cov_b(y_{t_i}, y_{t_j}) = 2 + 1~(t_i \times t_j) $$
+$$ \text{Cov}_a(y_{t_i}, y_{t_j}) = 1 + 2~(t_i \times t_j) $$
+$$ \text{Cov}_b(y_{t_i}, y_{t_j}) = 2 + 1~(t_i \times t_j) $$
 
 ```{r echo=FALSE, fig.height=4, fig.align="center"}
 x = seq(-2,2, length=100)
@@ -492,8 +496,8 @@ ggplot(cov_ll, aes(x=x, y=y, color=draw)) +
 
 ## Linear $\times$ Periodic
 
-$$ Cov_a(y_{t_i}, y_{t_j}) = 1 + 1~(t_i \times t_j) $$
-$$ Cov_b(y_{t_i}, y_{t_j}) = \exp\left(-2\, \sin^2\left(2\pi\,h\right)\right) $$
+$$ \text{Cov}_a(y_{t_i}, y_{t_j}) = 1 + 1~(t_i \times t_j) $$
+$$ \text{Cov}_b(y_{t_i}, y_{t_j}) = \exp\left(-2\, \sin^2\left(2\pi\,h\right)\right) $$
 
 ```{r echo=FALSE, fig.height=4, fig.align="center"}
 n_draw=2
@@ -519,8 +523,8 @@ ggplot(cov_lp, aes(x=x, y=y, color=draw)) +
 ## Linear + Periodic
 
 
-$$ Cov_a(y_{t_i}, y_{t_j}) = 1 + 1~(t_i \times t_j) $$
-$$ Cov_b(h = |t_i - t_j|) = \exp\left(-2\, \sin^2\left(2\pi\,h\right)\right) $$
+$$ \text{Cov}_a(y_{t_i}, y_{t_j}) = 1 + 1~(t_i \times t_j) $$
+$$ \text{Cov}_b(y_{t_i}, y_{t_j}) = \exp\left(-2\, \sin^2\left(2\pi\,h\right)\right) $$
 
 ```{r echo=FALSE, fig.height=4, fig.align="center"}
 n_draw=2
@@ -539,14 +543,14 @@ cov_lp = (cov_a + cov_b) |>
 
 ggplot(cov_lp, aes(x=x, y=y, color=draw)) +
   geom_line() + 
-  labs(title="Cov_a + Cov_b")
+  labs(title="Cov_a + \text{Cov}_b")
 ```
 
 ## Sq Exp $\times$ Periodic $\to$ Locally Periodic
 
 
-$$ Cov_a(h = |t_i - t_j|) =\exp(-(1/3)h^2) $$
-$$ Cov_b(h = |t_i - t_j|) = \exp\left(-2\, \sin^2\left(\pi\,h\right)\right) $$
+$$ \text{Cov}_a(y_{t_i}, y_{t_j}) =\exp(-(1/3)h^2) $$
+$$ \text{Cov}_b(y_{t_i}, y_{t_j}) = \exp\left(-2\, \sin^2\left(\pi\,h\right)\right) $$
 
 ```{r echo=FALSE, fig.height=4, fig.align="center"}
 n_draw=2
@@ -572,8 +576,8 @@ ggplot(cov_sp, aes(x=x, y=y, color=draw)) +
 
 ## Sq Exp (short) + Sq Exp (long)
 
-$$ Cov_a(h = |t_i - t_j|) = (1/4) \exp(-4\sqrt{3}h^2) $$
-$$ Cov_b(h = |t_i - t_j|) = \exp(-(\sqrt{3}/2)h^2) $$
+$$ \text{Cov}_a(y_{t_i}, y_{t_j}) = (1/4) \exp(-4\sqrt{3}h^2) $$
+$$ \text{Cov}_b(y_{t_i}, y_{t_j}) = \exp(-(\sqrt{3}/2)h^2) $$
 
 ```{r echo=FALSE, fig.height=4, fig.align="center"}
 n_draw=2
@@ -593,7 +597,7 @@ cov_ss = (cov_a + cov_b) |>
 ggplot(cov_ss, aes(x=x, y=y, color=draw)) +
   geom_line() + 
   guides(colour=FALSE) +
-  labs(title="Cov_a + Cov_b")
+  labs(title="Cov_a + \text{Cov}_b")
 ```
 
 
@@ -628,7 +632,11 @@ rbind(
 
 ## BDA3
 
-![](imgs/bda_cover.png){fig-align="center" width="40%"}
+::: {.r-stack}
+![](imgs/bda_cover.png){.fragment .fade-out fig-align="center" width="40%"}
+
+![](imgs/bda_cover_zoom.png){.fragment fig-align="center" width="66%"}
+:::
 
 ::: {.aside}
 [Source](http://research.cs.aalto.fi/pml/software/gpstuff/demo_births.shtml)
@@ -639,7 +647,7 @@ rbind(
 
 :::: {.columns}
 ::: {.column width='50%'}
-![](imgs/births_pic1.png){fig-align="center" width="100%"}
+![](imgs/births_pic1.png){fig-align="center" width="95%"}
 :::
 
 ::: {.column width='50%'}
