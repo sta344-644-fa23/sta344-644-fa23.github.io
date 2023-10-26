@@ -129,19 +129,6 @@ schedule:
   day: 4
   lecture: <b>Midterm 1</b>
 
-#- week: 7
-#  day: 4
-#  lecture: tidyverts + Prophet
-#  slides: 
-#  screencast: 
-#  readings:
-#  - text: "Hyndman (fpp3)  5"
-#    link: https://otexts.com/fpp3/toolbox.html
-#  - text: "Hyndman (fpp3) 12.2"
-#    link: https://otexts.com/fpp3/prophet.html
-#  - text: "Forecasting at scale"
-#    link: https://peerj.com/preprints/3190/
-
 - week: 8
   day: 0
   lecture: "<i>No lab - Fall break</i>"
@@ -170,7 +157,7 @@ schedule:
   day: 2
   lecture: Covariance Functions
   slides: Lec15
-  screencast: 
+  screencast: https://youtu.be/PWmcLOZ704M
   readings:
   - text: "Rasmussen & Williams 4, 5"
     link: http://www.gaussianprocess.org/gpml/chapters/RW.pdf
@@ -181,7 +168,7 @@ schedule:
 - week: 9
   day: 4
   lecture: GPs & GLMs + Spatial Data (pt. 1)
-  slides: 
+  slides: Lec16
   screencast: 
   readings:
   - text: "sf Vignettes"
