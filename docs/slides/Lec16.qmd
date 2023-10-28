@@ -1,6 +1,6 @@
 ---
 title: "GPs for GLMs<br/>+ Spatial Data"
-subtitle: "Lecture 17"
+subtitle: "Lecture 16"
 author: "Dr. Colin Rundel"
 footer: "Sta 344/644 - Fall 2023"
 format:
