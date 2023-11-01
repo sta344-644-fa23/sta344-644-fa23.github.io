@@ -38,13 +38,15 @@ set.seed(20221102)
 
 ## `sf` object summary
 
+From last time,
+
 - `sf` class is an extension of `data.frame` / `tibble` that includes a `geometry` column
 
 - The geometry column is a list column with the `sfc` class 
 
   - This column also tracks the CRS of the geometry (set via `st_crs()` or transformed by `st_transform()`)
   
-- Individual elements of the geometry column are objects with the `sfg` class
+- Elements of the geometry column are objects with the `sfg` class
   
   - S3 class also contains the simple feature geometry type and coordinate type
 
@@ -60,6 +62,7 @@ set.seed(20221102)
 :::
 
 ## Base Plots
+
 ```{r}
 plot(nc)
 ```
@@ -84,15 +87,17 @@ plot(st_transform(nc[,"SID79"], 3631), axes=TRUE)
 ```
 
 ::: {.aside}
-EPSG 3631 is a projected LCC coordinate system that is centered on North Carolina (uses meters as units).
+EPSG 3631 is a projected LCC coordinate system that is centered on North Carolina
 :::
 
 
 ## EPSG 3631 w/ Graticules
 
+::: {.small}
 ```{r}
 plot(st_transform(nc[,"SID79"], 3631), graticule=TRUE, axes=TRUE)
 ```
+:::
 
 
 
@@ -110,27 +115,38 @@ plot(st_transform(nc[,"SID79"], 3631), graticule=st_crs(3631), axes=TRUE)
 
 ## ggplot2
 
+::: {.small}
 ```{r}
 ggplot(nc) + 
   geom_sf(aes(fill=SID79))
 ```
+:::
 
 ## ggplot2 + projections
 
+::: {.small}
 ```{r}
 ggplot(st_transform(nc, 3631)) + 
   geom_sf(aes(fill=SID79 / BIR79))
 ```
+:::
 
 ## ggplot2 + viridis
 
+::: {.small}
 ```{r}
 ggplot(st_transform(nc, 3631)) + 
   geom_sf(aes(fill=SID79 / BIR79)) +
   scale_fill_viridis_c()
 ```
+:::
 
 ## Example Data - Meuse
+
+```{r}
+#| include: false
+options(width=95)
+```
 
 ::: {.small}
 ```{r}
@@ -142,12 +158,19 @@ data(meuse, meuse.riv, package="sp")
 
 ##
 
+::: {.small}
 ```{r}
 ( meuse_riv = st_polygon(list(meuse.riv)) |>
     st_sfc() |>
     st_set_crs(28992) |>
     st_as_sf()
 )
+```
+:::
+
+```{r}
+#| include: false
+options(width=60)
 ```
 
 ## Meuse
@@ -172,41 +195,49 @@ plot(meuse[,"lead"], pch=16, add=TRUE)
 
 ## ggplot2
 
+::: {.small}
 ```{r}
 ggplot() +
   geom_sf(data=meuse_riv, fill="lightblue", color=NA) +
   geom_sf(data=meuse, aes(color=lead), size=1)
 ```
+:::
 
 
 ## ggplot2 - axis limits
 
+::: {.small}
 ```{r}
 ggplot() +
   geom_sf(data=meuse_riv, fill="lightblue", color=NA) +
   geom_sf(data=meuse, aes(color=lead), size=1) +
   ylim(50.95, 50.99)
 ```
+:::
 
 
 ## ggplot2 - axis limits
 
+::: {.small}
 ```{r}
 ggplot() +
   geom_sf(data=meuse_riv, fill="lightblue", color=NA) +
   geom_sf(data=meuse, aes(color=lead), size=1) +
   ylim(329500, 334000)
 ```
+:::
 
 
-## ggplot2 - bounding box{.t}
+## ggplot2 - bounding box
 
+::: {.small}
 ```{r}
 ggplot() +
   geom_sf(data=st_sf(meuse_riv), fill="lightblue", color=NA) +
   geom_sf(data=meuse, aes(color=lead), size=1) +
   ylim(st_bbox(meuse)["ymin"], st_bbox(meuse)["ymax"])
 ```
+:::
 
 
 # Geometry Predicates
@@ -302,8 +333,9 @@ ggplot() +
 options(width=90)
 ```
 
-```{r}
-#| output-location: fragment
+```{r county-airport}
+#| code-line-numbers: "|4|5|6-9"
+#| eval: false
 ncc |>
   select(COUNTY, geometry) |>
   mutate(
@@ -319,12 +351,21 @@ ncc |>
 ```
 :::
 
+## Which counties have an airport?
+
+::: {.small}
+```{r ref.label="county-airport"}
+#| echo: false
+```
+:::
+
 
 ## Which counties neighbor Durham County?
 
 ::: {.small}
 ```{r}
 #| output-location: fragment
+#| code-line-numbers: "|4|5"
 ncc |>
   select(COUNTY, geometry) |>
   mutate(
@@ -339,6 +380,8 @@ ncc |>
 
 ::: {.small}
 ```{r}
+#| output-location: fragment
+#| code-line-numbers: "|3|4"
 ncc |>
   mutate(
     neighbors = st_touches(ncc) |> unclass(),
@@ -396,6 +439,7 @@ st_cast(nc, "MULTILINESTRING")
 ```{r}
 st_cast(nc, "MULTILINESTRING") |> st_geometry() |> plot()
 ```
+
 ## Grouping Features
 
 ```{r}
@@ -448,6 +492,7 @@ plot(state_rotate, axes=TRUE)
 
 ## Scaling Size
 
+::: {.small}
 ```{r}
 ctrd = st_centroid(st_geometry(nc))
 area = st_area(nc) |> strip_attrs()
@@ -457,6 +502,7 @@ st_geometry(nc_rot) = (st_geometry(nc) - ctrd) * 0.75 + ctrd
 
 plot(nc_rot[,"SID79"])
 ```
+:::
 
 # Highway Example
 
@@ -561,13 +607,12 @@ plot(nc_house[,"DISTRICT"], axes=TRUE)
 
 ## Measuring Compactness - Reock Score
 
+::: {.small}
 The Reock score is a measure of compactness that is calculated as the the ratio of the area of a shape to the area of its minimum bounding circle.
 
-::: {.small}
 ```{r}
 circs = nc_house |> 
   lwgeom::st_minimum_bounding_circle()
-
 plot(circs |> filter(DISTRICT == 1) |> st_geometry(), axes=TRUE)
 plot(nc_house |> select(DISTRICT) |> filter(DISTRICT == 1), add=TRUE)
 ```
