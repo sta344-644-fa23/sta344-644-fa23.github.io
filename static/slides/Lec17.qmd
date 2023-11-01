@@ -36,6 +36,18 @@ ggplot2::theme_set(ggplot2::theme_bw())
 set.seed(20221102)
 ```
 
+## `sf` object summary
+
+- `sf` class is an extension of `data.frame` / `tibble` that includes a `geometry` column
+
+- The geometry column is a list column with the `sfc` class 
+
+  - This column also tracks the CRS of the geometry (set via `st_crs()` or transformed by `st_transform()`)
+  
+- Individual elements of the geometry column are objects with the `sfg` class
+  
+  - S3 class also contains the simple feature geometry type and coordinate type
+
 # Plotting
 
 ## Example Data - NC SIDS
