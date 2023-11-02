@@ -189,7 +189,7 @@ schedule:
 - week: 10
   day: 4
   lecture: Models for areal data
-  slides: 
+  slides: Lec18
   screencast: 
   readings:
   - text: Banerjee, Carlin, Gelfand Ch. 4
