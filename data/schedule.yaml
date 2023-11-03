@@ -193,7 +193,7 @@ schedule:
   screencast: 
   readings:
   - text: Banerjee, Carlin, Gelfand Ch. 4
-  notes: 
+  notes: "<a href='slides/Lec18-Notes.pdf'>notes</a>"
 
 - week: 11
   day: 2
