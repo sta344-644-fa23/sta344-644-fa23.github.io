@@ -805,7 +805,7 @@ $$
 . . .
 
 $$
-\boldsymbol{\Sigma} = \sigma^2 \, (\boldsymbol{D} - \phi \, \boldsymbol{W}) = \sigma^2~\begin{pmatrix}
+\boldsymbol{\Sigma} = \sigma^2 \, (\boldsymbol{D} - \phi \, \boldsymbol{W})^{-1} = \sigma^2~\begin{pmatrix}
 1 & -\phi & 0 \\
 -\phi & 2 & -\phi \\
 0 & -\phi & 1 
