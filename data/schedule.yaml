@@ -190,7 +190,7 @@ schedule:
   day: 4
   lecture: Models for areal data
   slides: Lec18
-  screencast: 
+  screencast: https://youtu.be/pSnQpxv6fgg
   readings:
   - text: Banerjee, Carlin, Gelfand Ch. 4
   notes: "<a href='slides/Lec18-Notes.pdf'>notes</a>"
