@@ -198,11 +198,13 @@ schedule:
 - week: 11
   day: 2
   lecture: Fitting CAR and SAR models
-  slides: 
+  slides: Lec19
   screencast: 
   readings:
   - text: On the relationship between CAR and SAR models
     link: https://mhooten.github.io/publications/VerHoef_etal_SpatStat_2018.pdf
+  - text: A close look at the spatial structure implied by the CAR and SAR models
+    link: https://www.sciencedirect.com/science/article/pii/S0378375803001113
   notes: 
   
 - week: 11

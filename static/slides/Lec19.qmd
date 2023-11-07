@@ -1,0 +1,1076 @@
+---
+title: "Fitting CAR and SAR Models"
+subtitle: "Lecture 19"
+author: "Dr. Colin Rundel"
+footer: "Sta 344/644 - Fall 2023"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+    self-contained: true
+    html-math-method: mathjax
+execute:
+  echo: true
+  warning: false
+  collapse: true
+---
+
+```{r setup}
+#| include: false
+library(dukestm)
+library(sf)
+library(spdep)
+
+library(tidyverse)
+library(patchwork)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+options(width=50)
+
+set.seed(20221109)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+```
+
+# Fitting areal models
+
+## Revised CAR Model
+
+* Conditional Model
+
+$$
+y(s_i)|\boldsymbol{y}_{-s_i} \sim N\left(X_{i\cdot}\beta + \phi\sum_{j=1}^n \frac{A_{ij}}{D_{ii}} ~ \big(y(s_j)-X_{j\cdot}\beta\big),~ \sigma^2 D^{-1}_{ii} \right)
+$$
+
+* Joint Model
+
+$$
+\boldsymbol{y} \sim N(\boldsymbol{X}\boldsymbol{\beta},~\sigma^2(\boldsymbol{D}-\phi \boldsymbol{A})^{-1})
+$$
+
+
+## SAR odel - mean structure
+
+Let us consider what happens to our derivation of the SAR model when we include a $\boldsymbol X\boldsymbol\beta$ in our formula model.
+
+$$ 
+\begin{aligned}
+\boldsymbol{y} = \boldsymbol{X} \boldsymbol{\beta} + \phi \boldsymbol{D}^{-1} \, \boldsymbol{A} \boldsymbol{y} + \boldsymbol{\epsilon} \\
+ \boldsymbol{\epsilon} \sim N(\boldsymbol{0},\, \sigma^2 \boldsymbol{D}^{-1}) 
+\end{aligned}
+$$
+
+. . .
+
+$$
+\begin{aligned} 
+\boldsymbol{y} &= \boldsymbol{X}\boldsymbol{\beta} + \phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A} \, \boldsymbol{y} + \boldsymbol{\epsilon} \\
+\boldsymbol{y} - \phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A} \, \boldsymbol{y} &= \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\epsilon} \\
+(I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A}) \, \boldsymbol{y} &= \boldsymbol{X}\boldsymbol{\beta} + \boldsymbol{\epsilon} \\
+\end{aligned}
+$$
+
+
+$$
+\boldsymbol{y} = (I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A})^{-1} \boldsymbol{X}\boldsymbol{\beta} + (I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A})^{-1} \boldsymbol{\epsilon}
+$$
+
+## Properties
+
+$$
+\begin{aligned}
+E(\boldsymbol{y}) &= (I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A})^{-1} \boldsymbol{X}\boldsymbol{\beta} \\
+\end{aligned}
+$$
+
+. . .
+
+$$
+\begin{aligned}
+Var(\boldsymbol{y})
+  &= \left((I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A})^{-1}\right) \sigma^2 \boldsymbol{D}^{-1} \left((I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A})^{-1}\right)^{t} \\
+  &= \sigma^2 \left((I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A})^{-1}\right) \boldsymbol{D}^{-1} \left((I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A})^{-1}\right)^{t} \\
+\end{aligned}
+$$
+
+. . .
+
+This is the same behavior we saw with the AR(1) model, where the mean of the process is $\delta / (1-\phi)$ and **not** $\delta$.
+
+This is a relatively minor issue but it does have practical implications when it comes to interpretation of the model parameters (particularly the slope coefficients $\boldsymbol \beta$).
+
+
+## SAR error model
+
+The previous model is sometimes refered to as the **SAR lag model**, a variation of this model, common in spatial econometrics, is the **SAR error model** which is defiend as follows,
+
+$$ 
+\begin{aligned}
+\boldsymbol{y} &= \boldsymbol{X} \boldsymbol{\beta} + \boldsymbol{u} \\
+\boldsymbol{u} &= \phi \boldsymbol{D}^{-1} \, \boldsymbol{A} \boldsymbol{u} + \boldsymbol{\epsilon} \\
+ \boldsymbol{\epsilon} &\sim N(\boldsymbol{0},\, \sigma^2 \boldsymbol{D}^{-1}) 
+\end{aligned}
+$$
+
+. . .
+
+As with the SAR lag model we can solve for $\boldsymbol{u}$,
+
+$$ 
+\begin{aligned}
+\boldsymbol{u} &= \phi \boldsymbol{D}^{-1} \, \boldsymbol{A} \boldsymbol{u} + \boldsymbol{\epsilon} \\
+\boldsymbol{u} &- \phi \boldsymbol{D}^{-1} \, \boldsymbol{A} \boldsymbol{u} =  \boldsymbol{\epsilon} \\
+\boldsymbol{u} &= (I - \phi \boldsymbol{D}^{-1} \, \boldsymbol{A} )^{-1} \boldsymbol{\epsilon} \\
+\end{aligned}
+$$
+
+## Properties
+
+$$ 
+\begin{aligned}
+\boldsymbol{y} &= \boldsymbol{X} \boldsymbol{\beta} + (I - \phi \boldsymbol{D}^{-1} \, \boldsymbol{A} )^{-1} \boldsymbol{\epsilon} \\
+\end{aligned}
+$$
+
+. . .
+
+$$
+\begin{aligned}
+E(\boldsymbol{y}) &= \boldsymbol{X}\boldsymbol{\beta} \\
+\end{aligned}
+$$
+
+. . .
+
+$$
+\begin{aligned}
+Var(\boldsymbol{y})
+  &= \sigma^2 \left((I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A})^{-1}\right) \boldsymbol{D}^{-1} \left((I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A})^{-1}\right)^{t} \\
+\end{aligned}
+$$
+
+
+## Example - NC SIDS
+
+```{r echo=FALSE}
+nc = read_sf(system.file("shape/nc.shp", package="sf"), quiet = TRUE) |> 
+  select(-(AREA:CNTY_ID), -(FIPS:CRESS_ID)) |>
+  st_transform(st_crs("+proj=utm +zone=17 +ellps=GRS80 +datum=NAD83 +units=m +no_defs"))
+
+(ggplot() + geom_sf(data=nc, aes(fill=BIR74))) /
+(ggplot() + geom_sf(data=nc, aes(fill=SID74)))
+```
+
+## `BIR74` vs `SID74`
+
+```{r}
+#| echo: false
+ggplot(nc, aes(x=BIR74, y=SID74)) + 
+  geom_smooth(method="lm", se=FALSE, color="grey") +
+  geom_point() +
+  ggpubr::stat_cor(size=6)
+```
+
+##
+
+```{r}
+ggplot() + geom_sf(data=nc, aes(fill=SID74/BIR74*1000))
+```
+
+## Using `spdep` +  `spatialreg`
+
+```{r message=FALSE}
+A = st_touches(nc, sparse=FALSE)
+(listW = spdep::mat2listw(A))
+```
+
+
+## Plotting listw
+
+::: {.small}
+```{r warning=FALSE}
+nc_coords = nc |> st_centroid() |> st_coordinates()
+plot(st_geometry(nc))
+plot(listW, nc_coords, add=TRUE, col="blue", pch=16)
+```
+:::
+
+## Moran's I
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(
+  nc$SID74, listW
+)
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(
+  1000*nc$SID74/nc$BIR74, listW
+)
+```
+:::
+::::
+
+
+
+
+## Geary's C
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+spdep::geary.test(
+  nc$SID74, listW
+)
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+spdep::geary.test(
+  1000*nc$SID74/nc$BIR74, listW
+)
+```
+:::
+::::
+
+
+## CAR Model
+
+```{r}
+#| include: false
+options(width=85)
+```
+
+
+::: {.small}
+```{r}
+nc_car = spatialreg::spautolm(
+  formula = 1000*SID74/BIR74 ~ 1, data = nc, 
+  listw = listW, family = "CAR"
+) 
+summary(nc_car)
+```
+:::
+
+## SAR Model (error)
+
+::: {.small}
+```{r}
+nc_sar_err = spatialreg::spautolm(
+  formula = 1000*SID74/BIR74 ~ 1, data = nc, 
+  listw = listW, family = "SAR"
+)
+summary(nc_sar_err)
+```
+:::
+
+## SAR Model (lag)
+
+::: {.small}
+```{r}
+nc_sar_lag = spatialreg::lagsarlm(
+  formula = 1000*SID74/BIR74 ~ 1, data = nc, 
+  listw = listW
+)
+summary(nc_sar_lag)
+```
+:::
+
+
+## Predictions
+
+```{r}
+#| echo: false
+#| message: false
+nc$car_pred = fitted(nc_car)
+nc$sar_pred = fitted(nc_sar_err)
+nc$sar_lag_pred = fitted(nc_sar_lag)
+
+nc |>
+  select(car_pred, sar_pred, sar_lag_pred) |>
+  pivot_longer(car_pred:sar_lag_pred, names_to = "model", values_to = "value") |>
+  ggplot() +
+    geom_sf(aes(fill=value)) +
+    facet_wrap(~model, ncol = 2)
+```
+
+## Residuals
+
+```{r echo=FALSE}
+nc$car_resid = residuals(nc_car)
+nc$sar_resid = residuals(nc_sar_err)
+nc$sar_lag_resid = residuals(nc_sar_lag)
+
+nc |>
+  select(car_resid, sar_resid, sar_lag_resid) |>
+  pivot_longer(car_resid:sar_lag_resid, names_to = "model", values_to = "value") |>
+  ggplot() +
+    geom_sf(aes(fill=value)) +
+    facet_wrap(~model, ncol = 2)
+
+```
+
+## Residual distributions
+
+```{r echo=FALSE}
+nc |>
+  as_tibble() |>
+  select(car_resid, sar_resid, sar_lag_resid) |>
+  pivot_longer(ends_with("resid")) |>
+  ggplot(aes(x=value, fill=name)) +
+    geom_density(alpha=0.5)
+```
+
+## Residual autocorrelation
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(
+  residuals(nc_car), listW, 
+  alternative = "two.sided"
+)
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(
+  residuals(nc_sar_err), listW, 
+  alternative = "two.sided"
+)
+```
+:::
+::::
+
+##
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(
+  residuals(nc_sar_lag), listW, 
+  alternative = "two.sided"
+)
+```
+:::
+::::
+
+
+## Predicted vs Observed
+
+```{r echo=FALSE}
+nc |>
+  select(SID74,BIR74,car_pred, sar_pred, sar_lag_pred) |>
+  pivot_longer(car_pred:sar_lag_pred, names_to = "model", values_to = "value") |>
+  ggplot() +
+    geom_point(aes(x=1000*SID74/BIR74, y=value)) +
+    geom_abline(intercept=0, slope=1, color="grey") +
+    facet_wrap(~model, ncol = 2) +
+    ylim(0, 10) +
+    xlim(0, 10)
+```
+
+
+## What's wrong?
+
+```{r echo=FALSE, fig.height=3}
+nc |>
+  as_tibble() |>
+  transmute(SID74, BIR74, 1000*SID74/BIR74) |>
+  pivot_longer(everything()) |>
+  mutate(name = as_factor(name)) |>
+  ggplot(aes(x = value, fill = name)) +
+    geom_histogram(bins=15) +
+    facet_wrap(~name, scales = "free_x", ncol=2) +
+    guides(fill = "none") +
+    labs(x="", y="")
+```
+
+# Transforming the data
+
+## Freeman-Tukey's transformation
+
+This is the transformation used by Cressie and Road in Spatial Data Analysis of Regional Counts (1989).
+
+\footnotesize
+$$
+FT = \sqrt{1000} \left( \sqrt{\frac{SID74}{BIR74}} + \sqrt{\frac{SID74+1}{BIR74}} \right)
+$$
+
+```{r echo=FALSE}
+nc = mutate(nc, FT = sqrt(1000) * sqrt(SID74/BIR74) + sqrt((SID74+1)/BIR74))
+```
+
+```{r echo=FALSE}
+par(mfrow=c(1,2))
+hist(nc$FT)
+qqnorm(nc$FT)
+qqline(nc$FT)
+```
+
+## Other possibilities
+
+::: {.small}
+```{r}
+nc = mutate(nc, 
+  sqrt = sqrt(1000*(SID74+1)/BIR74),
+  log  = log(1000*(SID74+1)/BIR74),
+)
+```
+:::
+
+```{r echo=FALSE}
+par(mfrow=c(2,2))
+
+hist(nc$sqrt)
+qqnorm(nc$sqrt)
+qqline(nc$sqrt)
+
+hist(nc$log)
+qqnorm(nc$log)
+qqline(nc$log)
+```
+
+
+## FT transformation
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+ggplot(nc) + geom_sf(aes(fill=FT))
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(nc$FT, listW)
+```
+:::
+::::
+
+## sqrt transformation
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+ggplot(nc) + geom_sf(aes(fill=sqrt))
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(nc$sqrt, listW)
+```
+:::
+::::
+
+
+## log transformation
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+ggplot(nc) + geom_sf(aes(fill=log))
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(nc$log, listW)
+```
+:::
+::::
+
+
+
+## Models
+
+### CAR
+
+::: {.small}
+```{r}
+nc_car_ft   = spatialreg::spautolm(formula = FT ~ 1,   data = nc, listw = listW, family = "CAR") 
+nc_car_sqrt = spatialreg::spautolm(formula = sqrt ~ 1, data = nc, listw = listW, family = "CAR")
+nc_car_log  = spatialreg::spautolm(formula = log ~ 1,  data = nc, listw = listW, family = "CAR")
+```
+:::
+
+
+
+### SAR (error)
+
+::: {.small}
+```{r}
+nc_sar_err_ft   = spatialreg::spautolm(formula = FT ~ 1,   data = nc, listw = listW, family = "SAR") 
+nc_sar_err_sqrt = spatialreg::spautolm(formula = sqrt ~ 1, data = nc, listw = listW, family = "SAR")
+nc_sar_err_log  = spatialreg::spautolm(formula = log ~ 1,  data = nc, listw = listW, family = "SAR")
+```
+:::
+
+### SAR (lag)
+
+::: {.small}
+```{r}
+nc_sar_lag_ft   = spatialreg::lagsarlm(formula = FT ~ 1,   data = nc, listw = listW) 
+nc_sar_lag_sqrt = spatialreg::lagsarlm(formula = sqrt ~ 1, data = nc, listw = listW)
+nc_sar_lag_log  = spatialreg::lagsarlm(formula = log ~ 1,  data = nc, listw = listW)
+```
+:::
+
+
+## CAR predictions
+
+```{r echo=FALSE}
+nc$car_ft_pred   = fitted(nc_car_ft)
+nc$car_sqrt_pred = fitted(nc_car_sqrt)
+nc$car_log_pred  = fitted(nc_car_log)
+
+(nc |>
+  ggplot(aes(x=FT, y=car_ft_pred)) +
+    geom_abline(intercept=0, slope=1, color="grey") +
+    geom_point(size=0.5) +
+    labs(title="FT") +
+    coord_fixed() +
+    xlim(0,3.25) + ylim(0,3.25)
+) + (
+nc |>
+  ggplot(aes(x=sqrt, y=car_sqrt_pred)) +
+    geom_abline(intercept=0, slope=1, color="grey") +  
+    geom_point(size=0.5) +
+    labs(title="sqrt") +
+    coord_fixed() +
+    xlim(0,3.25) + ylim(0,3.25)
+) + (
+nc |>
+  ggplot(aes(x=log, y=car_log_pred)) +
+    geom_abline(intercept=0, slope=1, color="grey") +
+    geom_point(size=0.5) +
+    labs(title="log") +
+    coord_fixed() +
+    xlim(-0.5,2.5) + ylim(-0.5,2.5)
+) + patchwork::plot_layout(ncol=3)
+```
+
+
+
+## SAR (error) predictions
+
+```{r echo=FALSE}
+nc$sar_ft_pred   = fitted(nc_sar_err_ft)
+nc$sar_sqrt_pred = fitted(nc_sar_err_sqrt)
+nc$sar_log_pred  = fitted(nc_sar_err_log)
+
+(nc |>
+  ggplot(aes(x=FT, y=sar_ft_pred)) +
+    geom_abline(intercept=0, slope=1, color="grey") +
+    geom_point(size=0.5) +
+    labs(title="FT") +
+    coord_fixed() +
+    xlim(0,3.25) + ylim(0,3.25)
+) + (
+nc |>
+  ggplot(aes(x=sqrt, y=sar_sqrt_pred)) +
+    geom_abline(intercept=0, slope=1, color="grey") +  
+    geom_point(size=0.5) +
+    labs(title="sqrt") +
+    coord_fixed() +
+    xlim(0,3.25) + ylim(0,3.25)
+) + (
+nc |>
+  ggplot(aes(x=log, y=sar_log_pred)) +
+    geom_abline(intercept=0, slope=1, color="grey") +
+    geom_point(size=0.5) +
+    labs(title="log") +
+    coord_fixed() +
+    xlim(-0.5,2.5) + ylim(-0.5,2.5)
+) + patchwork::plot_layout(ncol=3)
+```
+
+
+## SAR (lag) predictions
+
+```{r}
+#| echo: false
+#| message: false
+nc$sar_lag_ft_pred   = fitted(nc_sar_lag_ft)
+nc$sar_lag_sqrt_pred = fitted(nc_sar_lag_sqrt)
+nc$sar_lag_log_pred  = fitted(nc_sar_lag_log)
+
+(nc |>
+  ggplot(aes(x=FT, y=sar_lag_ft_pred)) +
+    geom_abline(intercept=0, slope=1, color="grey") +
+    geom_point(size=0.5) +
+    labs(title="FT") +
+    coord_fixed() +
+    xlim(0,3.25) + ylim(0,3.25)
+) + (
+nc |>
+  ggplot(aes(x=sqrt, y=sar_lag_sqrt_pred)) +
+    geom_abline(intercept=0, slope=1, color="grey") +  
+    geom_point(size=0.5) +
+    labs(title="sqrt") +
+    coord_fixed() +
+    xlim(0,3.25) + ylim(0,3.25)
+) + (
+nc |>
+  ggplot(aes(x=log, y=sar_lag_log_pred)) +
+    geom_abline(intercept=0, slope=1, color="grey") +
+    geom_point(size=0.5) +
+    labs(title="log") +
+    coord_fixed() +
+    xlim(-0.5,2.5) + ylim(-0.5,2.5)
+) + patchwork::plot_layout(ncol=3)
+```
+
+## Residual spatial autocorrelation
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(
+  residuals(nc_car_sqrt), listW
+)
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(
+  residuals(nc_sar_err_sqrt), listW
+)
+```
+:::
+::::
+
+##
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(
+  residuals(nc_sar_lag_sqrt), listW
+)
+```
+:::
+::::
+
+
+# CAR with brms (and Stan)
+
+```{r}
+#| echo: false
+options(width=85)
+```
+
+## brms CAR
+
+```{r}
+#| results: hide
+rownames(A) = nc$NAME
+colnames(A) = nc$NAME
+
+b_car = brms::brm(
+    1000*SID74/BIR74 ~ 1 + car(A, gr=NAME), 
+    data=nc, data2=list(A=A),
+    control = list(adapt_delta = 0.95),
+    iter=20000,
+    cores = 4,
+    thin=10
+    #prior = c(brms::prior(normal(0, 0.01), class = sigma))
+)
+```
+
+##
+
+::: {.small}
+```{r warning=FALSE}
+b_car
+```
+:::
+
+
+## Diagnostics
+
+```{r}
+plot(b_car)
+```
+
+## Predictions
+
+```{r}
+#| echo: false
+#| message: false
+p = predict(b_car) |>
+  as_tibble() |>
+  mutate(
+    truth = 1000*nc$SID74/nc$BIR74
+  )
+
+nc$brm_car_pred = p$Estimate
+nc$brm_car_resid = p$Est.Error
+
+(
+  ggplot(nc, aes(fill = 1000*SID74/BIR74)) +
+    geom_sf() 
+) / (
+  ggplot(nc, aes(fill = brm_car_pred)) +
+    geom_sf() 
+)
+```
+
+
+
+
+## Observed vs predicted
+
+```{r}
+#| echo: false
+ggplot(p, aes(x=truth, y=Estimate)) +
+  geom_abline(intercept=0, slope=1, color="grey") +
+  geom_point() +
+  geom_errorbar(aes(ymin=Q2.5, ymax=Q97.5), alpha=0.25) +
+  coord_fixed() +
+  labs(x = "Observed", y = "Predicted")
+```
+
+## Stan (correct model)
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+#| results: hide
+stan_car = rstan::stan_model(
+  model_code = "
+    data {
+      int<lower=1> n;
+      int<lower=1> p;
+      matrix[n, p] X;
+      vector[n] y;
+      matrix<lower=0, upper=1>[n, n] W;
+      matrix[n, n] D;
+      matrix[n, n] D_inv;
+    }
+    parameters {
+      vector[p] beta;
+      real<lower=0> tau;
+      real<lower=0, upper=1> alpha;
+    }
+    transformed parameters {
+      vector[n] y_cond = X * beta + alpha * D_inv *  W * (y - X * beta);
+      real<lower=0> sigma2 = 1/tau;
+    }
+    model {
+      y ~ multi_normal_prec(X * beta, tau * (D - alpha * W));
+      beta ~ normal(0, 1);
+      tau ~ gamma(2, 2);
+    }
+  "
+)
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+#| results: hide
+X = model.matrix(~1, data = nc)
+d = list(
+  n = nrow(X),                # number of observations
+  p = ncol(X),                # number of coefficients
+  X = X,                      # design matrix
+  y = 1000*nc$SID74/nc$BIR74,
+  W = A*1,
+  D = diag(rowSums(A)),
+  D_inv = diag(1/rowSums(A))
+)   
+
+s_car = rstan::sampling(stan_car, data = d, cores = 4)
+```
+:::
+::::
+
+::: {.aside}
+Based on [mbjoseph/CARstan](https://github.com/mbjoseph/CARstan)
+:::
+
+## Results
+
+::: {.small}
+```{r}
+rstan::extract(s_car, pars=c("beta[1]","tau", "sigma2", "alpha")) |>
+  posterior::summarise_draws()
+```
+:::
+
+
+
+## Diagnostics
+
+```{r}
+#| echo: false
+
+bayesplot::mcmc_dens(
+  s_car, pars=c("beta[1]","tau", "sigma2", "alpha"), 
+  facet_args = list(nrow=4)
+) +
+bayesplot::mcmc_trace(
+  s_car, pars=c("beta[1]","tau", "sigma2", "alpha"), 
+  facet_args = list(nrow=4)
+)
+```
+
+
+## Observed vs predicted
+
+```{r}
+#| echo: false
+tidybayes::gather_draws(
+  s_car, y_cond[i]
+) |>
+  ungroup() |>
+  filter(.chain == 1) |>
+  summarise(
+    i = i[1],
+    mean = mean(.value),
+    Q2.5 = quantile(.value, 0.025),
+    Q97.5 = quantile(.value, 0.975),
+    .by = i
+  ) |>
+  left_join(
+    nc |> as_tibble() |> transmute(obs = 1000*SID74/BIR74, i = row_number()),
+    by = "i"
+  ) |>
+  ggplot(aes(x=obs, y=mean)) +
+    geom_abline(intercept=0, slope=1, color="grey") +
+    geom_point() +
+    geom_errorbar(aes(ymin=Q2.5, ymax=Q97.5), alpha=0.25) +
+    coord_fixed() +
+    xlim(0,10) +
+    ylim(0,10) +
+    labs(x = "Observed", y = "Predicted")
+```
+
+## What's different?
+
+<br/>
+
+#### brms model
+
+$$
+y \sim N(X\beta + w, \sigma^2) \\
+w \sim N(0, \sigma^2_{CAR} (D - \alpha W)^{-1})
+$$
+
+<br/> <br/>
+
+#### Stan model
+
+$$
+y \sim N(X\beta + w, \sigma^2 (D - \alpha W)^{-1})
+$$
+
+
+# SAR with brms 
+
+## brms SAR (error)
+
+```{r message=FALSE}
+#| results: hide
+W = diag(1/rowSums(A)) %*% A 
+
+b_sar_err = brms::brm(
+    1000*SID74/BIR74 ~ 1 + sar(W, type="error"), 
+    data=nc, data2=list(W=W),
+    #silent=2, refresh=0, 
+    iter=4000,
+    cores = 4,
+    thin = 2
+)
+```
+
+##
+
+::: {.small}
+```{r warning=FALSE}
+b_sar_err
+```
+:::
+
+
+## Diagnostics
+
+```{r}
+plot(b_sar_err)
+```
+
+## Predictions
+
+```{r}
+#| echo: false
+#| message: false
+p = predict(b_sar_err) |>
+  as_tibble() |>
+  mutate(
+    truth = 1000*nc$SID74/nc$BIR74
+  )
+
+nc$brm_sar_pred = p$Estimate
+nc$brm_sar_resid = p$Est.Error
+
+(
+ggplot(nc, aes(fill = 1000*SID74/BIR74)) +
+  geom_sf() 
+) / (
+ggplot(nc, aes(fill = brm_sar_pred)) +
+  geom_sf() 
+)
+```
+
+## Observed vs predicted
+
+```{r}
+#| echo: false
+ggplot(p, aes(x=truth, y=Estimate)) +
+  geom_abline(intercept=0, slope=1, color="grey") +
+  geom_point() +
+  geom_errorbar(aes(ymin=Q2.5, ymax=Q97.5), alpha=0.25) +
+  coord_fixed() +
+  labs(x = "Observed", y = "Predicted")
+```
+
+
+## Correcting `predict()`
+
+If instead we use $\boldsybol{X}\boldsymbol{\beta} + \phi \boldsymbol{W}\boldsymbol{y}$, we get the following:
+
+```{r}
+p = b_sar_err |>
+  tidybayes::spread_draws(b_Intercept, errorsar) |>
+  filter(.chain == 1) |>
+  mutate(
+    y_cond = map2(
+      b_Intercept, errorsar,
+      ~ .x + .y * W %*% (1000 * (nc$SID74 / nc$BIR74))
+    )
+  ) |>
+  pull(y_cond) |>
+  do.call(cbind, args = _)
+
+tibble(
+    y_cond_mean = apply(p, 1, mean),
+    y_cond_q025 = apply(p, 1, quantile, 0.025),
+    y_cond_q975 = apply(p, 1, quantile, 0.975)
+  ) |>
+  ggplot(aes(x=1000 * (nc$SID74 / nc$BIR74), y=y_cond_mean)) +
+    geom_abline(intercept=0, slope=1, color="grey") +
+    geom_point() +
+    geom_errorbar(aes(ymin=y_cond_q025, ymax=y_cond_q975), alpha=0.25) +
+    coord_fixed() +
+    labs(x = "Observed", y = "Predicted")
+```
+
+
+
+## brms SAR (lag)
+
+```{r}
+#| message: false
+#| results: hide
+W = diag(1/rowSums(A)) %*% A 
+
+b_sar_lag = brms::brm(
+    1000*SID74/BIR74 ~ 1 + sar(W, type="lag"), 
+    data=nc, data2=list(W=W),
+    iter=4000,
+    cores = 4,
+    thin = 2
+)
+```
+
+##
+
+::: {.small}
+```{r warning=FALSE}
+b_sar_lag
+```
+:::
+
+
+## Diagnostics
+
+```{r}
+plot(b_sar_lag)
+```
+
+## Predictions
+
+```{r}
+#| echo: false
+#| message: false
+p = predict(b_sar_lag) |>
+  as_tibble() |>
+  mutate(
+    truth = 1000*nc$SID74/nc$BIR74
+  )
+
+nc$b_sar_lag_pred = p$Estimate
+
+(
+ggplot(nc, aes(fill = 1000*SID74/BIR74)) +
+  geom_sf() 
+) / (
+ggplot(nc, aes(fill = b_sar_lag_pred)) +
+  geom_sf() 
+)
+```
+
+## Observed vs predicted
+
+```{r}
+#| echo: false
+ggplot(p, aes(x=truth, y=Estimate)) +
+  geom_abline(intercept=0, slope=1, color="grey") +
+  geom_point() +
+  geom_errorbar(aes(ymin=Q2.5, ymax=Q97.5), alpha=0.25) +
+  coord_fixed() +
+  labs(x = "Observed", y = "Predicted")
+```
+
+## Correcting `predict()`
+
+If instead we use $\boldsybol{X}\boldsymbol{\beta} + \phi \boldsymbol{W}\boldsymbol{y}$, we get the following:
+
+```{r}
+p = b_sar_lag |>
+  tidybayes::spread_draws(b_Intercept, lagsar) |>
+  filter(.chain == 1) |>
+  mutate(
+    y_cond = map2(
+      b_Intercept, lagsar,
+      ~ .x + .y * W %*% (1000 * (nc$SID74 / nc$BIR74))
+    )
+  ) |>
+  pull(y_cond) |>
+  do.call(cbind, args = _)
+
+tibble(
+    y_cond_mean = apply(p, 1, mean),
+    y_cond_q025 = apply(p, 1, quantile, 0.025),
+    y_cond_q975 = apply(p, 1, quantile, 0.975)
+  ) |>
+  ggplot(aes(x=1000 * (nc$SID74 / nc$BIR74), y=y_cond_mean)) +
+    geom_abline(intercept=0, slope=1, color="grey") +
+    geom_point() +
+    geom_errorbar(aes(ymin=y_cond_q025, ymax=y_cond_q975), alpha=0.25) +
+    coord_fixed() +
+    labs(x = "Observed", y = "Predicted")
+```
