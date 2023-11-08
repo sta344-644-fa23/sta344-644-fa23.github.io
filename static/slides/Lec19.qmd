@@ -53,7 +53,7 @@ $$
 $$
 
 
-## SAR odel - mean structure
+## SAR - lag model
 
 Let us consider what happens to our derivation of the SAR model when we include a $\boldsymbol X\boldsymbol\beta$ in our formula model.
 
@@ -74,6 +74,7 @@ $$
 \end{aligned}
 $$
 
+. . .
 
 $$
 \boldsymbol{y} = (I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A})^{-1} \boldsymbol{X}\boldsymbol{\beta} + (I-\phi \, \boldsymbol{D}^{-1} \, \boldsymbol{A})^{-1} \boldsymbol{\epsilon}
@@ -104,9 +105,9 @@ This is the same behavior we saw with the AR(1) model, where the mean of the pro
 This is a relatively minor issue but it does have practical implications when it comes to interpretation of the model parameters (particularly the slope coefficients $\boldsymbol \beta$).
 
 
-## SAR error model
+## SAR - error model
 
-The previous model is sometimes refered to as the **SAR lag model**, a variation of this model, common in spatial econometrics, is the **SAR error model** which is defiend as follows,
+The previous model is sometimes refered to as the **SAR lag model**, a variation of this model, common in spatial econometrics, is the **SAR error model** which is defined as follows,
 
 $$ 
 \begin{aligned}
@@ -292,11 +293,11 @@ summary(nc_sar_lag)
 #| echo: false
 #| message: false
 nc$car_pred = fitted(nc_car)
-nc$sar_pred = fitted(nc_sar_err)
+nc$sar_err_pred = fitted(nc_sar_err)
 nc$sar_lag_pred = fitted(nc_sar_lag)
 
 nc |>
-  select(car_pred, sar_pred, sar_lag_pred) |>
+  select(car_pred, sar_err_pred, sar_lag_pred) |>
   pivot_longer(car_pred:sar_lag_pred, names_to = "model", values_to = "value") |>
   ggplot() +
     geom_sf(aes(fill=value)) +
@@ -366,24 +367,26 @@ spdep::moran.test(
 ::::
 
 
-## Predicted vs Observed
+## Observed vs Predicted 
 
 ```{r echo=FALSE}
 nc |>
-  select(SID74,BIR74,car_pred, sar_pred, sar_lag_pred) |>
+  select(SID74,BIR74,car_pred, sar_err_pred, sar_lag_pred) |>
   pivot_longer(car_pred:sar_lag_pred, names_to = "model", values_to = "value") |>
   ggplot() +
     geom_point(aes(x=1000*SID74/BIR74, y=value)) +
     geom_abline(intercept=0, slope=1, color="grey") +
     facet_wrap(~model, ncol = 2) +
     ylim(0, 10) +
-    xlim(0, 10)
+    xlim(0, 10) +
+    labs(x="Observed", y="Predicted")
 ```
 
 
 ## What's wrong?
 
-```{r echo=FALSE, fig.height=3}
+```{r}
+#| echo: false
 nc |>
   as_tibble() |>
   transmute(SID74, BIR74, 1000*SID74/BIR74) |>
@@ -391,7 +394,7 @@ nc |>
   mutate(name = as_factor(name)) |>
   ggplot(aes(x = value, fill = name)) +
     geom_histogram(bins=15) +
-    facet_wrap(~name, scales = "free_x", ncol=2) +
+    facet_wrap(~name, scales = "free_x", ncol=3) +
     guides(fill = "none") +
     labs(x="", y="")
 ```
@@ -539,7 +542,7 @@ nc$car_log_pred  = fitted(nc_car_log)
   ggplot(aes(x=FT, y=car_ft_pred)) +
     geom_abline(intercept=0, slope=1, color="grey") +
     geom_point(size=0.5) +
-    labs(title="FT") +
+    labs(title="FT", x="Observed", y="Predicted") +
     coord_fixed() +
     xlim(0,3.25) + ylim(0,3.25)
 ) + (
@@ -547,7 +550,7 @@ nc |>
   ggplot(aes(x=sqrt, y=car_sqrt_pred)) +
     geom_abline(intercept=0, slope=1, color="grey") +  
     geom_point(size=0.5) +
-    labs(title="sqrt") +
+    labs(title="sqrt", x="Observed", y="Predicted") +
     coord_fixed() +
     xlim(0,3.25) + ylim(0,3.25)
 ) + (
@@ -555,7 +558,7 @@ nc |>
   ggplot(aes(x=log, y=car_log_pred)) +
     geom_abline(intercept=0, slope=1, color="grey") +
     geom_point(size=0.5) +
-    labs(title="log") +
+    labs(title="log", x="Observed", y="Predicted") +
     coord_fixed() +
     xlim(-0.5,2.5) + ylim(-0.5,2.5)
 ) + patchwork::plot_layout(ncol=3)
@@ -574,7 +577,7 @@ nc$sar_log_pred  = fitted(nc_sar_err_log)
   ggplot(aes(x=FT, y=sar_ft_pred)) +
     geom_abline(intercept=0, slope=1, color="grey") +
     geom_point(size=0.5) +
-    labs(title="FT") +
+    labs(title="FT", x="Observed", y="Predicted") +
     coord_fixed() +
     xlim(0,3.25) + ylim(0,3.25)
 ) + (
@@ -582,7 +585,7 @@ nc |>
   ggplot(aes(x=sqrt, y=sar_sqrt_pred)) +
     geom_abline(intercept=0, slope=1, color="grey") +  
     geom_point(size=0.5) +
-    labs(title="sqrt") +
+    labs(title="sqrt", x="Observed", y="Predicted") +
     coord_fixed() +
     xlim(0,3.25) + ylim(0,3.25)
 ) + (
@@ -590,7 +593,7 @@ nc |>
   ggplot(aes(x=log, y=sar_log_pred)) +
     geom_abline(intercept=0, slope=1, color="grey") +
     geom_point(size=0.5) +
-    labs(title="log") +
+    labs(title="log", x="Observed", y="Predicted") +
     coord_fixed() +
     xlim(-0.5,2.5) + ylim(-0.5,2.5)
 ) + patchwork::plot_layout(ncol=3)
@@ -610,7 +613,7 @@ nc$sar_lag_log_pred  = fitted(nc_sar_lag_log)
   ggplot(aes(x=FT, y=sar_lag_ft_pred)) +
     geom_abline(intercept=0, slope=1, color="grey") +
     geom_point(size=0.5) +
-    labs(title="FT") +
+    labs(title="FT", x="Observed", y="Predicted") +
     coord_fixed() +
     xlim(0,3.25) + ylim(0,3.25)
 ) + (
@@ -618,7 +621,7 @@ nc |>
   ggplot(aes(x=sqrt, y=sar_lag_sqrt_pred)) +
     geom_abline(intercept=0, slope=1, color="grey") +  
     geom_point(size=0.5) +
-    labs(title="sqrt") +
+    labs(title="sqrt", x="Observed", y="Predicted") +
     coord_fixed() +
     xlim(0,3.25) + ylim(0,3.25)
 ) + (
@@ -626,7 +629,7 @@ nc |>
   ggplot(aes(x=log, y=sar_lag_log_pred)) +
     geom_abline(intercept=0, slope=1, color="grey") +
     geom_point(size=0.5) +
-    labs(title="log") +
+    labs(title="log", x="Observed", y="Predicted") +
     coord_fixed() +
     xlim(-0.5,2.5) + ylim(-0.5,2.5)
 ) + patchwork::plot_layout(ncol=3)
@@ -686,7 +689,6 @@ b_car = brms::brm(
     iter=20000,
     cores = 4,
     thin=10
-    #prior = c(brms::prior(normal(0, 0.01), class = sigma))
 )
 ```
 
@@ -743,7 +745,7 @@ ggplot(p, aes(x=truth, y=Estimate)) +
   labs(x = "Observed", y = "Predicted")
 ```
 
-## Stan (correct model)
+## Stan (non-latent CAR)
 
 :::: {.columns .small}
 ::: {.column width='50%'}
@@ -854,8 +856,6 @@ tidybayes::gather_draws(
     geom_point() +
     geom_errorbar(aes(ymin=Q2.5, ymax=Q97.5), alpha=0.25) +
     coord_fixed() +
-    xlim(0,10) +
-    ylim(0,10) +
     labs(x = "Observed", y = "Predicted")
 ```
 
@@ -866,8 +866,10 @@ tidybayes::gather_draws(
 #### brms model
 
 $$
+\begin{aligned}
 y \sim N(X\beta + w, \sigma^2) \\
 w \sim N(0, \sigma^2_{CAR} (D - \alpha W)^{-1})
+\end{aligned}
 $$
 
 <br/> <br/>
@@ -923,14 +925,14 @@ p = predict(b_sar_err) |>
     truth = 1000*nc$SID74/nc$BIR74
   )
 
-nc$brm_sar_pred = p$Estimate
-nc$brm_sar_resid = p$Est.Error
+nc$brm_sar_err_pred = p$Estimate
+nc$brm_sar_err_resid = p$Est.Error
 
 (
 ggplot(nc, aes(fill = 1000*SID74/BIR74)) +
   geom_sf() 
 ) / (
-ggplot(nc, aes(fill = brm_sar_pred)) +
+ggplot(nc, aes(fill = brm_sar_err_pred)) +
   geom_sf() 
 )
 ```
@@ -950,9 +952,10 @@ ggplot(p, aes(x=truth, y=Estimate)) +
 
 ## Correcting `predict()`
 
-If instead we use $\boldsybol{X}\boldsymbol{\beta} + \phi \boldsymbol{W}\boldsymbol{y}$, we get the following:
+If instead we use $\boldsymbol{X}\boldsymbol{\beta} + \phi \boldsymbol{W}\boldsymbol{y}$, we get the following:
 
 ```{r}
+#| echo: false
 p = b_sar_err |>
   tidybayes::spread_draws(b_Intercept, errorsar) |>
   filter(.chain == 1) |>
@@ -1047,9 +1050,10 @@ ggplot(p, aes(x=truth, y=Estimate)) +
 
 ## Correcting `predict()`
 
-If instead we use $\boldsybol{X}\boldsymbol{\beta} + \phi \boldsymbol{W}\boldsymbol{y}$, we get the following:
+If instead we use $\boldsymbol{X}\boldsymbol{\beta} + \phi \boldsymbol{W}\boldsymbol{y}$, we get the following:
 
 ```{r}
+#| echo: false
 p = b_sar_lag |>
   tidybayes::spread_draws(b_Intercept, lagsar) |>
   filter(.chain == 1) |>
