@@ -9,6 +9,7 @@ format:
     transition: fade
     slide-number: true
     self-contained: true
+    html-math-method: mathjax
 execute:
   echo: true
   warning: false
@@ -67,6 +68,10 @@ lip_cancer |>
 ::: {.small}
 ```{r}
 A = (st_distance(lip_cancer) |> unclass()) < 1e-6
+diag(A) = 0
+rownames(A) = lip_cancer$District
+colnames(A) = lip_cancer$District
+
 listw = spdep::mat2listw(A, style="B")
 ```
 :::
@@ -85,7 +90,8 @@ plot(listw, coords = st_coordinates(st_centroid(lip_cancer)), add=TRUE, col="blu
 ::: {.column width='50%'}
 ```{r}
 spdep::moran.test(
-  lip_cancer$Observed, listw
+  lip_cancer$Observed, 
+  listw
 )
 ```
 :::
@@ -93,7 +99,8 @@ spdep::moran.test(
 ::: {.column width='50%'}
 ```{r}
 spdep::moran.test(
-  lip_cancer$Observed / lip_cancer$Expected, listw
+  lip_cancer$Observed / lip_cancer$Expected, 
+  listw
 )
 ```
 :::
@@ -101,6 +108,12 @@ spdep::moran.test(
 
 
 ## GLM
+
+```{r}
+#| echo: false
+options(width=85)
+```
+
 
 ::: {.small}
 ```{r}
@@ -181,7 +194,7 @@ y_i &\sim \text{Poisson}(\lambda_i) \\
 \\
 \log(\lambda_i) &= \log(E_i) + x_i \beta + \omega_i \\
 \\
-\boldsymbol{\omega} &\sim \mathcal{N}(\boldsymbol{0},~\sigma^2(\boldsymbol{D}-\phi\,\boldsymbol{A})^{-1})
+\boldsymbol{\omega} &\sim N(\boldsymbol{0},~\sigma^2(\boldsymbol{D}-\phi\,\boldsymbol{A})^{-1})
 \end{aligned}$$
 
 where $E_i$ is the expected counts for each region (and serves as an offset).
@@ -191,15 +204,12 @@ where $E_i$ is the expected counts for each region (and serves as an offset).
 
 ```{r}
 #| results: hide
-rownames(A) = lip_cancer$District
-
 b_car = brms::brm(
-  Observed ~ offset(log(Expected)) + scale(pcaff) + car(A, gr=District), 
+  Observed~offset(log(Expected))+scale(pcaff)+car(A, gr=District), 
   data=lip_cancer, data2=list(A=A), 
-  family = poisson, cores=4, iter=10000,
-  control=list(max_treedepth = 12),
-  thin = 5
+  family = poisson, cores=4, iter=10000, thin=5
 )
+
 ```
 
 ##
@@ -246,7 +256,7 @@ b_car_pred = predicted_draws_fix(b_car, newdata=lip_cancer) |>
 ## Observed vs predicted
 
 ```{r echo=FALSE}
-ggplot(bar_pred, aes(x=Observed, y=y_pred)) +
+ggplot(b_car_pred, aes(x=Observed, y=y_pred)) +
   geom_abline(intercept=0, slope=1, color="grey") +
   geom_point() +
   geom_errorbar(aes(ymin=q025, ymax=q975), alpha=0.25) +
@@ -279,7 +289,7 @@ b_car_resid = residual_draws_fix(b_car, newdata=lip_cancer, type="pearson") |>
     labs(title="Residuals",fill=""))
 ```
 
-## IAR Results
+## Results
 
 #### RMSE
 
@@ -306,8 +316,6 @@ spdep::moran.test(b_car_resid$resid, listw)
 
 ```{r}
 #| results: hide
-rownames(A) = lip_cancer$District
-
 b_iar = brms::brm(
   Observed~offset(log(Expected))+scale(pcaff)+car(A, gr=District, type="icar"), 
   data=lip_cancer, data2=list(A=A), 
@@ -415,6 +423,7 @@ spdep::moran.test(b_iar_pred$resid, listw)
 
 ## Test / Train split
 
+::: {.small}
 ```{r}
 set.seed(202311091)
 lip_cancer_train =  
@@ -422,6 +431,7 @@ lip_cancer_train =
 lip_cancer_test = lip_cancer |> 
   filter(! District %in% lip_cancer_train$District)
 ```
+:::
 
 ```{r}
 #| echo: false
@@ -438,17 +448,21 @@ lip_cancer_test = lip_cancer |>
 )
 ```
 
+## CAR Training Model
 
 ```{r}
-#| eval: false
-rownames(A) = lip_cancer$District
-b_car_train = brms::brm(
-  Observed ~ offset(log(Expected)) + scale(pcaff) + car(A, gr=District),
+b_iar_train = brms::brm(
+  Observed ~ offset(log(Expected)) + scale(pcaff) + car(A, gr=District, type="icar"),
   data=lip_cancer_train, data2=list(A=A),
-  family = poisson, cores=4, iter=10000,
-  control=list(max_treedepth = 12),
-  thin = 5
+  family = poisson, cores=4, iter=10000, thin = 5
 )
+```
+
+## Prediction
+
+```{r}
+#| error: true
+predict(b_iar_train, newdata=b_car_test)
 ```
 
 
@@ -533,48 +547,60 @@ $$ f(\boldsymbol{x}) = \sum_{i=1}^n w_i ~ d(\boldsymbol{x}, \boldsymbol{x_i})^2 
 
 ## Prediction locations
 
-::: {.small}
+:::: {.columns .small}
+::: {.column width='50%'}
 ```{r}
 r_usa = stars::st_rasterize(
   usa, 
   stars::st_as_stars(st_bbox(usa), 
     nx = 100, ny = 50, values=NA_real_)
 )
+```
+:::
+
+::: {.column width='50%'}
+```{r}
 plot(r_usa)
 ```
 :::
+::::
+
 
 ## Fitting a TPS
 
 ::: {.small}
 ```{r}
-coords = select(csn, long=longitude, lat=latitude) |>
-  as.matrix()
-(tps = fields::Tps(x = coords, Y=csn$pm25, lon.lat=TRUE))
+coords = select(csn, long=longitude, lat=latitude) |> as.matrix()
+(tps = fields::Tps(x=coords, Y=csn$pm25, lon.lat=TRUE))
 ```
 :::
 
 
 ## Predictions
 
-::: {.small}
-```{r echo=FALSE}
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
 pred = r_usa |>
-  as.data.frame() |>
+  as_tibble() |>
   filter(!is.na(ID)) |>
-  select(longitude = x, latitude = y) |>
-  as_tibble()
+  select(long = x, lat = y)
 
 tps_pred = pred |>
   mutate(
-    .,
-    pred = predict(tps, as.matrix(.[,1:2]))
+    pred = predict(tps, cbind(long, lat))
   ) |>
   stars::st_as_stars()
+```
+:::
 
+::: {.column width='50%'}
+```{r}
 plot(tps_pred)
 ```
 :::
+::::
+
 
 
 
@@ -583,6 +609,11 @@ plot(tps_pred)
 ## Variogram
 
 ::: {.small}
+```{r}
+#| echo: false
+par(mar=c(4.5,4.5,0.5,0.5))
+```
+
 ```{r}
 coords = csn |> select(latitude, longitude) |> as.matrix()
 d = fields::rdist(coords)
@@ -600,6 +631,11 @@ geoR::variog(
 
 ::: {.small}
 ```{r}
+#| echo: false
+par(mar=c(4.5,4.5,0.5,0.5))
+```
+
+```{r}
 geoR::variog(
   coords = coords, data = csn$pm25, messages = FALSE,
   uvec = seq(0, max(d)/4, length.out=50)
@@ -611,12 +647,17 @@ geoR::variog(
 ## Isotropy / Anisotropy
 
 ::: {.small}
+```{r}
+#| echo: false
+par(mar=c(4.5,4.5,0.5,0.5))
+```
+
 ```{r message=FALSE}
-v4 = geoR::variog4(
+geoR::variog4(
   coords = coords, data = csn$pm25, messages = FALSE,
   uvec = seq(0, max(d)/4, length.out = 50)
-)
-plot(v4)
+) |>
+  plot()
 ```
 :::
 
@@ -624,7 +665,7 @@ plot(v4)
 
 If we assume that our data is *stationary* and *isotropic* then we can use a Gaussian Process model to fit the data. We will assume an exponential covariance structure. 
 
-$$ \boldsymbol{y} \sim \mathcal{N}(\boldsymbol{\mu},~\Sigma) $$
+$$ \boldsymbol{y} \sim N(\boldsymbol{\mu},~\Sigma) $$
 $$ \{\Sigma\}_{ij} = \sigma^2 \exp(- l \, \lVert s_i - s_j\lVert) + \sigma^2_n \, 1_{i=j} $$
 
 . . .
@@ -633,12 +674,12 @@ we can also view this as a spatial random effects model where
 
 $$ 
 y(\boldsymbol{s}) = \mu(\boldsymbol{s}) + w(\boldsymbol{s}) + \epsilon(\boldsymbol{s}) \\
-w(\boldsymbol{s}) \sim \mathcal{N}(0,\Sigma') \\
-\epsilon(s_i) \sim \mathcal{N}(0,\sigma^2_n) \\
+w(\boldsymbol{s}) \sim N(0,\Sigma') \\
+\epsilon(s_i) \sim N(0,\sigma^2_n) \\
 \{\Sigma'\}_{ij} = \sigma^2 \exp(- r \, \lVert s_i - s_j\lVert) 
 $$
 
-## Fitting with `gplm()` (`spBayes`)
+## Fitting with `gplm()`
 
 ```{r eval=FALSE}
 max_range = max(dist(csn[,c("longitude", "latitude")])) / 4
@@ -653,8 +694,7 @@ m = gplm(
     sigma.sq.IG = c(2, 2), 
     tau.sq.IG = c(2, 2)
   ),
-  thin=10,
-  verbose=TRUE
+  thin=10
 )
 ```
 
@@ -666,9 +706,11 @@ m = readRDS("Lec20_csn_gp.rds")
 
 ##
 
+::: {.small}
 ```{r}
 m
 ```
+:::
 
 
 ## Parameter values
@@ -678,7 +720,7 @@ plot(m)
 ```
 
 
-## Predictions
+## Predictions - posterior draws
 
 ```{r eval=FALSE}
 (p = predict(m, newdata=pred, coords=c("longitude", "latitude")))
@@ -689,35 +731,43 @@ plot(m)
 ```
 
 
-##
+## Predictions - raster
 
-```{r echo=FALSE}
-gp_pred = tidybayes::gather_draws(p, y[i]) |>
-  filter(.chain == 1) |>
-  group_by(.chain, i) |>
-  summarize(
-    mean = mean(.value),
-    med = median(.value),
-    sd = sd(.value),
-    .groups = "drop"
-  ) |>
-  left_join(
-    pred |> mutate(i = seq_len(n())),
-    ., 
-    by = "i"
-  )
+::: {.small}
+```{r}
+#| output-location: slide
+gp_pred = left_join(
+  pred |> 
+    mutate(i = row_number()),
+  tidybayes::gather_draws(p, y[i]) |>
+    filter(.chain == 1) |>
+    group_by(.chain, i) |>
+    summarize(
+      mean = mean(.value),
+      med = median(.value),
+      sd = sd(.value),
+      .groups = "drop"
+    ),
+  by = "i"
+)
 
 gp_pred |> 
   stars::st_as_stars() |> 
   select(mean) |> 
   plot()
 ```
+:::
+
+
+
 
 ##
 
-```{r echo=FALSE}
+::: {.small}
+```{r}
 gp_pred |> 
   stars::st_as_stars() |> 
   select(sd) |> 
   plot()
 ```
+:::

@@ -1,0 +1,773 @@
+---
+title: "Spatial GLM + Point Reference Spatial Data"
+subtitle: "Lecture 20"
+author: "Dr. Colin Rundel"
+footer: "Sta 344/644 - Fall 2023"
+format:
+  revealjs:
+    theme: slides.scss
+    transition: fade
+    slide-number: true
+    self-contained: true
+    html-math-method: mathjax
+execute:
+  echo: true
+  warning: false
+  collapse: true
+---
+
+```{r setup}
+#| include: false
+library(dukestm)
+library(sf)
+
+library(tidyverse)
+library(patchwork)
+
+knitr::opts_chunk$set(
+  fig.align = "center"
+)
+
+options(width=50)
+
+set.seed(20221109)
+
+ggplot2::theme_set(ggplot2::theme_bw())
+```
+
+
+# Spatial GLM Models
+
+## Scottish Lip Cancer Data
+
+```{r echo=FALSE}
+lip_cancer = readRDS("data/lip_cancer.rds")
+
+lip_cancer |>
+  pivot_longer(Observed:Expected, names_to = "var", values_to = "value") |>
+  ggplot() +
+    geom_sf(aes(fill=value), color=NA) +
+    facet_wrap(~forcats::as_factor(var))
+```
+
+##
+
+```{r echo=FALSE}
+( ggplot(lip_cancer) +
+    geom_sf(aes(fill=Observed/Expected), color=NA) + 
+    labs(title="Obs/Exp",fill="")
+) +
+( ggplot(lip_cancer) +
+    geom_sf(aes(fill=pcaff), color=NA) +
+    labs(title="% Agg Fish Forest",fill="")
+)
+```
+
+## Neighborhood / weight matrix
+
+::: {.small}
+```{r}
+A = (st_distance(lip_cancer) |> unclass()) < 1e-6
+diag(A) = 0
+rownames(A) = lip_cancer$District
+colnames(A) = lip_cancer$District
+
+listw = spdep::mat2listw(A, style="B")
+```
+:::
+
+```{r}
+#| echo: false
+par(mar=c(0,0,0,0))
+plot(st_geometry(lip_cancer), asp=1) 
+plot(listw, coords = st_coordinates(st_centroid(lip_cancer)), add=TRUE, col="blue", pch=16)
+```
+
+
+## Moran's I
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(
+  lip_cancer$Observed, 
+  listw
+)
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+spdep::moran.test(
+  lip_cancer$Observed / lip_cancer$Expected, 
+  listw
+)
+```
+:::
+::::
+
+
+## GLM
+
+```{r}
+#| echo: false
+options(width=85)
+```
+
+
+::: {.small}
+```{r}
+l = glm(Observed ~ offset(log(Expected)) + pcaff, 
+        family="poisson", data=lip_cancer)
+summary(l)
+```
+:::
+
+
+## GLM Fit
+
+```{r echo=FALSE} 
+lip_cancer_fit =
+  bind_cols(
+    lip_cancer,
+    broom::augment(
+      l,
+      type.predict = "response",
+      type.residuals = "pearson"
+    ) |>
+      select(-Observed, -pcaff)
+  )
+
+( ggplot(lip_cancer_fit) +
+    geom_sf(aes(fill=Observed), color=NA) + 
+    labs(title="Observed Cases",fill="")) +
+( ggplot(lip_cancer_fit) +
+    geom_sf(aes(fill=.fitted), color=NA) + 
+    labs(title="GLM Predicted Cases",fill=""))
+```
+
+## GLM Fit 
+
+```{r echo=FALSE}
+ggplot(lip_cancer_fit) +
+  geom_abline(intercept=0, slope=1, color="grey") +
+  geom_point(aes(x=Observed, y=.fitted)) +
+  labs(y="Predicted")
+```
+
+## GLM Residuals
+
+
+```{r echo=FALSE} 
+( ggplot(lip_cancer_fit) +
+    geom_sf(aes(fill=.fitted), color=NA) + 
+    labs(title="GLM Predicted Cases",fill="")) +
+( ggplot(lip_cancer_fit) +
+    geom_sf(aes(fill=.resid), color=NA) +
+    labs(title="GLM Pearson Residuals",fill=""))
+```
+
+## Model Results
+
+#### RMSE
+::: {.small}
+```{r}
+yardstick::rmse_vec(lip_cancer_fit$Observed, lip_cancer_fit$.fitted)
+```
+:::
+
+#### Moran's I
+
+::: {.small}
+```{r}
+spdep::moran.test(lip_cancer_fit$.resid, listw)
+```
+:::
+
+
+## A hierachical model for lip cancer
+
+We have observed counts of lip cancer for 56 districts in Scotland. Let $y_i$ represent the number of lip cancer for district $i$.
+
+$$\begin{aligned}
+y_i &\sim \text{Poisson}(\lambda_i) \\
+\\
+\log(\lambda_i) &= \log(E_i) + x_i \beta + \omega_i \\
+\\
+\boldsymbol{\omega} &\sim N(\boldsymbol{0},~\sigma^2(\boldsymbol{D}-\phi\,\boldsymbol{A})^{-1})
+\end{aligned}$$
+
+where $E_i$ is the expected counts for each region (and serves as an offset).
+
+
+## CAR model
+
+```{r}
+#| results: hide
+b_car = brms::brm(
+  Observed~offset(log(Expected))+scale(pcaff)+car(A, gr=District), 
+  data=lip_cancer, data2=list(A=A), 
+  family = poisson, cores=4, iter=10000, thin=5
+)
+
+```
+
+##
+
+::: {.small}
+```{r}
+b_car
+```
+:::
+
+## Diagnostics
+
+```{r}
+plot(b_car)
+```
+
+
+## Predictions
+
+```{r echo=FALSE}
+b_car_pred = predicted_draws_fix(b_car, newdata=lip_cancer) |>
+  filter(.chain == 1) |>
+  as_tibble() |>
+  group_by(District) |>
+  summarize(
+    Observed = Observed[1],
+    y_pred = mean(.prediction),
+    q025 = quantile(.prediction, 0.025),
+    q975 = quantile(.prediction, 0.975),
+    #resid =  Observed - y_pred,
+    geometry = geometry[1],
+    .groups = "drop"
+  ) |>
+  st_as_sf()
+
+( ggplot(b_car_pred) +
+    geom_sf(aes(fill=Observed), color=NA) + 
+    labs(title="Observed Cases",fill="")) +
+( ggplot(b_car_pred) +
+    geom_sf(aes(fill=y_pred), color=NA) + 
+    labs(title="Predicted Cases",fill=""))
+```
+
+## Observed vs predicted
+
+```{r echo=FALSE}
+ggplot(b_car_pred, aes(x=Observed, y=y_pred)) +
+  geom_abline(intercept=0, slope=1, color="grey") +
+  geom_point() +
+  geom_errorbar(aes(ymin=q025, ymax=q975), alpha=0.25) +
+  labs(y="y_hat")
+```
+
+## Residuals
+
+```{r}
+#| echo: false
+b_car_resid = residual_draws_fix(b_car, newdata=lip_cancer, type="pearson") |>
+  filter(.chain == 1) |>
+  as_tibble() |>
+  group_by(District) |>
+  summarize(
+    Observed = Observed[1],
+    resid = mean(.residual),
+    q025 = quantile(.residual, 0.025),
+    q975 = quantile(.residual, 0.975),
+    geometry = geometry[1],
+    .groups = "drop"
+  ) |>
+  st_as_sf()
+
+( ggplot(b_car_resid) +
+    geom_sf(aes(fill=Observed), color=NA) + 
+    labs(title="Predicted Cases",fill="")) +
+( ggplot(b_car_resid) +
+    geom_sf(aes(fill=resid), color=NA) +
+    labs(title="Residuals",fill=""))
+```
+
+## Results
+
+#### RMSE
+
+```{r}
+yardstick::rmse_vec(b_car_pred$Observed, b_car_pred$y_pred)
+```
+
+
+#### Moran's I
+
+::: {.small}
+```{r}
+spdep::moran.test(b_car_resid$resid, listw)
+```
+:::
+
+
+
+
+
+# IAR Model
+
+## Intrinsic Autoregressive Model (IAR)
+
+```{r}
+#| results: hide
+b_iar = brms::brm(
+  Observed~offset(log(Expected))+scale(pcaff)+car(A, gr=District, type="icar"), 
+  data=lip_cancer, data2=list(A=A), 
+  family = poisson, cores=4, iter=10000, thin=5
+)
+```
+
+##
+
+::: {.small}
+```{r}
+b_iar
+```
+:::
+
+## Diagnostics
+
+```{r echo=FALSE}
+plot(b_iar)
+```
+
+
+
+## Predictions
+
+```{r echo=FALSE}
+b_iar_pred = epred_draws_fix(b_iar, newdata=lip_cancer) |>
+  filter(.chain == 1) |>
+  as_tibble() |>
+  group_by(District) |>
+  summarize(
+    Observed = Observed[1],
+    y_pred = mean(.epred),
+    q025 = quantile(.epred, 0.025),
+    q975 = quantile(.epred, 0.975),
+    resid =  Observed - y_pred,
+    geometry = geometry[1],
+    .groups = "drop"
+  ) |>
+  st_as_sf()
+
+( ggplot(b_iar_pred) +
+    geom_sf(aes(fill=Observed), color=NA) + 
+    labs(title="Observed Cases",fill="")) +
+( ggplot(b_iar_pred) +
+    geom_sf(aes(fill=y_pred), color=NA) + 
+    labs(title="Predicted Cases",fill=""))
+```
+
+## Observed vs predicted
+
+```{r echo=FALSE}
+ggplot(b_iar_pred, aes(x=Observed, y=y_pred)) +
+  geom_abline(intercept=0, slope=1, color="grey") +
+  geom_point() +
+  geom_errorbar(aes(ymin=q025, ymax=q975), alpha=0.25) +
+  labs(y="ʎ")
+```
+
+## Residuals
+
+```{r}
+#| echo: false
+b_iar_resid = residual_draws_fix(b_iar, newdata=lip_cancer, type="pearson") |>
+  filter(.chain == 1) |>
+  as_tibble() |>
+  group_by(District) |>
+  summarize(
+    Observed = Observed[1],
+    resid = mean(.residual),
+    q025 = quantile(.residual, 0.025),
+    q975 = quantile(.residual, 0.975),
+    geometry = geometry[1],
+    .groups = "drop"
+  ) |>
+  st_as_sf()
+
+( ggplot(b_iar_resid) +
+    geom_sf(aes(fill=Observed), color=NA) + 
+    labs(title="Predicted Cases",fill="")) +
+( ggplot(b_iar_resid) +
+    geom_sf(aes(fill=resid), color=NA) +
+    labs(title="Residuals",fill=""))
+```
+
+## IAR Results
+
+#### RMSE
+
+::: {.small}
+```{r}
+yardstick::rmse_vec(b_iar_pred$Observed, b_iar_pred$y_pred)
+```
+:::
+
+#### Moran's I
+
+::: {.small}
+```{r}
+spdep::moran.test(b_iar_pred$resid, listw)
+```
+:::
+
+# Out of sample predictions
+
+## Test / Train split
+
+::: {.small}
+```{r}
+set.seed(202311091)
+lip_cancer_train =  
+  slice_sample(lip_cancer, prop = 0.8, replace= FALSE)
+lip_cancer_test = lip_cancer |> 
+  filter(! District %in% lip_cancer_train$District)
+```
+:::
+
+```{r}
+#| echo: false
+(
+  ggplot() +
+    geom_sf(data=st_geometry(lip_cancer)) +
+    geom_sf(data=lip_cancer_train, fill="lightblue") +
+    labs(title="Train")
+) + (
+  ggplot() +
+    geom_sf(data=st_geometry(lip_cancer)) +
+    geom_sf(data=lip_cancer_test, fill="red") +
+    labs(title="Test")
+)
+```
+
+## CAR Training Model
+
+```{r}
+b_iar_train = brms::brm(
+  Observed ~ offset(log(Expected)) + scale(pcaff) + car(A, gr=District, type="icar"),
+  data=lip_cancer_train, data2=list(A=A),
+  family = poisson, cores=4, iter=10000, thin = 5
+)
+```
+
+## Prediction
+
+```{r}
+#| error: true
+predict(b_iar_train, newdata=b_car_test)
+```
+
+
+# Point Referenced Data
+
+## Example - PM2.5 from CSN
+
+The Chemical Speciation Network are a series of air quality monitors run by EPA (221 locations in 2007). We'll look at a subset of the data from Nov 11th, 2007 (n=191) for just PM2.5. 
+
+```{r include=FALSE}
+states = st_read("data/us/") |>
+  filter(!STATE %in% c("Hawaii", "Alaska", "Puerto Rico", "U.S. Virgin Islands")) |>
+  select(state = STATE) |>
+  filter(!duplicated(state))
+
+usa = states |>
+  summarize()
+```
+
+```{r echo=FALSE, fig.height=3.5}
+csn = readRDS("data/epa/csn.rds")
+
+csn = csn |> 
+  select(site:date, pm25) |> 
+  na.omit() |> 
+  filter(date == lubridate::ymd("2007-11-14")) |> 
+  filter(longitude > -140) |> # Remove Hawaii Location
+  as_tibble()
+
+csn_plot = ggplot() +
+  geom_sf(data=states, color="grey", fill=NA) +
+  geom_point(data=csn, aes(x=longitude, y=latitude, color=pm25), alpha=1, size=3) +
+  scale_color_viridis_c() 
+
+csn_plot
+```
+
+
+
+
+##
+
+```{r}
+csn
+```
+
+## Aside - Splines
+
+![](imgs/Lec20/spline1.png){fig-align="center" width="80%"}
+
+##
+
+![](imgs/Lec20/spline2.png){fig-align="center" width="100%"}
+
+
+## Splines in 1d - Smoothing Splines
+
+These are a mathematical analogue to the drafting splines represented using a penalized regression model.
+
+. . .
+
+We want to find a function $f(x)$ that best fits our observed data $\boldsymbol{y} = y_1, \ldots, y_n$ while being *smooth*.
+
+$$ \underset{f(x)}{\arg\min} ~ \sum_{i=1}^n\left(y_i - f(x_i)\right)^2 + \lambda \int_{-\infty}^\infty f''(x)^2 ~ dx $$
+
+. . .
+
+Interestingly, this minimization problem has an exact solution which is given by a mixture of weighted natural cubic splines (cubic splines that are linear in the tails) with knots at the observed data locations ($x$s).
+
+
+## Splines in 2d - Thin Plate Splines
+
+Now imagine we have observed data of the form $(x_i, y_i, z_i)$ where we wish to predict $z_i$ given $x_i$ and $y_i$ for all $i$. We can extend the smoothing spline model in two dimensions,
+
+$$ \underset{f(x,y)}{\arg\min} ~~ \sum_{i=1}^n (z_i-f(x_i,y_i))^2 + \lambda  \int_{-\infty}^\infty  \int_{-\infty}^\infty \left(\frac{\partial^2 f}{\partial x^2} + 2 \frac{\partial^2 f}{\partial x \, \partial y} + \frac{\partial^2 f}{\partial y^2} \right) dx\, dy$$
+
+. . .
+
+The solution to this equation has a natural representation using a weighted sum of *radial basis functions* with knots at the observed data locations ($\boldsymbol{x_i}$)
+ 
+$$ f(\boldsymbol{x}) = \sum_{i=1}^n w_i ~ d(\boldsymbol{x}, \boldsymbol{x_i})^2 \log d(\boldsymbol{x}, \boldsymbol{x_i}).$$
+
+## Prediction locations
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+r_usa = stars::st_rasterize(
+  usa, 
+  stars::st_as_stars(st_bbox(usa), 
+    nx = 100, ny = 50, values=NA_real_)
+)
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+plot(r_usa)
+```
+:::
+::::
+
+
+## Fitting a TPS
+
+::: {.small}
+```{r}
+coords = select(csn, long=longitude, lat=latitude) |> as.matrix()
+(tps = fields::Tps(x=coords, Y=csn$pm25, lon.lat=TRUE))
+```
+:::
+
+
+## Predictions
+
+:::: {.columns .small}
+::: {.column width='50%'}
+```{r}
+pred = r_usa |>
+  as_tibble() |>
+  filter(!is.na(ID)) |>
+  select(long = x, lat = y)
+
+tps_pred = pred |>
+  mutate(
+    pred = predict(tps, cbind(long, lat))
+  ) |>
+  stars::st_as_stars()
+```
+:::
+
+::: {.column width='50%'}
+```{r}
+plot(tps_pred)
+```
+:::
+::::
+
+
+
+
+# Gaussin Process Models / Kriging
+
+## Variogram
+
+::: {.small}
+```{r}
+#| echo: false
+par(mar=c(4.5,4.5,0.5,0.5))
+```
+
+```{r}
+coords = csn |> select(latitude, longitude) |> as.matrix()
+d = fields::rdist(coords)
+
+geoR::variog(
+  coords = coords, data = csn$pm25, messages = FALSE, 
+  uvec = seq(0, max(d)/2, length.out=50)
+) |> 
+  plot()
+```
+:::
+
+
+##
+
+::: {.small}
+```{r}
+#| echo: false
+par(mar=c(4.5,4.5,0.5,0.5))
+```
+
+```{r}
+geoR::variog(
+  coords = coords, data = csn$pm25, messages = FALSE,
+  uvec = seq(0, max(d)/4, length.out=50)
+) |> plot()
+```
+:::
+
+
+## Isotropy / Anisotropy
+
+::: {.small}
+```{r}
+#| echo: false
+par(mar=c(4.5,4.5,0.5,0.5))
+```
+
+```{r message=FALSE}
+geoR::variog4(
+  coords = coords, data = csn$pm25, messages = FALSE,
+  uvec = seq(0, max(d)/4, length.out = 50)
+) |>
+  plot()
+```
+:::
+
+## GP Spatial Model
+
+If we assume that our data is *stationary* and *isotropic* then we can use a Gaussian Process model to fit the data. We will assume an exponential covariance structure. 
+
+$$ \boldsymbol{y} \sim N(\boldsymbol{\mu},~\Sigma) $$
+$$ \{\Sigma\}_{ij} = \sigma^2 \exp(- l \, \lVert s_i - s_j\lVert) + \sigma^2_n \, 1_{i=j} $$
+
+. . .
+
+we can also view this as a spatial random effects model where
+
+$$ 
+y(\boldsymbol{s}) = \mu(\boldsymbol{s}) + w(\boldsymbol{s}) + \epsilon(\boldsymbol{s}) \\
+w(\boldsymbol{s}) \sim N(0,\Sigma') \\
+\epsilon(s_i) \sim N(0,\sigma^2_n) \\
+\{\Sigma'\}_{ij} = \sigma^2 \exp(- r \, \lVert s_i - s_j\lVert) 
+$$
+
+## Fitting with `gplm()`
+
+```{r eval=FALSE}
+max_range = max(dist(csn[,c("longitude", "latitude")])) / 4
+
+m = gplm(
+  pm25~1, data = csn, coords=c("longitude", "latitude"),
+  cov_model = "exponential",
+  starting = list(phi = 3/3, sigma.sq = 33, tau.sq = 17),
+  tuning = list("phi"=0.1, "sigma.sq"=0.1, "tau.sq"=0.1),
+  priors = list(
+    phi.Unif = c(3/max_range, 3/(0.5)), 
+    sigma.sq.IG = c(2, 2), 
+    tau.sq.IG = c(2, 2)
+  ),
+  thin=10
+)
+```
+
+```{r include=FALSE}
+m = readRDS("Lec20_csn_gp.rds")
+```
+
+
+
+##
+
+::: {.small}
+```{r}
+m
+```
+:::
+
+
+## Parameter values
+
+```{r}
+plot(m)
+```
+
+
+## Predictions - posterior draws
+
+```{r eval=FALSE}
+(p = predict(m, newdata=pred, coords=c("longitude", "latitude")))
+```
+
+```{r echo=FALSE}
+(p = readRDS("Lec20_csn_gp_pred.rds"))
+```
+
+
+## Predictions - raster
+
+::: {.small}
+```{r}
+#| output-location: slide
+gp_pred = left_join(
+  pred |> 
+    mutate(i = row_number()),
+  tidybayes::gather_draws(p, y[i]) |>
+    filter(.chain == 1) |>
+    group_by(.chain, i) |>
+    summarize(
+      mean = mean(.value),
+      med = median(.value),
+      sd = sd(.value),
+      .groups = "drop"
+    ),
+  by = "i"
+)
+
+gp_pred |> 
+  stars::st_as_stars() |> 
+  select(mean) |> 
+  plot()
+```
+:::
+
+
+
+
+##
+
+::: {.small}
+```{r}
+gp_pred |> 
+  stars::st_as_stars() |> 
+  select(sd) |> 
+  plot()
+```
+:::

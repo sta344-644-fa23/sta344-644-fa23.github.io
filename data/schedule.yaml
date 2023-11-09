@@ -199,7 +199,7 @@ schedule:
   day: 2
   lecture: Fitting CAR and SAR models
   slides: Lec19
-  screencast: 
+  screencast: https://youtu.be/-m6oTIXVStk
   readings:
   - text: On the relationship between CAR and SAR models
     link: https://mhooten.github.io/publications/VerHoef_etal_SpatStat_2018.pdf
@@ -210,7 +210,7 @@ schedule:
 - week: 11
   day: 4
   lecture: GLMs for areal data + Point referenced data (pt. 1)
-  slides: 
+  slides: Lec20
   screencast: 
   
 - week: 12
