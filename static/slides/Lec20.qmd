@@ -67,11 +67,8 @@ lip_cancer |>
 
 ::: {.small}
 ```{r}
-A = (st_distance(lip_cancer) |> unclass()) < 1e-6
-diag(A) = 0
-rownames(A) = lip_cancer$District
-colnames(A) = lip_cancer$District
-
+A = (st_distance(lip_cancer) |> unclass()) < 1e-6; diag(A) = 0
+rownames(A) = lip_cancer$District; colnames(A) = lip_cancer$District
 listw = spdep::mat2listw(A, style="B")
 ```
 :::
@@ -117,8 +114,7 @@ options(width=85)
 
 ::: {.small}
 ```{r}
-l = glm(Observed ~ offset(log(Expected)) + pcaff, 
-        family="poisson", data=lip_cancer)
+l = glm(Observed ~ offset(log(Expected)) + pcaff, family="poisson", data=lip_cancer)
 summary(l)
 ```
 :::
@@ -205,7 +201,7 @@ where $E_i$ is the expected counts for each region (and serves as an offset).
 ```{r}
 #| results: hide
 b_car = brms::brm(
-  Observed~offset(log(Expected))+scale(pcaff)+car(A, gr=District), 
+  Observed ~ offset(log(Expected)) + pcaff + car(A, gr=District), 
   data=lip_cancer, data2=list(A=A), 
   family = poisson, cores=4, iter=10000, thin=5
 )
@@ -317,7 +313,7 @@ spdep::moran.test(b_car_resid$resid, listw)
 ```{r}
 #| results: hide
 b_iar = brms::brm(
-  Observed~offset(log(Expected))+scale(pcaff)+car(A, gr=District, type="icar"), 
+  Observed ~ offset(log(Expected)) + pcaff + car(A, gr=District, type="icar"),
   data=lip_cancer, data2=list(A=A), 
   family = poisson, cores=4, iter=10000, thin=5
 )
@@ -452,7 +448,7 @@ lip_cancer_test = lip_cancer |>
 
 ```{r}
 b_iar_train = brms::brm(
-  Observed ~ offset(log(Expected)) + scale(pcaff) + car(A, gr=District, type="icar"),
+  Observed ~ offset(log(Expected)) + pcaff + car(A, gr=District, type="icar"),
   data=lip_cancer_train, data2=list(A=A),
   family = poisson, cores=4, iter=10000, thin = 5
 )
@@ -462,7 +458,7 @@ b_iar_train = brms::brm(
 
 ```{r}
 #| error: true
-predict(b_iar_train, newdata=b_car_test)
+predict(b_iar_train, newdata=lip_cancer_test)
 ```
 
 
