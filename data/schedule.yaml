@@ -216,7 +216,7 @@ schedule:
 - week: 12
   day: 2
   lecture: Point referenced data (pt. 2)
-  slides: 
+  slides: Lec21
   screencast:
   readings:
   - text: Diggle (2007)
