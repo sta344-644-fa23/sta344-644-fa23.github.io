@@ -519,7 +519,7 @@ For the allele $i$, from locus $l$, at location $k$
 
 $$
 \begin{aligned}
-P(y_{l \cdot k} | f_{l \cdot k} ) &= \frac{s_{lk}!}{\prod_i y_{ilk}!} \prod_i {f_{ilk}}^{y_{ilk}} \\
+\boldsymbol{y}_{\cdot l k} | f_{\cdot l k} &\sim \text{Multinom}\left(\boldsymbol{f}_{\cdot l k}, n_{l k}\right) \\
 \\
 f_{ilk} &= \frac{\exp(\Theta_{ilk})}{\sum_i \exp(\Theta_{ilk})} \\
 \\
