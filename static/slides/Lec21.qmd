@@ -1,5 +1,5 @@
 ---
-title: "Point referenced data (pt. 2)"
+title: "GLMs +<br/>Point referenced data"
 subtitle: "Lecture 22"
 author: "Dr. Colin Rundel"
 footer: "Sta 344/644 - Fall 2023"
@@ -46,18 +46,18 @@ ggplot2::theme_set(ggplot2::theme_bw())
 
 ::: {.small}
 ```{r}
-loaloa = PrevMap::loaloa |>
-  as_tibble() |> 
-  (\(x) setNames(x, tolower(names(x))))() |>
-  rename(elev=elevation)
-
-loaloa
+( loaloa = PrevMap::loaloa |>
+    as_tibble() |> 
+    rename_with(tolower) |>
+    rename(elev=elevation)
+)
 ```
 :::
 
 ## Spatial Distribution
 
-```{r echo=FALSE, out.width="0.9\\textwidth"}
+```{r}
+#| echo: false
 w_africa = read_sf("data/AfricanCountries/", quiet = TRUE) |>
   filter(COUNTRY %in% c("Cameroon", "Nigeria", "Central African Republic", "Gabon", "Congo", "Equatorial Guinea", "Chad"))
 
@@ -69,10 +69,13 @@ ggplot() +
 ```
 
 
-## Normalized Difference Vegetation Index (NDVI)
+## Normalized Difference Vegetation Index
 
-![](imgs/Lec21/ndvi_cameroon.png){fig-align="center" width="50%"}
+![](imgs/Lec21/ndvi_cameroon.png){fig-align="center" width="45%"}
 
+::: {.aside}
+See [here](https://www.usgs.gov/land-resources/nli/landsat/landsat-normalized-difference-vegetation-index) for more details on NDVI.
+:::
 
 ## Paper / Data summary
 
@@ -82,23 +85,23 @@ Original paper - Diggle, et. al. (2007). *Spatial modelling and prediction of Lo
 
 * `elev` - USGS gtopo30 (1km resolution)
 
-* `mean9901` to `stdev9901` - aggregated data from 1999 to 2001 from the Flemish Institute for Technological Research (1 km resolution)
+* `mean9901`, `max9901`, `min9901`, `stdev9901` - aggregated NDVI data from 1999 to 2001 from the Flemish Institute for Technological Research (1 km resolution)
 
 
 ## Diggle's Model
 
 $$ 
 \begin{aligned}
+y(s) &\sim \text{Binom}(p(s), n(s)) \\
 \log \left( \frac{p(s)}{1-p(s)} \right) = \alpha &+ f_1(\text{elev}(s)) \\
 &+ f_2(\text{MAX.NDVI}(s)) \\
-&+ f_3(\text{SD.NDVI}(s)) + w(s) 
+&+ f_3(\text{SD.NDVI}(s)) \\
+&+ w(s) \\
+\\
+w(s) &\sim N(0, \Sigma) \\
+\{\Sigma\}_{ij} &= \sigma^2 \, \exp(-d \,\phi) 
 \end{aligned}
 $$
-
-where
-
-$$ w(s) \sim N(0, \Sigma) $$
-$$ \{\Sigma\}_{ij} = \sigma^2 \, \exp(-d \,\phi) $$
 
 
 ## EDA
@@ -139,7 +142,7 @@ loaloa |> select(elev, elev_f, max9901, max_f)
 ::: {.small}
 ```{r}
 model.matrix(
-  ~ elev:elev_f - 1, 
+  ~ elev:elev_f, 
   data = loaloa
 ) |>
   as_tibble()
@@ -149,25 +152,27 @@ model.matrix(
 
 ## OOS Validation
 
+::: {.small}
 ```{r message=FALSE}
 set.seed(12345)
 loaloa_test = loaloa |> slice_sample(prop=0.20)
 loaloa = anti_join(loaloa, loaloa_test, by="row")
 ```
+:::
 
 ```{r echo=FALSE}
-( ggplot() +
+bind_rows(
+  loaloa |> mutate(type = "Training"),
+  loaloa_test |> mutate(type = "Testing")
+) |>
+  mutate(
+    type = as_factor(type)
+  ) |>
+  ggplot() +
     geom_sf(data=w_africa) +
-    geom_point(data=loaloa, aes(x=longitude, y=latitude, color=no_inf/no_exam), alpha=0.8) +
+    geom_point(aes(x=longitude, y=latitude, color=no_inf/no_exam), alpha=0.8) +
     xlim(7.5,16) + ylim(2,7.2) +
-    labs(title="Training")
-) +
-( ggplot() +
-    geom_sf(data=w_africa) +
-    geom_point(data=loaloa_test, aes(x=longitude, y=latitude, color=no_inf/no_exam), alpha=0.8) +
-    xlim(7.5,16) + ylim(2,7.2) +
-    labs(title="Testing")
-)
+    facet_wrap(~type)
 ```
 
 ## Model
@@ -241,6 +246,7 @@ ggplot(loaloa_test, aes(x=no_inf/no_exam, y=glm_pred)) +
 
 ## Fit - RMSE
 
+<br/>
 
 #### Training
 
@@ -248,11 +254,14 @@ ggplot(loaloa_test, aes(x=no_inf/no_exam, y=glm_pred)) +
 yardstick::rmse_vec(loaloa$no_inf/loaloa$no_exam, loaloa$glm_pred)
 ```
 
+<br/>
+
 #### Testing
 
 ```{r}
 yardstick::rmse_vec(loaloa_test$no_inf/loaloa_test$no_exam, loaloa_test$glm_pred)
 ```
+
 
 ## Spatial Structure?
 
@@ -289,7 +298,11 @@ ll_gp = gpglm(
   n_report = 10,
   chains=4
 )
+```
 
+```{r}
+#| eval: false
+#| include: false
 saveRDS(ll_gp, file="Lec21_loaloa.rds")
 ```
 
@@ -383,7 +396,8 @@ ll_gp_pred_y |>
     geom_point() +
     geom_abline(slope = 1, intercept = 0) +
     geom_errorbar(aes(ymin=q025, ymax=q975), alpha=0.1)+
-    guides(color="none")
+    guides(color="none") +
+    coord_fixed()
 ```
 
 
@@ -422,7 +436,8 @@ ll_gp_test_pred_y |>
     geom_point() +
     geom_abline(slope = 1, intercept = 0) +
     geom_errorbar(aes(ymin=q025, ymax=q975), alpha=0.1) +
-    guides(color="none")
+    guides(color="none") +
+    coord_fixed()
 ```
 
 ## Diggle's Predictive Surface
@@ -504,7 +519,7 @@ For the allele $i$, from locus $l$, at location $k$
 
 $$
 \begin{aligned}
-\boldsymbol{y}_{\cdot l k}|\boldsymbol{\Theta} &\sim N\left(\textstyle\sum_i y_{ilk},\: \boldsymbol{f}_{\cdot l k}\right) \\
+P(y_{l \cdot k} | f_{l \cdot k} ) &= \frac{s_{lk}!}{\prod_i y_{ilk}!} \prod_i {f_{ilk}}^{y_{ilk}} \\
 \\
 f_{ilk} &= \frac{\exp(\Theta_{ilk})}{\sum_i \exp(\Theta_{ilk})} \\
 \\
