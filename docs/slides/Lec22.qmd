@@ -1104,7 +1104,7 @@ animate(g, nframes = 300, fps = 10)
 
   - Dealing with $n$ $k \times k$ matrices is much easier than dealing with a single $n \times n$ matrix.
   
-  - The NN approximation is $O(nk^2)$ while the full likelihood is $O(n^3)$.
+  - The NN approximation is $O(nk^3)$ while the full likelihood is $O(n^3)$.
 
 - The NN approximation is also a **huge** memory savings over the full likelihood.
 
