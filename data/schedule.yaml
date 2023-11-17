@@ -217,7 +217,7 @@ schedule:
   day: 2
   lecture: Point referenced data (pt. 2)
   slides: Lec21
-  screencast:
+  screencast: https://youtu.be/p87FMv1CXHQ
   readings:
   - text: Diggle, et al. (2007)
     link: https://www.researchgate.net/profile/Valerie-Obsomer/publication/6124441_Spatial_modelling_and_the_prediction_of_Loa_loa_risk_Decision_making_under_uncertainty/links/0fcfd5081417290b82000000/Spatial-modelling-and-the-prediction-of-Loa-loa-risk-Decision-making-under-uncertainty.pdf
@@ -225,7 +225,7 @@ schedule:
 - week: 12
   day: 4
   lecture: Computation and GP Models
-  slides: 
+  slides: Lec22
   notes: 
   screencast: 
 
