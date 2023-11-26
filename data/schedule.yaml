@@ -227,7 +227,7 @@ schedule:
   lecture: Computation and GP Models
   slides: Lec22
   notes: 
-  screencast: 
+  screencast: https://youtu.be/fQ-pOt4SeLw
 
 - week: 13
   day: 0
@@ -245,7 +245,7 @@ schedule:
 - week: 14
   day: 2
   lecture: Spatio-temporal models
-  slides: 
+  slides: Lec23
 
 - week: 14
   day: 4
