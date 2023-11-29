@@ -117,8 +117,8 @@ $$
 
 $$ 
 \begin{aligned}
-\boldsymbol{v}_t &\sim \mathcal{N}(0,\boldsymbol{V}_t) \\
-\boldsymbol{\omega}_t &\sim \mathcal{N}(0,\boldsymbol{W}_t) \\
+\boldsymbol{v}_t &\sim N(0,\boldsymbol{V}_t) \\
+\boldsymbol{\omega}_t &\sim N(0,\boldsymbol{W}_t) \\
 \end{aligned}
 $$
 
@@ -141,7 +141,7 @@ $$
 $$ 
 \begin{aligned}
 \omega_t &= (\omega_1, 0, \ldots, 0), 
-\quad &\omega_1 \sim \mathcal{N}(0,\,\sigma^2)
+\quad &\omega_1 \sim N(0,\,\sigma^2)
 \end{aligned}
 $$
 :::
@@ -151,8 +151,8 @@ $$
 \begin{aligned}
 y_t &= \theta_t + v_t \\
 \theta_t &= \sum_{i=1}^p \phi_i\, \theta_{t-i} + \omega_1 \\
-v_t &\sim \mathcal{N}(0,\, \sigma^2_v) \\
-\omega_1 &\sim \mathcal{N}(0,\, \sigma^2_\omega) \\
+v_t &\sim N(0,\, \sigma^2_v) \\
+\omega_1 &\sim N(0,\, \sigma^2_\omega) \\
 \end{aligned}
 $$
 :::
@@ -171,13 +171,13 @@ The observed temperature at time $t$ and location $s$ is given by $y_t(s)$ where
 $$
 \begin{aligned}
 y_t(\boldsymbol{s}) & = \boldsymbol{x}_t(\boldsymbol{s})\boldsymbol{\beta}_t + u_t(\boldsymbol{s}) + \epsilon_t(\boldsymbol{s}) \\
-\epsilon_t(\boldsymbol{s}) &\stackrel{ind}\sim \mathcal{N}(0,\tau_{t}^2) \\
+\epsilon_t(\boldsymbol{s}) &\stackrel{ind}\sim N(0,\tau_{t}^2) \\
 \\
 \boldsymbol{\beta}_t & = \boldsymbol{\beta}_{t-1} + \boldsymbol{\eta}_t \\
-\boldsymbol{\eta}_t &\stackrel{i.i.d.}\sim \mathcal{N}(0,\boldsymbol{\Sigma}_{\eta}) \\
+\boldsymbol{\eta}_t &\stackrel{i.i.d.}\sim N(0,\boldsymbol{\Sigma}_{\eta}) \\
 \\
 u_t(\boldsymbol{s}) &= u_{t-1}(\boldsymbol{s}) + w_t(\boldsymbol{s}) \\
-w_t(\boldsymbol{s}) &\stackrel{ind.}{\sim} \mathcal{N}\left(\boldsymbol{0}, \Sigma_t(\phi_t, \sigma^2_t)\right)
+w_t(\boldsymbol{s}) &\stackrel{ind.}{\sim} N\left(\boldsymbol{0}, \Sigma_t(\phi_t, \sigma^2_t)\right)
 \end{aligned}
 $$
 :::
@@ -189,7 +189,7 @@ Additional assumptions for $t=0$,
 ::: {.small}
 $$
 \begin{aligned}
-\boldsymbol{\beta}_{0} &\sim \mathcal{N}(\boldsymbol{\mu}_0, \boldsymbol{\Sigma}_0) \\
+\boldsymbol{\beta}_{0} &\sim N(\boldsymbol{\mu}_0, \boldsymbol{\Sigma}_0) \\
 u_{0}(\boldsymbol{s}) &= 0
 \end{aligned}
 $$
@@ -376,15 +376,12 @@ ggplot(y_hat, aes(x=temp, y=post_mean)) +
 ```{r}
 r = raster(xmn=5750, xmx=6300, ymn=3000, ymx=3550, nrow=20, ncol=20)
 
-pred = xyFromCell(r, 1:length(r)) |> 
-  as.data.frame() |>
-  mutate(type="pred") |>
-  (\(x) {
-    bind_rows(
-      ne_temp |> mutate(type = "obs"),
-      x
-    )
-  })()
+pred = bind_rows(
+  ne_temp |> mutate(type = "obs"),
+  xyFromCell(r, 1:length(r)) |> 
+    as.data.frame() |>
+    mutate(type="pred")
+)
 ```  
 
 
@@ -501,7 +498,7 @@ obs = ne_temp |>
 coordinates(obs) = ~x+y
 
 
-rasterVis::levelplot(s, contour=FALSE) +
+rasterVis::levelplot(s, contour=TRUE, par.settings = rasterVis::BuRdTheme) +
   latticeExtra::layer(sp::sp.points(obs, pch=16, col=1, cex=1))
 ```
 
@@ -509,11 +506,11 @@ rasterVis::levelplot(s, contour=FALSE) +
 ## Out-of-sample validation
 
 ```{r echo=FALSE}
-oos_full = mutate(ne_temp, type = "train", station=1:n())
-oos_full$type[c(1,7,19,24,33)] = "test"
-oos_full = oos_full |> relocate(x,y,elev,type, station)
+full = mutate(ne_temp, type = "train", station=1:n())
+full$type[c(1,7,19,24,33)] = "test"
+full = full |> relocate(x,y,elev,type, station)
 
-oos = oos_full |>
+oos = full |>
   tidyr::gather(month, temp, t_1:t_24) |>
   mutate(temp = ifelse(type=="train", temp, NA)) |>
   tidyr::spread(month, temp) |>
@@ -525,8 +522,7 @@ oos = oos_full |>
 
 ::: {.small}
 ```{r}
-#| echo: false
-oos_full
+full
 ```
 :::
 
@@ -535,7 +531,6 @@ oos_full
 
 ::: {.small}
 ```{r}
-#| echo: false
 oos
 ```
 :::
@@ -567,7 +562,7 @@ m_oos$p.y.samples |>
   post_summary() |>
   (\(x) {
     bind_cols(
-      tidyr::gather(oos_full, month, temp, t_1:t_24),
+      tidyr::gather(full, month, temp, t_1:t_24),
       x
     )
   })() |>
@@ -607,16 +602,16 @@ these are straight forward to fit and interpret but are quite limiting (no share
 
 Lets assume that we want to define our spatiotemporal random effect to be a single stationary Gaussian Process (in 3 dimensions$^\star$),
 $$ 
-\boldsymbol{w}(\boldsymbol{s},\boldsymbol{t}) \sim \mathcal{N}\big(\boldsymbol{0}, \boldsymbol{\Sigma}(\boldsymbol{s},\boldsymbol{t})\big) 
+\boldsymbol{w}(\boldsymbol{s},\boldsymbol{t}) \sim N\big(\boldsymbol{0}, \boldsymbol{\Sigma}(\boldsymbol{s},\boldsymbol{t})\big) 
 $$
-where our covariance function depends on both $\lVert s-s'\rVert$ and $\lvert t-t'\rvert$,
+where our covariance function will depend on both $\lVert s-s'\rVert$ and $\lvert t-t'\rvert$,
 $$
 \text{cov}(\boldsymbol{w}(\boldsymbol{s},\boldsymbol{t}), \boldsymbol{w}(\boldsymbol{s}',\boldsymbol{t}')) = c(\lVert s-s'\rVert, \lvert t-t'\rvert)
 $$
 
 . . .
 
-* Note that the resulting covariance matrix $\Sigma$ will be of size $n_s \cdot n_t \times n_s \cdot n_t$.
+* Note that the resulting covariance matrix will be of size $n_s \cdot n_t \times n_s \cdot n_t$.
 
     + Even for modest problems this gets very large (past the point of direct computability).
 
@@ -695,7 +690,7 @@ $$
 
 If we have a spatiotemporal random effect with a separable form,
 $$
-\boldsymbol{w}(\boldsymbol{s},\boldsymbol{t}) \sim \mathcal{N}(\boldsymbol{0},\, \boldsymbol{\Sigma}_w)
+\boldsymbol{w}(\boldsymbol{s},\boldsymbol{t}) \sim N(\boldsymbol{0},\, \boldsymbol{\Sigma}_w)
 $$
 $$
 \boldsymbol{\Sigma}_w = \sigma^2 \, \boldsymbol{H}_s \otimes \boldsymbol{H}_t
