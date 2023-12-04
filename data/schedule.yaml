@@ -250,5 +250,9 @@ schedule:
 - week: 14
   day: 4
   lecture: <b>Midterm 2</b>
-  slides: 
+  slides:
+  
+- week: 17
+  day: -1
+  lecture: "<i>Final project due by 5 pm</i>"
 
